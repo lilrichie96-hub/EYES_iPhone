@@ -18,7 +18,8 @@
 
    Future interactions (Peek, Mirror, Orbit): EyesContact.register(name, { cap, label, … }). A registered
    interaction is only offered to a friend whose phone advertised `cap` in its hello (EyesFriends.supports).
-   Nothing is registered for Phase 3 yet, so nothing pretends to work. */
+   Nothing is registered for Phase 3 yet, so nothing pretends to work.
+   4.2: the Meeting Space panel has one slot for Battle Lite (eyes-duel.js fills it). */
 'use strict';
 (function (root) {
   const TAU = Math.PI * 2;
@@ -505,8 +506,10 @@
     else if (st.id === 'resting') note = `<p class="ec-hint">${esc(nameOf(n.b))} is resting. Signals wait for them and arrive when they open EYES.</p>`;
     else if (st.id === 'linked') note = `<p class="ec-hint">Signals travel through your first Eye Contact.</p>`;
     p.innerHTML = `${note}<div class="ec-sigs" role="group" aria-label="Signals">${sigs.map(([k, d]) => `<button type="button" class="ec-sig ec-sig-${k}" data-sig="${k}" aria-label="Send a ${esc(d.label)}: ${esc(d.hint)}"><span class="ec-orb" aria-hidden="true"><i class="ec-g ec-g-${k}"></i></span><b>${esc(d.label)}</b><small>${esc(d.hint)}</small></button>`).join('')}</div>
-      <p class="ec-hint ec-gesture">${motion === 'off' ? 'Tap to send' : 'Tap to send, or drag one to their Eye'}</p>`;
+      <p class="ec-hint ec-gesture">${motion === 'off' ? 'Tap to send' : 'Tap to send, or drag one to their Eye'}</p><div class="ec-duel-slot"></div>`;
     p.querySelectorAll('[data-sig]').forEach((b) => bindSig(b, b.dataset.sig));
+    // 4.2 Battle Lite (eyes-duel.js): a small Battle button, only live for friends whose EYES understands duels
+    if (root.EyesDuel && EyesDuel.slot) { try { EyesDuel.slot(p.querySelector('.ec-duel-slot'), n.b, { say }); } catch (e) { console.error(e); } }
     const a = p.querySelector('[data-a]');
     if (a) a.onclick = () => {
       if (a.dataset.a === 'retry') { F().refreshProfile(n.b.f); say('Asking their Eye to introduce itself…'); a.disabled = true; later(() => { a.disabled = false; }, 20000); later(() => { if (!n.b.f.profile) say('Still nothing. Ask them to open EYES too. It arrives as soon as both phones are open.'); }, 26000); }

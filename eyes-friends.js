@@ -14,14 +14,18 @@
    - New kinds are only ever sent to a peer that advertised them. 'ack' {r: nonce, a: 'live'|'later'}
      tells the sender their signal was actually played on the other phone (live, or later on return).
    - Each sent signal is tracked: sending → relayed (ntfy accepted it) / failed → felt (an ack came back).
-     The UI never shows more than the protocol knows. */
+     The UI never shows more than the protocol knows.
+   4.2 (Battle Lite), additive only:
+   - hello's `c` also carries 'duel'. Kind 'duel' {d: {o: ask|yes|no|cancel|mv|bye, id, …}} is only ever sent
+     to a peer that advertised it, is only played live (≤ 90 s old) and never counts as a signal: no stats,
+     no "while you were away", no ack, no push. eyes-duel.js owns everything inside `d`. */
 'use strict';
 (function (root) {
   const RELAY = 'https://ntfy.sh/';
   const KEY = 'eyes.friends.v1';
   const SIGNALS = ['pulse', 'spark', 'calm', 'resonance', 'hello'];
-  const CAPS = ['ack'];                 // what this phone understands beyond the original protocol
-  const EXTRA = ['ack'];                // kinds that only go to peers that advertised them
+  const CAPS = ['ack', 'duel'];         // what this phone understands beyond the original protocol
+  const EXTRA = ['ack', 'duel'];        // kinds that only go to peers that advertised them
   const capOk = (x) => typeof x === 'string' && /^[a-z0-9]{1,12}$/.test(x);
   const CODE_RE = /HL1-[A-Za-z0-9_-]{43}/;
   const enc = new TextEncoder(), dec = new TextDecoder();
@@ -186,6 +190,10 @@
         return;
       }
       if (age <= 180000) { const was = online(f); f.lastSeen = Math.max(f.lastSeen || 0, Number(p.t) || now); if (!was) emit('here', f); }
+      if (k === 'duel') {                              // 4.2 Battle Lite: live only, never a signal
+        if (age <= 90000 && p.d && typeof p.d === 'object' && !Array.isArray(p.d)) emit('duel', f, p.d, Number(p.t) || now);
+        return;
+      }
       if (isProfile) {
         if (typeof p.p === 'string' && enc.encode(p.p).length <= 1024) {
           try { const prof = root.HavenDNA ? root.HavenDNA.cleanProfile(JSON.parse(p.p)) : null; if (prof) { const first = !f.profile; f.profile = prof; save(); emit('profile', f, first); if (first) sendProfile(f, true); } } catch (e) {}
@@ -338,6 +346,14 @@
       }
       if (!online(f) && root.EyesPush) root.EyesPush.nudge(ch.mailbox, ch.tag, kind);
       return e;
+    },
+    // 4.2 Battle Lite: a duel message, only to a peer that understands it. Resolves true when the relay took it.
+    duel(f, d) {
+      const ch = channels.get(f && f.code);
+      if (!ch || !f.peer || !supports(f, 'duel') || !d || typeof d !== 'object') return Promise.resolve(false);
+      if (JSON.stringify(d).length > 600) return Promise.resolve(false);
+      if (!ch.active && document.visibilityState === 'visible') ch.start();
+      return ch.publish({ ...ch.msg('duel'), d }, true);
     },
     sendAll(kind) { let any = false; st.friends.forEach((f) => { if (f.peer) any = Friends.send(f, kind) || any; }); return any; },
     rename(f, nick) { f.nick = String(nick || '').trim().slice(0, 24) || undefined; save(); emit('change', f); },

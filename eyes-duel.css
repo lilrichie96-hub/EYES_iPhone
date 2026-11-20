@@ -1,0 +1,163 @@
+/* EYES 4.2 · Battle Lite. Scoped under #eyesDuel, #eyesDuelCall and #eyesContact .ec-duel
+   (the launcher has global header/button rules). No inline styles: CSP is style-src 'self'. */
+
+/* ---------- the Battle button in the Meeting Space ---------- */
+#eyesContact .ec-duel-slot { display: flex; justify-content: center; margin-top: 10px; }
+#eyesContact .ec-duel { display: inline-flex; align-items: center; gap: 9px; min-height: 40px; padding: 8px 18px 8px 12px; border-radius: 999px;
+  background: rgba(228, 241, 243, 0.04); border: 1px solid rgba(255, 190, 170, 0.22); color: var(--ink); font-size: 14px; letter-spacing: 0.08em;
+  box-shadow: 0 0 18px rgba(255, 170, 150, 0.06); transition: transform 0.15s, background 0.2s, opacity 0.2s; }
+#eyesContact .ec-duel:active { transform: scale(0.96); background: rgba(255, 190, 170, 0.1); }
+#eyesContact .ec-duel.ec-duel-off { opacity: 0.42; border-color: var(--line); box-shadow: none; }
+/* two beams crossing: the duel glyph */
+#eyesContact .ec-duel-g, #eyesDuel .ed-g-duel { position: relative; width: 20px; height: 20px; display: block; }
+#eyesContact .ec-duel-g::before, #eyesContact .ec-duel-g::after { content: ''; position: absolute; left: 1px; right: 1px; top: 9px; height: 2px; border-radius: 2px;
+  background: linear-gradient(90deg, rgba(var(--me, 111, 193, 202), 0.2), rgba(255, 236, 220, 0.95) 50%, rgba(255, 160, 150, 0.2)); }
+#eyesContact .ec-duel-g::before { transform: rotate(45deg); } #eyesContact .ec-duel-g::after { transform: rotate(-45deg); }
+
+/* ---------- the battle scene ---------- */
+#eyesDuel {
+  --ed-top: max(env(safe-area-inset-top, 0px), var(--native-inset-top, 0px));
+  --ed-bottom: max(env(safe-area-inset-bottom, 0px), var(--native-inset-bottom, 0px));
+  --ink: #e4f1f3; --dim: rgba(228, 241, 243, 0.58); --faint: rgba(228, 241, 243, 0.34); --line: rgba(228, 241, 243, 0.14);
+  position: fixed; inset: 0; z-index: 48; overflow: hidden; background: #020405; color: var(--ink);
+  font: 15px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  animation: ed-in 0.45s ease both;
+}
+@keyframes ed-in { from { opacity: 0; } }
+#eyesDuel button { font: inherit; color: var(--ink); }
+#eyesDuel .ed-world { position: absolute; inset: 0; will-change: transform; }
+#eyesDuel .ed-sky, #eyesDuel .ed-fx { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
+#eyesDuel .ed-stage { position: absolute; inset: 0; pointer-events: none; }
+#eyesDuel .ed-eye { position: absolute; left: 0; top: 0; transform-origin: 50% 50%; will-change: transform, opacity; }
+#eyesDuel .ed-eye canvas { display: block; width: 100%; height: 100%; }
+
+#eyesDuel .ed-ui { position: absolute; inset: 0; display: flex; flex-direction: column; pointer-events: none; }
+#eyesDuel .ed-ui > * { pointer-events: auto; }
+html #eyesDuel .ed-top, html[data-skin] #eyesDuel .ed-top { position: relative; left: auto; right: auto; top: auto; z-index: 2;
+  display: flex; align-items: center; gap: 6px; padding: calc(var(--ed-top) + 8px) 10px 4px; }
+#eyesDuel .ed-icon { width: 44px; height: 44px; flex: none; border-radius: 50%; display: grid; place-items: center; font-size: 26px; line-height: 1;
+  color: var(--dim); background: rgba(228, 241, 243, 0.035); border: 1px solid rgba(228, 241, 243, 0.08); }
+#eyesDuel .ed-spacer { visibility: hidden; }
+#eyesDuel .ed-title { flex: 1; min-width: 0; text-align: center; }
+#eyesDuel .ed-title h2 { margin: 0; font-weight: 400; font-size: 15px; letter-spacing: 0.22em; text-transform: uppercase; }
+#eyesDuel .ed-round { margin: 2px 0 0; min-height: 1.3em; font-size: 12px; letter-spacing: 0.1em; color: var(--faint); }
+
+/* name tags: a name, HP and charge pips beside each Eye */
+#eyesDuel .ed-tag { position: absolute; z-index: 1; pointer-events: none; display: flex; flex-direction: column; gap: 1px; line-height: 1.2; }
+#eyesDuel .ed-tag b { font-weight: 500; font-size: 15px; letter-spacing: 0.05em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#eyesDuel .ed-hp { font-size: 22px; font-weight: 300; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; color: var(--ink); min-height: 1.1em; transition: color 0.4s; }
+#eyesDuel .ed-tag.ed-low .ed-hp { color: #ffb4bd; }
+#eyesDuel .ed-pips { display: flex; gap: 5px; min-height: 8px; }
+#eyesDuel .ed-tag-them .ed-pips { justify-content: flex-end; }
+#eyesDuel[data-wide="1"] .ed-pips { justify-content: center; }
+#eyesDuel .ed-pips i { width: 7px; height: 7px; border-radius: 50%; border: 1px solid rgba(228, 241, 243, 0.3); }
+#eyesDuel .ed-pips i.on { background: #eef3ff; border-color: transparent; box-shadow: 0 0 8px rgba(200, 215, 255, 0.9); }
+
+/* banners: EYE DUEL · Stare! · Victory · Defeat */
+#eyesDuel .ed-banner { position: absolute; left: 0; right: 0; top: 42%; display: flex; justify-content: center; pointer-events: none; opacity: 0; z-index: 3; }
+#eyesDuel .ed-banner span { font-weight: 300; font-size: 30px; letter-spacing: 0.32em; text-transform: uppercase; padding-left: 0.32em; color: #f4f8ff;
+  text-shadow: 0 0 24px rgba(var(--me, 111, 193, 202), 0.8), 0 0 48px rgba(var(--them, 230, 160, 150), 0.5); }
+#eyesDuel .ed-banner.big span { font-size: 36px; }
+#eyesDuel .ed-banner.loss span { text-shadow: 0 0 24px rgba(var(--them, 230, 160, 150), 0.8); }
+#eyesDuel .ed-banner.show.go { animation: ed-banner 1.25s ease both; }
+@keyframes ed-banner { 0% { opacity: 0; transform: scale(1.25); letter-spacing: 0.6em; } 22% { opacity: 1; transform: scale(1); } 70% { opacity: 1; } 100% { opacity: 0; transform: scale(0.98); } }
+
+#eyesDuel .ed-say { margin: auto 22px 8px; min-height: 2.8em; display: flex; align-items: flex-end; justify-content: center; text-align: center;
+  font-size: 14.5px; color: var(--ink); opacity: 0; transition: opacity 0.35s; pointer-events: none; }
+#eyesDuel .ed-say.show { opacity: 0.92; }
+#eyesDuel .ed-panel { min-height: 196px; box-sizing: border-box; padding: 4px 16px calc(var(--ed-bottom) + 16px);
+  background: linear-gradient(to top, rgba(2, 4, 5, 0.94) 45%, rgba(2, 4, 5, 0)); display: flex; flex-direction: column; justify-content: flex-end; }
+
+/* ask / wait / end */
+#eyesDuel .ed-ask { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; padding-bottom: 4px; }
+#eyesDuel .ed-lead { margin: 0; font-size: 18px; font-weight: 300; letter-spacing: 0.02em; }
+#eyesDuel .ed-end .ed-lead { font-size: 24px; }
+#eyesDuel .ed-sub { margin: 0 6px 8px; font-size: 13.5px; color: var(--dim); }
+#eyesDuel .ed-fine { margin: 0 0 12px; font-size: 12px; color: var(--faint); }
+#eyesDuel .ed-wait { display: block; width: min(240px, 60vw); height: 2px; margin: 6px 0 12px; border-radius: 2px; background: rgba(228, 241, 243, 0.4); transform-origin: 0 50%; }
+#eyesDuel .ed-btn { min-height: 46px; padding: 11px 24px; border-radius: 999px; background: rgba(228, 241, 243, 0.06); border: 1px solid var(--line); font-size: 15px; letter-spacing: 0.02em; }
+#eyesDuel .ed-btn:active { transform: scale(0.97); }
+#eyesDuel .ed-btn.ed-primary { background: var(--ink); color: #061014; border-color: transparent; font-weight: 600; box-shadow: 0 0 28px rgba(var(--me, 111, 193, 202), 0.25); }
+#eyesDuel .ed-btn.ed-quiet { background: transparent; border-color: transparent; color: var(--faint); min-height: 40px; }
+#eyesDuel .ed-row { display: flex; gap: 10px; justify-content: center; }
+#eyesDuel .ed-row .ed-btn { flex: 1 1 0; }
+
+/* the four moves */
+#eyesDuel .ed-timer { height: 2px; margin: 0 auto 12px; width: min(420px, 100%); border-radius: 2px; background: rgba(228, 241, 243, 0.08); overflow: hidden; }
+#eyesDuel .ed-timer i { display: block; height: 100%; background: rgba(228, 241, 243, 0.55); transform-origin: 0 50%; }
+#eyesDuel .ed-timer.late i { background: #ffc3a6; }
+#eyesDuel .ed-moves { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; max-width: 460px; width: 100%; margin: 0 auto; }
+#eyesDuel .ed-move { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 2px 0; background: none; border: 0; min-width: 0; }
+#eyesDuel .ed-move b { font-weight: 500; font-size: 13.5px; letter-spacing: 0.04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+#eyesDuel .ed-move small { font-size: 10.5px; color: var(--faint); line-height: 1.25; max-width: 92%; text-align: center; min-height: 2.5em; }
+#eyesDuel .ed-m-glare { --c: 255, 214, 200; } #eyesDuel .ed-m-blink { --c: 180, 215, 255; } #eyesDuel .ed-m-charge { --c: 210, 200, 255; } #eyesDuel .ed-m-special { --c: var(--me, 111, 193, 202); }
+#eyesDuel .ed-orb { width: 66px; height: 66px; border-radius: 50%; display: grid; place-items: center; margin-bottom: 5px;
+  background: radial-gradient(circle at 36% 30%, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.025) 58%, rgba(var(--c), 0.07));
+  border: 1px solid rgba(var(--c), 0.32); box-shadow: inset 0 0 18px rgba(var(--c), 0.12), 0 0 20px rgba(var(--c), 0.1);
+  transition: transform 0.16s ease, box-shadow 0.3s ease, opacity 0.3s; }
+#eyesDuel .ed-move:active .ed-orb { transform: scale(0.92); box-shadow: inset 0 0 22px rgba(var(--c), 0.32), 0 0 32px rgba(var(--c), 0.35); }
+#eyesDuel .ed-m-special:not([disabled]) .ed-orb { border-color: rgba(var(--c), 0.7); box-shadow: inset 0 0 22px rgba(var(--c), 0.3), 0 0 30px rgba(var(--c), 0.35); animation: ed-ready 1.8s ease-in-out infinite; }
+@keyframes ed-ready { 50% { box-shadow: inset 0 0 26px rgba(var(--c), 0.45), 0 0 40px rgba(var(--c), 0.5); } }
+#eyesDuel .ed-move[disabled] { opacity: 0.38; }
+#eyesDuel .ed-move:focus-visible { outline: none; } #eyesDuel .ed-move:focus-visible .ed-orb { box-shadow: 0 0 0 2px rgba(228, 241, 243, 0.6); }
+
+/* glyphs, drawn in CSS */
+#eyesDuel .ed-g { display: block; width: 30px; height: 30px; position: relative; }
+#eyesDuel .ed-g-glare { border-radius: 50% / 34%; border: 2px solid rgba(255, 228, 214, 0.85); box-sizing: border-box; height: 18px;
+  background: radial-gradient(circle, #fff 0 18%, rgba(255, 190, 170, 0.9) 19% 34%, transparent 35%); }
+#eyesDuel .ed-g-glare::after { content: ''; position: absolute; left: -3px; right: -3px; top: -6px; height: 7px; border-bottom: 2px solid rgba(255, 228, 214, 0.85); transform: skewY(-8deg); }
+#eyesDuel .ed-g-blink { height: 18px; }
+#eyesDuel .ed-g-blink::before { content: ''; position: absolute; left: 1px; right: 1px; top: 4px; height: 10px; border-bottom: 2px solid rgba(190, 220, 255, 0.9); border-radius: 0 0 50% 50% / 0 0 100% 100%; }
+#eyesDuel .ed-g-blink::after { content: ''; position: absolute; left: -4px; right: -4px; top: -6px; height: 28px; border: 1.5px solid rgba(190, 220, 255, 0.4); border-left-color: transparent; border-right-color: transparent; border-bottom-color: transparent; border-radius: 50%; }
+#eyesDuel .ed-g-charge { border-radius: 50%; background: radial-gradient(circle, #fff 0 12%, rgba(210, 200, 255, 0.85) 13% 24%, transparent 25% 46%, rgba(210, 200, 255, 0.45) 47% 52%, transparent 53% 68%, rgba(210, 200, 255, 0.25) 69% 72%, transparent 73%);
+  animation: ed-gather 2.2s ease-in-out infinite; }
+@keyframes ed-gather { 0% { transform: scale(1.12); opacity: 0.7; } 60% { transform: scale(0.9); opacity: 1; } 100% { transform: scale(1.12); opacity: 0.7; } }
+#eyesDuel .ed-g-glower, #eyesDuel .ed-g-clear, #eyesDuel .ed-g-flurry, #eyesDuel .ed-g-peek, #eyesDuel .ed-g-dream { border-radius: 50%; }
+#eyesDuel .ed-g-glower { background: radial-gradient(circle, #fff 0 14%, rgba(var(--c), 0.95) 15% 30%, transparent 31%), linear-gradient(170deg, transparent 0 36%, rgba(255, 236, 226, 0.9) 37% 44%, transparent 45%); }
+#eyesDuel .ed-g-clear { background: radial-gradient(circle, #fff 0 8%, transparent 9% 26%, rgba(230, 244, 255, 0.85) 27% 30%, transparent 31% 52%, rgba(var(--c), 0.6) 53% 56%, transparent 57%); }
+#eyesDuel .ed-g-flurry { background: conic-gradient(from 10deg, transparent 0 8%, rgba(var(--c), 0.95) 9% 12%, transparent 13% 33%, rgba(255, 245, 230, 0.95) 34% 37%, transparent 38% 58%, rgba(var(--c), 0.95) 59% 62%, transparent 63% 83%, rgba(255, 245, 230, 0.95) 84% 87%, transparent 88%); animation: ed-spin 3s linear infinite; }
+@keyframes ed-spin { to { transform: rotate(360deg); } }
+#eyesDuel .ed-g-peek { background: radial-gradient(circle at 50% 62%, rgba(var(--c), 0.9) 0 18%, transparent 19%), linear-gradient(to bottom, rgba(228, 241, 243, 0.85) 0 44%, transparent 45%); clip-path: circle(48%); }
+#eyesDuel .ed-g-dream { background: radial-gradient(circle at 38% 46%, rgba(230, 236, 255, 0.95) 0 26%, transparent 27%), radial-gradient(circle at 54% 40%, rgba(var(--c), 0.9) 0 30%, transparent 31%); clip-path: circle(46%); }
+
+/* bow-out confirmation */
+#eyesDuel .ed-confirm { position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; background: rgba(1, 3, 4, 0.72); }
+#eyesDuel .ed-confirm[hidden] { display: none; }
+#eyesDuel .ed-confirm-in { width: min(330px, 86vw); padding: 22px 20px 18px; border-radius: 24px; text-align: center; background: #081014; border: 1px solid var(--line); }
+#eyesDuel .ed-confirm-in p { margin: 0 0 6px; font-size: 17px; font-weight: 300; }
+#eyesDuel .ed-confirm-in .ed-sub { font-size: 13px; margin-bottom: 16px; }
+
+@media (max-height: 680px) {
+  #eyesDuel .ed-orb { width: 56px; height: 56px; margin-bottom: 3px; }
+  #eyesDuel .ed-move small { display: none; }
+  #eyesDuel .ed-panel { min-height: 150px; }
+  #eyesDuel .ed-hp { font-size: 18px; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  #eyesDuel .ed-panel { min-height: 112px; padding-bottom: calc(var(--ed-bottom) + 8px); }
+  #eyesDuel .ed-say { min-height: 1.4em; margin-bottom: 2px; }
+  #eyesDuel .ed-orb { width: 48px; height: 48px; }
+}
+
+/* ---------- the incoming challenge card ---------- */
+#eyesDuelCall { position: fixed; left: 0; right: 0; top: calc(max(env(safe-area-inset-top, 0px), var(--native-inset-top, 0px)) + 10px); z-index: 60;
+  display: flex; justify-content: center; pointer-events: none; padding: 0 12px;
+  font: 15px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; color: #e4f1f3; animation: edc-in 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+@keyframes edc-in { from { opacity: 0; transform: translateY(-24px) scale(0.96); } }
+#eyesDuelCall .edc-card { pointer-events: auto; position: relative; width: min(420px, 100%); box-sizing: border-box; display: grid; grid-template-columns: 64px 1fr; gap: 4px 14px; align-items: center;
+  padding: 14px 14px 14px 12px; border-radius: 24px; overflow: hidden; background: rgba(6, 12, 15, 0.96); border: 1px solid rgba(var(--c, 230, 170, 150), 0.32);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55), 0 0 36px rgba(var(--c, 230, 170, 150), 0.18); }
+#eyesDuelCall .edc-eye { width: 64px; height: 64px; grid-row: span 2; }
+#eyesDuelCall .edc-k { margin: 0; font-size: 11px; letter-spacing: 0.24em; color: rgba(228, 241, 243, 0.5); }
+#eyesDuelCall .edc-l { margin: 1px 0 0; font-size: 15px; } #eyesDuelCall .edc-l b { font-weight: 600; }
+#eyesDuelCall .edc-row { display: flex; gap: 8px; margin-top: 8px; }
+#eyesDuelCall button { flex: 1; min-height: 42px; border-radius: 999px; font: inherit; font-size: 14.5px; color: #e4f1f3; background: rgba(228, 241, 243, 0.06); border: 1px solid rgba(228, 241, 243, 0.14); }
+#eyesDuelCall .edc-yes { background: #e4f1f3; color: #061014; font-weight: 600; border-color: transparent; }
+#eyesDuelCall .edc-time { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: rgba(var(--c, 230, 170, 150), 0.7); transform-origin: 0 50%; }
+
+/* ---------- motion settings: Gentle slows, Off stills ---------- */
+#eyesDuel[data-motion=gentle] .ed-g { animation-duration: 4.5s; }
+#eyesDuel[data-motion=gentle] .ed-banner.show.go { animation-duration: 1.7s; }
+#eyesDuel[data-motion=off], #eyesDuel[data-motion=off] * { animation: none !important; transition: none !important; }
+@media (prefers-reduced-motion: reduce) { #eyesDuelCall { animation: none; } }
