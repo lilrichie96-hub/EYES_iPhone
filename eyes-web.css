@@ -49,3 +49,41 @@ html.eyes-pre #home, html.eyes-pre #eyesDock { visibility: hidden; }
 .card-fine { font-size: 14px; color: rgba(223,239,241,.7); }
 #eyesPlay .play-done { bottom: calc(env(safe-area-inset-bottom, 0px) + 36px); }
 body:has(#eyesPlay) #eyesDock { opacity: 0; pointer-events: none; }
+
+
+/* iPhone-first Home Screen installation tutorial.
+   Only shown in the browser, never over the installed EYES app. */
+.eyes-install { align-items: flex-start; justify-content: center; padding: calc(var(--st) + 12px) 18px calc(var(--sb) + 24px); -webkit-overflow-scrolling: touch; }
+.eyes-install .inner { width: 100%; max-width: 410px; margin: auto; gap: 7px; padding: 5px 0; }
+.eyes-install .eyemark { width: 82px; height: 50px; flex: none; }
+.eyes-install h1 { font-size: 25px; letter-spacing: .34em; padding-left: .34em; }
+.eyes-install .install-kicker { color: #77bfcb; font-size: 10px; font-weight: 650; letter-spacing: .23em; margin: 1px 0 0; }
+.eyes-install .lead { margin: 4px 0 0; font-size: 16px; line-height: 1.35; }
+.eyes-install .install-subtitle { margin: 0 0 7px; font-size: 13px; color: rgba(223,239,241,.58); }
+.eyes-install .install-guide { list-style: none; padding: 0; margin: 0; width: 100%; display: grid; gap: 8px; }
+.eyes-install .install-step { display: grid; grid-template-columns: 28px minmax(0,1fr); gap: 10px; padding: 11px 12px;
+  text-align: left; border-radius: 14px; border: 1px solid rgba(125,191,199,.2); background: rgba(124,202,211,.065); }
+.eyes-install .install-number { display: inline-flex; align-items: center; justify-content: center; width: 27px; height: 27px;
+  border-radius: 50%; color: #99dbe5; background: rgba(116,209,219,.12); font: 700 11px/1 -apple-system, BlinkMacSystemFont, sans-serif; }
+.eyes-install .install-copy { min-width: 0; display: flex; flex-direction: column; gap: 4px; font-size: 13px; line-height: 1.38; color: rgba(223,239,241,.67); }
+.eyes-install .install-copy strong { color: #eff9f9; font-weight: 650; font-size: 14px; line-height: 1.4; }
+.eyes-install .install-copy b { font-weight: 650; color: #dfedf1; }
+.eyes-install .share { width: 16px; height: 18px; vertical-align: -4px; margin-left: 2px; }
+.eyes-install .install-finish { box-sizing: border-box; display: flex; align-items: center; gap: 11px; width: 100%; text-align: left;
+  padding: 12px; margin-top: 3px; border-radius: 14px; border: 1px solid rgba(158,224,185,.3); background: rgba(137,222,181,.075); }
+.eyes-install .install-finish img { border-radius: 10px; flex-shrink: 0; }
+.eyes-install .install-finish > span { display: flex; flex-direction: column; gap: 3px; font-size: 12px; line-height: 1.42; color: rgba(223,239,241,.75); }
+.eyes-install .install-finish strong { color: #b6eacb; font-size: 14px; }
+.eyes-install .install-help { width: 100%; text-align: left; font-size: 12px; margin-top: 5px; padding: 2px 5px; color: rgba(223,239,241,.74); }
+.eyes-install .install-help summary { cursor: pointer; padding: 8px 3px; color: #a3d3e1; text-decoration: underline; text-underline-offset: 3px; }
+.eyes-install .install-help p { margin: 8px 0; line-height: 1.5; }
+.eyes-install .install-help button { font-size: 12px; padding: 9px 14px; }
+.eyes-install .install-help #installCopyStatus { overflow-wrap: anywhere; }
+.eyes-install .fine { margin: 4px 0 0; font-size: 11px; color: rgba(223,239,241,.48); }
+.eyes-install .install-existing { color: #a9d2d7; }
+.eyes-install button.link { margin-top: 0; min-height: 40px; }
+@media (max-height: 710px) {
+  .eyes-install .eyemark { width: 66px; height: 38px; }
+  .eyes-install .inner { gap: 5px; }
+  .eyes-install .install-step { padding: 8px 10px; }
+}
