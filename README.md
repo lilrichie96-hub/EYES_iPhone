@@ -50,3 +50,11 @@ No launcher, widgets, lock screen, or haptics. No push notifications yet.
 - Pairing: the joiner posts `hello`; the first other sender heard becomes the peer and gets `hello` back.
   Receivers drop: >12 h old, own id, non-peer after pairing, repeated nonce, profile before pairing;
   signals >10 min old don't play live.
+
+## Current GitHub Pages address
+
+Once **Settings → Pages → Deploy from a branch → main → /(root)** has been saved and the Pages deployment completes, the app is available at:
+
+https://lilrichie96-hub.github.io/EYES_iPhone/
+
+If that address displays 404, check the repository **Actions** tab for a completed **pages build and deployment** workflow and verify Pages still uses `main` / `/(root)`.
