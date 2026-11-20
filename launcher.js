@@ -170,6 +170,8 @@
     : null;
   // 4.0 play: chase the light, staring contest (eyes-play.js)
   const play = window.createEyesPlay ? createEyesPlay({ core, personality, now, schedule: () => schedule(), eyeCentre }) : null;
+  // a game needs the home screen: close The Optic (or any panel) first, which also restarts the draw loop
+  if (play) for (const k of ['startLight', 'startStare']) { const f = play[k]; play[k] = (...a) => { if (panel) closePanel(); return f(...a); }; }
   function native(method, ...args) {
     try {
       if (phone && typeof phone[method] === 'function') phone[method](...args);

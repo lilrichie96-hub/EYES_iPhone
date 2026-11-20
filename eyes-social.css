@@ -81,3 +81,6 @@ small.t-uncommon { color: #9fe6b0 !important; } small.t-rare { color: #a9c6ff !i
 #eyesCaption { position: fixed; left: 24px; right: 24px; bottom: calc(env(safe-area-inset-bottom, 0px) + 112px); margin: 0; text-align: center; z-index: 43;
   color: rgba(223,239,241,0.75); font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; letter-spacing: 0.04em; opacity: 0; transition: opacity 0.6s ease; pointer-events: none; }
 #eyesCaption.show { opacity: 1; }
+
+/* while a game runs, the home rows step aside so Done is clear */
+body:has(#eyesPlay) #homeApps, body:has(#eyesPlay) #dock, body:has(#eyesPlay) #home footer, body:has(#eyesPlay) #notice { opacity: 0; pointer-events: none; transition: opacity .3s; }
