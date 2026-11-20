@@ -168,6 +168,8 @@
   const senses = window.createEyesSenses
     ? createEyesSenses({ core, personality, now, schedule: () => schedule(), eyeCentre, panelOpen: () => !!panel, visible: () => visibility })
     : null;
+  // 4.0 play: chase the light, staring contest (eyes-play.js)
+  const play = window.createEyesPlay ? createEyesPlay({ core, personality, now, schedule: () => schedule(), eyeCentre }) : null;
   function native(method, ...args) {
     try {
       if (phone && typeof phone[method] === 'function') phone[method](...args);
@@ -263,7 +265,8 @@
         !eyeDive.active(t) &&
         !(core.mode === 'music' && core.state.media?.playing) &&
         !core.busy(t) &&
-        !(window.HavenLife && HavenLife.busy(t)),
+        !(window.HavenLife && HavenLife.busy(t)) &&
+        !(play && play.busy()),
       fps = eyeDive.active(t)
         ? 60
         : grooving
@@ -509,6 +512,7 @@
       ? { name: signal.name, amount: clamp((t - signal.at) / signal.duration) }
       : null;
     if (senses) senses.paint(ctx, { t, cx, cy, size, linkActive: !!signal });
+    if (play) { play.tick(t); play.paint(ctx, t); }
     if (signal) paintLinkEnergy(t, cx, cy, size, signal, v);
     paintPersonality(t, cx, cy, size, v);
     // Folder connections extend the iris outward into actual touchable app nodes.
@@ -1721,7 +1725,8 @@
       habit: (name) => core.react(name, now()),
       sleep: () => personality.sleepNow(),
       setSleepAfter: (ms) => personality.setSleepAfter(ms),
-      bedside: () => senses && senses.enterBedside()
+      bedside: () => senses && senses.enterBedside(),
+      play: () => play
     },
     diagnostics() {
       return {

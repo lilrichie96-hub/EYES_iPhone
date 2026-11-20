@@ -72,12 +72,35 @@
       if (!navigator.share) $('keepShare').style.display = 'none';
     }
   }
-  // 1.0 kept their Eye's card under its own key: hand it to the real friend system once
-  try {
-    const old = JSON.parse(localStorage.getItem('eyes.friend.v1'));
-    if (old && old.profile && window.HavenFriend && !HavenFriend.has()) HavenFriend.receive(old.profile);
-    localStorage.removeItem('eyes.friend.v1');
-  } catch (e) {}
-  route(); trimOptic();
+  // ---------- iPhone dock: Friends · Eye Dex · Play (the launcher's app dock is hidden here) ----------
+  function dock() {
+    if ($('eyesDock') || !window.EyesSocial) return;
+    const d = document.createElement('nav'); d.id = 'eyesDock';
+    d.innerHTML = '<button type="button" data-v="friends"><i class="dk-friends"></i>Friends</button><button type="button" data-v="dex"><i class="dk-dex"></i>Eye Dex</button><button type="button" data-v="play"><i class="dk-play"></i>Play</button>';
+    d.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) EyesSocial[b.dataset.v](); });
+    document.body.appendChild(d);
+  }
+  // ---------- card links: <site>#card=EYE1.… ----------
+  function cardFromHash() {
+    const m = location.hash.match(/card=(EYE1\.[A-Za-z0-9_-]+)/); if (!m) return;
+    const card = m[1];
+    history.replaceState(null, '', location.pathname);
+    if (HavenDNA.has() && window.EyesSocial) { setTimeout(() => EyesSocial.addCard(card), 800); return; }
+    // no Eye here (Safari, or someone without EYES yet): show whose Eye it is, and how to keep it
+    const p = window.EyesDex && EyesDex.readCard(card), d = p && HavenDNA.friendDNA(p); if (!d) return;
+    const el = document.createElement('section'); el.className = 'eyes-screen'; el.id = 'cardPage';
+    el.innerHTML = `<div class="inner"><canvas id="cardEye" class="card-eye"></canvas><h1 class="card-name">${d.name.replace(/[<>&]/g, '')}</h1>
+      <p class="tag">${d.tier} · ${d.words.join(' · ')}</p>
+      <p class="lead">Someone shared their Eye with you.</p>
+      <p class="fine card-fine">${isIOS && !standalone ? 'Copy the card, open <b>EYES</b> from your Home Screen, and paste it under <b>Eye Dex → My card → Add someone\'s card</b>.' : 'Copy the card and paste it in EYES under <b>Eye Dex → My card</b>.'} No EYES yet? Wake your own first.</p>
+      <button type="button" class="primary" id="cardCopy">Copy card</button><button type="button" class="link" id="cardClose">Continue</button></div>`;
+    document.body.appendChild(el);
+    const e = new HavenEye(d, $('cardEye')); e.resize();
+    (function loop() { if (!document.body.contains(el)) return; const t = performance.now() / 1000; e.step(t, 1 / 60); e.draw(t); requestAnimationFrame(loop); })();
+    $('cardCopy').onclick = async () => { try { await navigator.clipboard.writeText(card); $('cardCopy').textContent = 'Copied'; } catch (er) {} };
+    $('cardClose').onclick = () => el.remove();
+  }
+  addEventListener('hashchange', cardFromHash);
+  route(); trimOptic(); dock(); cardFromHash();
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 })();

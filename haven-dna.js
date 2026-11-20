@@ -747,6 +747,7 @@ root.HavenDNA = {
   has: () => !!state, active: () => !!dna, dna: () => dna, summary, adopt, rename,
   note, growth: growthInfo, takePending, skipDays, testBranch, STAGES, BRANCHES, profile, cleanProfile, friendDNA,
   mapColor, motion, bias, lid, looks, paintIris, pupilPath, fillRule, paintHalo, paintRim, paintDetail, paintCrown,
-  lib: { TAU, clamp, mix, ease, rng, makeDNA, buildPattern, newSeed, rgbToHsl, hslToRgb, col, lift, tierLabel, cleanLean, originLine, GLINTS }
+  lib: { TAU, clamp, mix, ease, rng, makeDNA, buildPattern, newSeed, rgbToHsl, hslToRgb, col, lift, tierLabel, cleanLean, originLine, GLINTS },
+  GENES: { PALETTES, PATTERNS, PUPILS, RARE_TRAITS }
 };
 })(typeof window === 'undefined' ? globalThis : window);

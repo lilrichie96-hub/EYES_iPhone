@@ -13,6 +13,9 @@
   const ease = (t) => { t = clamp(t); return t * t * (3 - 2 * t); };
   const FRIEND = (() => { const x = -0.55, y = -0.83, l = Math.hypot(x, y); return { x: x / l, y: y / l }; })();
   let friend = null, fdna = null, linked = false, native = null, lastSent = '', lastSentAt = 0;
+  // 4.0: another friend can come over for a while (their eye is the one that peeks in and signals)
+  let visitor = null, visitorUntil = 0;
+  const shown = () => (visitor && Date.now() < visitorUntil ? visitor : fdna);
 
   function load() {
     try { friend = JSON.parse(localStorage.getItem(KEY)); } catch (e) { friend = null; }
@@ -58,8 +61,9 @@
   // ---------- their colours ----------
   const lift = (rgb, k) => rgb.map((c) => Math.round(c + (255 - c) * k));
   function hueFor(kind, base) {
-    if (!fdna) return base;
-    const own = lift(fdna.accent, 0.3);
+    const fd = shown();
+    if (!fd) return base;
+    const own = lift(fd.accent, 0.3);
     if (kind === 'pulse') return own;
     return base.map((c, i) => Math.round(c * 0.65 + own[i] * 0.35));   // spark and calm keep their character
   }
@@ -75,12 +79,13 @@
   let cameoEye = null, cameoCanvas = null, cameoLast = 0;
   function cameoFor(px) {
     const Eye = root.HavenEye;
-    if (!Eye || !fdna) return null;
+    const fd = shown();
+    if (!Eye || !fd) return null;
     const dpr = Math.min(2, root.devicePixelRatio || 1), S = Math.round(px * dpr);
-    if (!cameoEye || cameoCanvas.width !== S) {
+    if (!cameoEye || cameoCanvas.width !== S || cameoEye._for !== fd) {
       cameoCanvas = cameoCanvas || document.createElement('canvas');
       cameoCanvas.width = cameoCanvas.height = S;
-      cameoEye = new Eye(fdna, cameoCanvas);
+      cameoEye = new Eye(fd, cameoCanvas); cameoEye._for = fd;
       cameoEye.auto = true;
     }
     return cameoEye;
@@ -88,7 +93,7 @@
   // r: the active LINK reaction. Incoming: they send it, then watch it land. Outgoing: they look up to catch it.
   // rest: { show, alpha } = resting quietly in its corner while you're in Eye Contact (3.2), no signal needed
   function paintCameo(ctx, { t, r, cx, cy, size, rest }) {
-    if (!fdna || (!r && !rest)) return;
+    if (!shown() || (!r && !rest)) return;
     const u = r ? clamp((t - r.at) / r.duration) : 0;
     const incoming = r ? /-in$|receive|resonance|hello/.test(r.name) : false;
     const show = rest ? rest.show : ease(u / 0.22) * (1 - ease((u - (incoming ? 0.78 : 0.7)) / 0.22));
@@ -113,7 +118,7 @@
     ctx.drawImage(cameoCanvas, x - dw / 2, y - dw / 2, dw, dw);
     ctx.restore();
   }
-  const busy = (r) => !!fdna && !!r;
+  const busy = (r) => !!shown() && !!r;
 
   // ---------- LINK sheet: both HAVENs side by side ----------
   const MATCH = {
@@ -182,7 +187,16 @@
   load();
   root.HavenFriend = {
     receive, setLinked, sendMine, paintCameo, busy, hueFor, ownHue, renderSheet,
-    has: () => !!fdna, dna: () => fdna,
+    has: () => !!shown(), dna: () => shown(), profile: () => (friend ? friend.profile : null),
+    // 4.0: a different friend's eye visits for a while (signals from them peek in as them)
+    visit(profile, ms = 9000) {
+      const d = profile && root.HavenDNA ? root.HavenDNA.friendDNA(profile) : null;
+      if (!d) return false;
+      if (!visitor || visitor.seed !== d.seed) cameoEye = null;
+      visitor = d; visitorUntil = Date.now() + ms;
+      clearTimeout(this._vt); this._vt = setTimeout(() => { visitor = null; cameoEye = null; }, ms + 50);
+      return true;
+    },
     // testing: HavenFriend.simulate() pretends a random friend linked up
     simulate(seed, stage = 2, branch = 'feral') {
       const s = seed == null ? (crypto.getRandomValues(new Uint32Array(1))[0] >>> 0) : seed;
