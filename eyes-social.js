@@ -85,7 +85,7 @@
   // 4.1: Eye Contact 2.0 (eyes-contact.js) is the Friends screen. The list below stays as a fallback.
   views.friends = function (keep) {
     if (root.EyesContact && !keep) { closeSheet(); return EyesContact.open(); }
-    openSheet('Friends', (b) => {
+    openSheet('Eye Contact', (b) => {
       const list = F().list(), nat = nativeFriend(), paired = list.filter((f) => f.peer).length + (nat && nat.paired ? 1 : 0);
       if (paired > 1) {
         b.insertAdjacentHTML('beforeend', `<div class="es-all"><span>Send to everyone</span>${sigButtons('all')}</div>`);
@@ -143,7 +143,7 @@
     }; });
     return row;
   }
-  const inviteText = (code) => `Eye contact? Open EYES → The Optic → Friends → I have an invite, and paste this:\n${code}`;
+  const inviteText = (code) => `Eye contact? Open EYES → The Optic → Eye Contact → I have an invite, and paste this:\n${code}`;
   function shareInvite(code) { if (navigator.share) navigator.share({ text: inviteText(code) }).catch(() => {}); else navigator.clipboard && navigator.clipboard.writeText(inviteText(code)).then(() => caption('Invite copied: send it to them'), () => {}); }
 
   function friendDetail(f, refreshing) {
@@ -299,7 +299,7 @@
   // ---------- The Optic rows ----------
   function mountOptic() {
     const link = $('linkOpen'); if (!link || $('dexOpen')) return;
-    const label = link.querySelector('span'); if (label && label.firstChild) label.firstChild.textContent = 'Friends';
+    const label = link.querySelector('span'); if (label && label.firstChild) label.firstChild.textContent = 'Eye Contact';
     const status = $('linkSettingsStatus'); if (status) status.textContent = 'Eye Contact with the Eyes you know';
     // the Friends screen replaces the single-link sheet (still reachable for the native link)
     link.addEventListener('click', (e) => { if (link.dataset.eyesPass) { delete link.dataset.eyesPass; return; } e.stopImmediatePropagation(); e.preventDefault(); views.friends(); }, true);

@@ -567,7 +567,7 @@
   // ---------- invitations ----------
   const site = () => { try { return root.EyesDex && EyesDex.site ? EyesDex.site() : ''; } catch (e) { return ''; } };
   const inviteLink = (code) => (site() ? site().replace(/#.*$/, '') + '#join=' + code : '');
-  const inviteText = (code) => `Let our Eyes meet.\nIn EYES, open Eye Contact (Friends on older versions) → Join, and paste this invite:\n${code}${inviteLink(code) ? `\n\nOr open it here: ${inviteLink(code)}` : ''}`;
+  const inviteText = (code) => `Let our Eyes meet.\nIn EYES, open Eye Contact → Join, and paste this invite:\n${code}${inviteLink(code) ? `\n\nOr open it here: ${inviteLink(code)}` : ''}`;
   async function newInvite() {
     const pend = F().list().find((f) => !f.peer && !f.joined && Date.now() - (f.addedAt || 0) < 7 * 86400000);
     const f = pend || (await F().invite());

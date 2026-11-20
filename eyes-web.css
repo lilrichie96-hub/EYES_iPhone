@@ -7,7 +7,7 @@ html, body { overscroll-behavior: none; -webkit-user-select: none; user-select: 
 /* haven.css already handles the iPhone notch; do not add a second header offset. */
 html.eyes-pre #home, html.eyes-pre #eyesDock { visibility: hidden; }
 
-/* Friends · Eye Dex · Play */
+/* Eye Contact · Eye Dex · Play */
 #eyesDock { position: fixed; left: 0; right: 0; bottom: calc(var(--sb) + 16px); display: flex; justify-content: center; gap: 10px; z-index: 30; }
 #eyesDock button { display: flex; align-items: center; gap: 7px; padding: 10px 16px; border-radius: 999px; background: rgba(255,255,255,0.05); border: 1px solid rgba(223,239,241,0.14);
   color: rgba(223,239,241,0.85); font: 14px -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; letter-spacing: 0.02em; }
