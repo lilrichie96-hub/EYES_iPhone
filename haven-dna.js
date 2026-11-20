@@ -413,12 +413,18 @@ function skipDays(n) { if (!growth) return; growth.skip += Math.max(0, Number(n)
 function testBranch(b) { if (!growth || !BRANCHES[b]) return; growth.branch = b; saveGrowth(); load(); announce(); }
 
 // ---- colour: the DNA hue replaces HAVEN's teal, mood colours keep their relationships ----
-function mapColor(r, g, b) {
-  if (!dna) return [r, g, b];
+// 3.2: every drawing hook takes an optional eye (o.dna / last argument) so the one shared renderer
+// (eye-render.js) can draw any eye: yours, a friend's, or one still being born.
+const ownDNA = () => dna;
+const patternOf = (d) => (d === dna && pattern ? pattern : d._geo || (d._geo = buildPattern(d)));
+function mapColor(r, g, b, which) {
+  const d = which || dna;
+  if (!d) return [r, g, b];
+  const aH = d === dna && accentHsl ? accentHsl : d._aHsl || (d._aHsl = rgbToHsl(d.accent));
   const [h, s, l] = rgbToHsl([r, g, b]);
-  const ah = accentHsl[0] - TEAL[0];
-  const ns = clamp(s * (accentHsl[1] / TEAL[1]), 0, 1);
-  const nl = clamp(l * (accentHsl[2] / TEAL[2]), 0, 0.92);
+  const ah = aH[0] - TEAL[0];
+  const ns = clamp(s * (aH[1] / TEAL[1]), 0, 1);
+  const nl = clamp(l * (aH[2] / TEAL[2]), 0, 0.92);
   return hslToRgb([h + ah, ns, nl]);
 }
 
@@ -439,8 +445,9 @@ function bias() {
   const T = dna.T;
   return { sleep: (0.5 - T.energy) * 0.3, curious: (T.curiosity - 0.5) * 0.4, content: (0.5 - T.grump) * 0.2 };
 }
-function lid() { return dna ? dna.lidRest * 0.55 : 0; }
-function looks() {
+function lid(which) { const dna = which || ownDNA(); return dna ? dna.lidRest * 0.55 : 0; }
+function looks(which) {
+  const dna = which || ownDNA();
   if (!dna) return { iris: 1, pupil: 1 };
   const baby = dna.stage === 0 ? 1.14 : 1;
   return { iris: mix(1, dna.looks.irisSize, 0.6), pupil: mix(1, dna.looks.pupilSize, 0.6) * baby };
@@ -449,7 +456,9 @@ function looks() {
 // ---- drawing hooks (launcher coordinates: origin at the eye centre, size ~ eye radius, t in ms) ----
 const rgba = (rgb, a) => `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${clamp(a)})`;
 function paintIris(ctx, o) {
+  const dna = o.dna || ownDNA();
   if (!dna || o.alpha <= 0.01) return;
+  const pattern = patternOf(dna);
   const { gx, gy, irisRadius: irisR, pupilR, size, own, tint } = o, s = o.t / 1000, k = o.alpha;
   const inner = pupilR * 1.15, span = irisR * 0.96 - inner, spin = (o.motion ? s : 0) * dna.looks.spin;
   const A2 = lift(dna.accent2, 0.38), A1 = lift(dna.accent, 0.5);
@@ -552,7 +561,8 @@ function paintIris(ctx, o) {
   ctx.restore();
 }
 // Builds the pupil outline. Returns false for a round pupil so the launcher draws its own.
-function pupilPath(ctx, x, y, r, t) {
+function pupilPath(ctx, x, y, r, t, which) {
+  const dna = which || ownDNA();
   if (!dna) return false;
   const id = dna.pupil.id;
   if (id === 'round') return false;
@@ -580,9 +590,10 @@ function pupilPath(ctx, x, y, r, t) {
   } else return false;
   return true;
 }
-const fillRule = () => (dna && dna.pupil.id === 'ring' ? 'evenodd' : 'nonzero');
+const fillRule = (which) => { const d = which || dna; return d && d.pupil.id === 'ring' ? 'evenodd' : 'nonzero'; };
 // Rare: two soft halos outside the eye.
-function paintHalo(ctx, { rx, ry, t, own, tint }) {
+function paintHalo(ctx, { rx, ry, t, own, tint, dna: which }) {
+  const dna = which || ownDNA();
   if (!dna || !dna.has.halo) return;
   const s = t / 1000;
   ctx.save();
@@ -594,7 +605,8 @@ function paintHalo(ctx, { rx, ry, t, own, tint }) {
   ctx.restore();
 }
 // Rare: an aurora that slides around the rim.
-function paintRim(ctx, { rx, ry, t, amount }) {
+function paintRim(ctx, { rx, ry, t, amount, dna: which }) {
+  const dna = which || ownDNA();
   if (!dna || !dna.has.aurora) return;
   const s = t / 1000;
   ctx.save();

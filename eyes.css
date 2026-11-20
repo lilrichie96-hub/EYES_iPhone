@@ -1,0 +1,1138 @@
+/* ==========================================================================
+   EYES 3.0.0 — design language
+   A FRAY, INC. product.
+
+   Loaded after haven.css. It changes how things look, never where controls live or how they
+   behave. Every surface is built from the same few tokens; the Eye's own colour (--eye-rgb, set by
+   eyes-brand.js from its DNA or the chosen material) is the only accent.
+
+   The habitat idea: panels rise from below with a soft lid-shaped top edge, lit faintly from above
+   by the Eye. Everything else stays quiet so the creature is the brightest thing on screen.
+   ========================================================================== */
+
+:root {
+  --eye-rgb: 111, 193, 202;
+  --void: #08090b;
+  --chamber: #0e1114;
+  --panel-a: #12161a;
+  --panel-b: #0b0e11;
+  --bone: #e7e2d9;
+  --ash: #8f9397;
+  --dim: #5f6468;
+  --hair: rgba(231, 226, 217, 0.085);
+  --hair-strong: rgba(231, 226, 217, 0.17);
+  --eye: rgb(var(--eye-rgb));
+  --eye-faint: rgba(var(--eye-rgb), 0.1);
+  --lid: 50% 50% 22px 22px / 20px 20px 22px 22px;
+  --lid-small: 50% 50% 18px 18px / 12px 12px 18px 18px;
+  --rise: cubic-bezier(0.16, 0.84, 0.24, 1);
+  --soft: var(--ash);
+  --line: var(--hair);
+  color: var(--bone);
+  background: var(--void);
+}
+html[data-skin='ember'] {
+  --void: #0d0906;
+  --chamber: #150d08;
+  --panel-a: #1b120c;
+  --panel-b: #100a06;
+  --bone: #efe3d6;
+  --ash: #a8978a;
+  --dim: #6c5d52;
+  --hair: rgba(239, 227, 214, 0.09);
+  --hair-strong: rgba(239, 227, 214, 0.18);
+  --line: var(--hair);
+}
+html[data-skin='frost'] {
+  --void: #090c0e;
+  --chamber: #0e1317;
+  --panel-a: #141b20;
+  --panel-b: #0b1013;
+  --bone: #e9eef1;
+  --ash: #97a3aa;
+  --dim: #5d6a71;
+  --hair: rgba(233, 238, 241, 0.09);
+  --hair-strong: rgba(233, 238, 241, 0.18);
+  --line: var(--hair);
+}
+html[data-skin='nebula'] {
+  --void: #0a0710;
+  --chamber: #110c1a;
+  --panel-a: #170f23;
+  --panel-b: #0c0814;
+  --bone: #e8e2f2;
+  --ash: #9b92ad;
+  --dim: #625a72;
+  --hair: rgba(232, 226, 242, 0.09);
+  --hair-strong: rgba(232, 226, 242, 0.18);
+  --line: var(--hair);
+}
+
+button:focus-visible,
+[role='button']:focus-visible,
+select:focus-visible,
+input:focus-visible,
+html[data-skin] button:focus-visible,
+html[data-skin] select:focus-visible {
+  outline: 1.5px solid rgba(var(--eye-rgb), 0.85);
+  outline-offset: 3px;
+}
+
+/* ---------- Home: the habitat ---------------------------------------------------------- */
+html:not([data-skin]) #home,
+html[data-skin='original'] #home {
+  background:
+    radial-gradient(ellipse 62% 40% at 50% 49%, rgba(var(--eye-rgb), 0.055), transparent 72%),
+    radial-gradient(ellipse 120% 90% at 50% 46%, #101317 0%, #0a0c0e 52%, #060708 100%);
+}
+
+/* The wordmark. Drawn, not typed. Its two lids blink now and then, together. */
+.wordmark,
+html[data-skin] .wordmark {
+  display: inline-flex;
+  align-items: center;
+  height: 48px;
+  color: var(--bone);
+  letter-spacing: 0;
+  font-size: 0;
+  opacity: 0.88;
+}
+.eyes-wordmark {
+  display: block;
+  width: auto;
+  height: clamp(13px, 3.9vw, 17px);
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: butt;
+  stroke-linejoin: miter;
+}
+.eyes-wordmark .wm-lid {
+  stroke-linecap: round;
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: eyes-wm-blink 13s 4s infinite;
+}
+.eyes-wordmark .wm-pupil {
+  fill: rgb(var(--eye-rgb));
+  stroke: none;
+}
+@keyframes eyes-wm-blink {
+  0%,
+  95.4%,
+  100% {
+    transform: scaleY(1);
+  }
+  96.2% {
+    transform: scaleY(0.12) scaleX(1.08);
+  }
+  97.2% {
+    transform: scaleY(1);
+  }
+}
+header,
+html[data-skin] header {
+  left: 26px;
+  right: 14px;
+}
+.optic-button,
+html[data-skin] .optic-button {
+  display: grid;
+  place-items: center;
+  color: var(--ash);
+}
+.optic-button svg {
+  width: 21px;
+  height: 21px;
+  stroke-width: 1.35;
+  transition: transform 520ms var(--rise);
+}
+.optic-button:active svg {
+  transform: rotate(30deg);
+}
+
+#clock {
+  font-weight: 200;
+  letter-spacing: -0.045em;
+  color: var(--bone);
+}
+.dayline,
+html[data-skin] .dayline {
+  color: var(--ash);
+  letter-spacing: 0.02em;
+}
+#battery,
+html[data-skin] #battery {
+  color: var(--ash);
+  border-left-color: var(--hair-strong);
+}
+#nextAlarm {
+  color: var(--ash);
+}
+
+.dock-app > span:last-child,
+.home-app > span:last-child {
+  color: var(--ash);
+  letter-spacing: 0.01em;
+}
+.home-app > span:last-child {
+  color: var(--bone);
+  color: color-mix(in srgb, var(--bone) 78%, transparent);
+}
+#drawerOpen,
+html[data-skin] #drawerOpen {
+  color: var(--ash);
+  letter-spacing: 0.08em;
+}
+.upmark,
+html[data-skin] .upmark {
+  width: 18px;
+  height: 6px;
+  border: 0;
+  border-top: 1.2px solid currentColor;
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  transform: none;
+  color: var(--ash);
+}
+
+/* Notification peek: a droplet from the Eye, then a quiet card. */
+#notice,
+html[data-skin] #notice {
+  background: var(--panel-a);
+  border: 1px solid var(--hair);
+  box-shadow:
+    0 14px 38px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(var(--eye-rgb), 0.12);
+}
+#noticeApp,
+html[data-skin] #noticeApp {
+  color: rgba(var(--eye-rgb), 0.9);
+  letter-spacing: 0.04em;
+}
+#noticeText {
+  color: var(--ash);
+}
+
+/* Iris shortcuts and unfolding folders orbit the Eye; they borrow its light, not a frame. */
+.iris-shortcut,
+html[data-skin] .iris-shortcut {
+  border: 1px solid rgba(var(--eye-rgb), 0.2);
+  border-radius: 22px;
+  background: var(--panel-a);
+  color: var(--bone);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
+}
+.iris-shortcut.selected,
+.iris-shortcut:focus-visible,
+html[data-skin] .iris-shortcut.selected {
+  background: var(--panel-a);
+  background: var(--panel-a);
+  background: color-mix(in srgb, rgb(var(--eye-rgb)) 16%, var(--panel-a));
+  border-color: rgba(var(--eye-rgb), 0.62);
+  color: #fff;
+}
+.constellation-node,
+html[data-skin] .constellation-node {
+  border: 1px solid rgba(var(--eye-rgb), 0.22);
+  background: radial-gradient(ellipse at 50% 0%, rgba(var(--eye-rgb), 0.14), transparent 70%), var(--panel-a);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.5);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.constellation-node > span:last-child {
+  color: var(--bone);
+}
+.constellation-node:focus-visible,
+.constellation-node:active {
+  outline: 1px solid rgba(var(--eye-rgb), 0.8);
+  background: rgba(var(--eye-rgb), 0.18);
+  box-shadow: 0 0 22px rgba(var(--eye-rgb), 0.3);
+}
+.folder-preview,
+html[data-skin] .folder-preview {
+  --folder-accent: rgb(var(--eye-rgb));
+  border-color: rgba(var(--eye-rgb), 0.35);
+  border-color: color-mix(in srgb, rgb(var(--eye-rgb)) 34%, transparent);
+  background: linear-gradient(160deg, var(--panel-a), var(--panel-b) 85%);
+  background: linear-gradient(160deg, color-mix(in srgb, rgb(var(--eye-rgb)) 16%, var(--panel-a)), var(--panel-b) 85%);
+}
+.home-app.press-armed,
+.dock-app.press-armed,
+.app.press-armed {
+  background: rgba(var(--eye-rgb), 0.1);
+  box-shadow: 0 0 0 1px rgba(var(--eye-rgb), 0.45);
+}
+.home-app.drop-target,
+.dock-app.drop-target,
+.manage-row.drop-target,
+html[data-skin] .home-app.drop-target,
+html[data-skin] .dock-app.drop-target {
+  background: rgba(var(--eye-rgb), 0.14);
+  border-color: rgba(var(--eye-rgb), 0.75);
+  box-shadow: 0 0 16px rgba(var(--eye-rgb), 0.2);
+}
+.home-drop-target {
+  border-color: rgba(var(--eye-rgb), 0.3);
+  background: rgba(var(--eye-rgb), 0.03);
+}
+.home-drop-target.highlighted {
+  border-color: rgba(var(--eye-rgb), 0.9);
+  background: rgba(var(--eye-rgb), 0.14);
+  box-shadow: 0 0 18px rgba(var(--eye-rgb), 0.2);
+}
+#homeDragTip {
+  border-color: var(--hair-strong);
+  background: var(--panel-a);
+  color: var(--bone);
+}
+.app.pinned:after {
+  background: var(--bone);
+}
+.app.iris-pinned:before {
+  background: rgb(var(--eye-rgb));
+}
+
+/* Music focus grows from the iris. */
+#musicFocusEyebrow,
+html[data-skin] #musicFocusEyebrow {
+  color: rgba(var(--eye-rgb), 0.85);
+  letter-spacing: 0.14em;
+}
+#focusTitle {
+  color: var(--bone);
+  font-weight: 300;
+  text-shadow: none;
+}
+#focusArtist,
+.music-focus-timeline,
+.music-focus-footer {
+  color: var(--ash);
+}
+#music .track {
+  color: var(--bone);
+  color: color-mix(in srgb, var(--bone) 80%, transparent);
+}
+#music .artist {
+  color: var(--dim);
+}
+#focusClose {
+  border-color: var(--hair-strong);
+  background: transparent;
+  color: var(--bone);
+  border-radius: 999px;
+}
+
+/* ---------- Panels: rising lids ----------------------------------------------------- */
+.eye-clear-panel,
+html[data-skin] .eye-clear-panel,
+.eye-clear-dialog > div,
+#linkSheet,
+html[data-skin] #linkSheet {
+  border: 1px solid var(--hair);
+  border-top-color: rgba(var(--eye-rgb), 0.24);
+  border-radius: var(--lid);
+  background:
+    radial-gradient(55% 46px at 50% 0, rgba(var(--eye-rgb), 0.12), transparent),
+    linear-gradient(180deg, var(--panel-a), var(--panel-b));
+  box-shadow:
+    0 -6px 28px rgba(var(--eye-rgb), 0.05),
+    0 24px 60px rgba(0, 0, 0, 0.6);
+  animation: eyes-lid-rise 340ms var(--rise);
+  transform-origin: 50% 100%;
+  padding-top: 18px;
+}
+.eye-clear-panel .sheet-head h1,
+.eye-clear-dialog h2 {
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--bone);
+}
+@keyframes eyes-lid-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scaleY(0.94);
+  }
+  60% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Full sheets (The Optic, the expanded app drawer): the habitat itself. */
+.sheet:not(.eye-clear-panel),
+html[data-skin] .sheet:not(.eye-clear-panel) {
+  background:
+    radial-gradient(90% 180px at 50% 0, rgba(var(--eye-rgb), 0.07), transparent),
+    var(--void);
+  animation: eyes-sheet-rise 380ms var(--rise);
+}
+#drawer.drawer-peek.expanded {
+  background:
+    radial-gradient(90% 180px at 50% 0, rgba(var(--eye-rgb), 0.07), transparent),
+    var(--void);
+  border: 0;
+  border-radius: 0;
+}
+@keyframes eyes-sheet-rise {
+  from {
+    opacity: 0;
+    transform: translateY(26px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.sheet h1 {
+  font-weight: 300;
+  letter-spacing: -0.025em;
+}
+.icon-button,
+html[data-skin] .icon-button {
+  color: var(--ash);
+  font-weight: 200;
+}
+.sheet .close,
+#linkClose,
+#organizeClose,
+#folderClose,
+#folderPickClose {
+  font-size: 26px;
+  line-height: 1;
+}
+
+.search {
+  border-color: var(--hair-strong);
+  border-radius: 999px;
+  color: var(--ash);
+  background: rgba(0, 0, 0, 0.18);
+}
+#drawer.drawer-peek .search {
+  border-radius: 999px;
+}
+.search input {
+  color: var(--bone);
+}
+.search input::placeholder,
+.folder-name-label input::placeholder,
+#linkSheet input::placeholder,
+.backup-paste textarea::placeholder {
+  color: var(--dim);
+}
+.hint {
+  color: var(--ash);
+}
+.app > span:last-child {
+  color: var(--bone);
+  color: color-mix(in srgb, var(--bone) 80%, transparent);
+}
+#empty {
+  color: var(--ash);
+  text-align: center;
+  font-size: 13px;
+}
+
+/* Buttons: one vocabulary everywhere. Primary = filled bone. Secondary = outlined. */
+.manage-shortcuts,
+html[data-skin] .manage-shortcuts,
+.backup-actions button,
+.finish-action,
+.folder-toolbar button,
+.shortcut-settings button,
+html[data-skin] .shortcut-settings button {
+  border: 1px solid var(--hair-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--bone);
+  transition:
+    background 160ms,
+    border-color 160ms;
+}
+.shortcut-settings button {
+  padding: 10px 15px;
+}
+.manage-shortcuts:active,
+.backup-actions button:active,
+.finish-action:active,
+.shortcut-settings button:active {
+  background: rgba(var(--eye-rgb), 0.12);
+  border-color: rgba(var(--eye-rgb), 0.5);
+}
+.primary,
+.dialog .primary,
+.app-actions .action-grid button.primary,
+#linkSheet .primary,
+.folder-action {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--bone);
+  color: var(--void);
+  font-weight: 500;
+}
+.dialog .secondary-action,
+.app-actions .action-grid button.secondary-action,
+.action-grid button {
+  border: 1px solid var(--hair-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--bone);
+}
+.danger-action,
+#linkUnlink {
+  border: 1px solid rgba(232, 150, 150, 0.32) !important;
+  border-radius: 999px;
+  color: #e9b2b2 !important;
+  background: transparent;
+}
+.app-shortcut-section {
+  border-top-color: var(--hair);
+}
+.app-shortcut-section .folder-choice-list button,
+.folder-choice {
+  border: 1px solid var(--hair);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.025);
+  color: var(--bone);
+}
+.folder-choice.selected {
+  border-color: rgba(var(--eye-rgb), 0.6);
+  background: rgba(var(--eye-rgb), 0.1);
+}
+
+/* Lists used by Organize and folders */
+.manage-row {
+  border: 1px solid var(--hair);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.022);
+}
+.manage-row span {
+  color: var(--bone);
+}
+.mini-action,
+.drag-handle {
+  color: var(--ash);
+}
+.folder-name-label {
+  color: var(--ash);
+}
+.folder-name-label input {
+  border: 1px solid var(--hair-strong);
+  background: rgba(0, 0, 0, 0.22);
+  color: var(--bone);
+  border-radius: 14px;
+}
+#folderEditor {
+  border-top-color: var(--hair);
+}
+.folder-launch-app span {
+  color: var(--bone);
+  color: color-mix(in srgb, var(--bone) 80%, transparent);
+}
+.folder-launch-app:active,
+.folder-launch-app:focus-visible {
+  background: rgba(var(--eye-rgb), 0.12);
+}
+.folder-empty-note {
+  color: var(--ash);
+}
+#folderCount {
+  margin: 4px 0 0;
+}
+#folderViewToggle {
+  border-color: var(--hair-strong);
+}
+
+/* ---------- The Optic ------------------------------------------------------------- */
+.optic {
+  padding-bottom: calc(40px + var(--inset-bottom, 0px));
+}
+.optic .sheet-head {
+  margin-bottom: 10px;
+}
+.optic .sheet-head h1 {
+  font-size: 34px;
+  font-weight: 250;
+  letter-spacing: -0.035em;
+}
+.optic .intro {
+  margin: 0 0 30px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ash);
+  max-width: 30ch;
+}
+.optic-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 34px 0 2px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.01em;
+  color: rgba(var(--eye-rgb), 0.92);
+}
+.optic-group::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(var(--eye-rgb), 0.22), transparent);
+}
+.optic .intro + .optic-group {
+  margin-top: 8px !important;
+}
+.setting {
+  border-bottom-color: var(--hair);
+  padding: 18px 0;
+  color: var(--bone);
+  font-size: 15px;
+}
+.setting small {
+  color: var(--ash);
+  line-height: 1.5;
+  margin-top: 4px;
+  max-width: 34ch;
+}
+button.setting:active {
+  background: linear-gradient(90deg, transparent, rgba(var(--eye-rgb), 0.06), transparent);
+}
+.row-go {
+  flex: 0 0 auto;
+  width: 9px;
+  height: 9px;
+  margin-right: 6px;
+  border-top: 1.3px solid var(--ash);
+  border-right: 1.3px solid var(--ash);
+  transform: rotate(45deg);
+}
+.detail {
+  color: var(--dim);
+  line-height: 1.65;
+  max-width: 62ch;
+}
+.optic .detail {
+  color: var(--bone);
+  color: color-mix(in srgb, var(--ash) 82%, var(--void));
+}
+.live-audio-explainer {
+  color: var(--bone);
+  color: color-mix(in srgb, var(--ash) 82%, var(--void));
+}
+.live-audio-explainer strong {
+  font-weight: 500;
+  color: var(--bone);
+}
+#liveAudioToggle[data-on='true'] {
+  border-color: rgba(var(--eye-rgb), 0.7);
+  background: rgba(var(--eye-rgb), 0.14);
+  color: var(--bone);
+}
+
+/* Selects: a quiet pill with a drawn chevron. */
+.setting select,
+html[data-skin] .setting select {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid var(--hair-strong);
+  border-radius: 999px;
+  background-color: transparent;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238f9397' stroke-width='1.3'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 13px center;
+  background-size: 10px 6px;
+  color: var(--bone);
+  padding: 9px 32px 9px 15px;
+  text-align-last: left;
+  min-width: 108px;
+}
+.setting select option {
+  background: var(--chamber);
+  color: var(--bone);
+}
+/* Checkboxes become small switches; still real checkboxes underneath. */
+.setting input[type='checkbox'] {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  flex: 0 0 auto;
+  width: 44px !important;
+  height: 26px !important;
+  margin: 0 2px 0 0 !important;
+  border: 1px solid var(--hair-strong);
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background 200ms,
+    border-color 200ms;
+}
+.setting input[type='checkbox']::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--ash);
+  transition:
+    transform 240ms var(--rise),
+    background 200ms;
+}
+.setting input[type='checkbox']:checked {
+  border-color: rgba(var(--eye-rgb), 0.6);
+  background: rgba(var(--eye-rgb), 0.2);
+}
+.setting input[type='checkbox']:checked::after {
+  transform: translateX(18px);
+  background: rgb(var(--eye-rgb));
+}
+
+/* Eye Contact row: two small eyes, apart. */
+#linkOpen .link-glyph {
+  display: inline-flex;
+  gap: 7px;
+  padding: 0 4px 0 0;
+  letter-spacing: 0;
+  text-shadow: none;
+}
+#linkOpen .link-glyph i {
+  width: 13px;
+  height: 8px;
+  border: 1.2px solid var(--ash);
+  border-radius: 50% / 50%;
+  position: relative;
+}
+#linkOpen .link-glyph i::after {
+  content: '';
+  position: absolute;
+  top: 1.5px;
+  left: 50%;
+  width: 3px;
+  height: 3px;
+  margin-left: -1.5px;
+  border-radius: 50%;
+  background: rgb(var(--eye-rgb));
+}
+#linkOpen .link-glyph i:first-child::after {
+  margin-left: 0;
+}
+#linkOpen .link-glyph i:last-child::after {
+  margin-left: -3px;
+}
+
+.optic-colophon {
+  margin: 52px 0 6px;
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+  color: var(--dim);
+}
+.optic-mark {
+  color: var(--ash);
+  opacity: 0.7;
+}
+.optic-mark .eyes-wordmark {
+  height: 14px;
+}
+.optic-colophon .version {
+  margin: 8px 0 0;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ash);
+}
+.optic-colophon .maker {
+  margin: 0;
+  font-size: 11px;
+  color: var(--dim);
+}
+
+/* ---------- Eye Contact -------------------------------------------------------------- */
+#linkSheet h1 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+.ec-glyph {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 46px;
+  height: 14px;
+  justify-content: space-between;
+}
+.ec-glyph i {
+  position: relative;
+  z-index: 1;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.3px solid var(--ash);
+  background: var(--panel-a);
+  transition:
+    border-color 400ms,
+    transform 600ms var(--rise);
+}
+.ec-glyph i::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  margin: -2px 0 0 -2px;
+  border-radius: 50%;
+  background: var(--ash);
+  transition:
+    transform 600ms var(--rise),
+    background 400ms;
+}
+/* Apart: each looks away. Waiting: one looks. Made: they look at each other, and a line joins them. */
+#linkSheet[data-contact='none'] .ec-glyph i:first-child::after {
+  transform: translate(-2.5px, 1px);
+}
+#linkSheet[data-contact='none'] .ec-glyph i:last-child::after {
+  transform: translate(2.5px, -1px);
+}
+#linkSheet[data-contact='waiting'] .ec-glyph i:first-child::after {
+  transform: translateX(2.5px);
+}
+#linkSheet[data-contact='waiting'] .ec-glyph i:last-child::after {
+  transform: translate(2px, -1.5px);
+}
+#linkSheet[data-contact='made'] .ec-glyph i {
+  border-color: rgba(var(--eye-rgb), 0.9);
+}
+#linkSheet[data-contact='made'] .ec-glyph i::after {
+  background: rgb(var(--eye-rgb));
+}
+#linkSheet[data-contact='made'] .ec-glyph i:first-child::after {
+  transform: translateX(2.5px);
+}
+#linkSheet[data-contact='made'] .ec-glyph i:last-child::after {
+  transform: translateX(-2.5px);
+}
+.ec-glyph b {
+  position: absolute;
+  left: 7px;
+  right: 7px;
+  top: 50%;
+  height: 1px;
+  background: repeating-linear-gradient(90deg, var(--dim) 0 2px, transparent 2px 5px);
+  opacity: 0.5;
+  transition: opacity 400ms;
+}
+#linkSheet[data-contact='made'] .ec-glyph b {
+  background: linear-gradient(90deg, rgba(var(--eye-rgb), 0.2), rgba(var(--eye-rgb), 0.9), rgba(var(--eye-rgb), 0.2));
+  opacity: 1;
+}
+#linkSheet .link-connection,
+html[data-skin] .link-connection {
+  color: var(--ash);
+  margin-top: 5px;
+}
+#linkSheet[data-contact='made'] .link-connection {
+  color: rgba(var(--eye-rgb), 0.95);
+}
+#linkSheet .link-intro {
+  color: var(--ash);
+}
+#linkSheet .link-label {
+  color: var(--ash);
+}
+#linkSheet input {
+  border: 1px solid var(--hair-strong);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--bone);
+}
+#linkSheet .primary {
+  padding: 10px 16px;
+}
+#linkSheet .link-three {
+  gap: 10px;
+}
+.link-three button,
+html[data-skin] .link-three button {
+  border: 1px solid var(--hair);
+  border-radius: 20px;
+  background: radial-gradient(ellipse at 50% 0%, rgba(var(--eye-rgb), 0.1), transparent 70%), rgba(255, 255, 255, 0.02);
+  box-shadow: none;
+  transition:
+    background 160ms,
+    border-color 160ms,
+    transform 160ms;
+}
+.link-three button:active,
+html[data-skin] .link-three button:active {
+  transform: scale(0.97);
+  border-color: rgba(var(--eye-rgb), 0.5);
+  background: rgba(var(--eye-rgb), 0.16);
+}
+.link-three button > span,
+html[data-skin] .link-three button:first-child > span {
+  color: var(--bone);
+  font-weight: 300;
+}
+.link-three button:nth-child(2) > span {
+  color: #ecd3a6;
+}
+.link-three button:nth-child(3) > span {
+  color: #b9c5ee;
+}
+.link-three button small {
+  color: var(--ash);
+}
+#linkSheet .link-hint,
+#linkSheet .link-feedback {
+  color: var(--ash);
+}
+#linkSheet .link-feedback:not(:empty) {
+  color: var(--bone);
+}
+#linkSheet .link-privacy {
+  color: var(--dim);
+  border-top-color: var(--hair);
+}
+.link-friends .lf-eye small {
+  color: var(--ash);
+  opacity: 1;
+}
+.link-friends .lf-link {
+  color: rgba(var(--eye-rgb), 0.8);
+  opacity: 1;
+}
+.link-friends .lf-match {
+  color: var(--ash);
+  opacity: 1;
+}
+
+/* ---------- Day ahead & notifications -------------------------------------------------- */
+#greeting {
+  font-weight: 300 !important;
+}
+#dayAhead,
+#inbox #dayAhead {
+  color: var(--ash);
+  border-bottom-color: var(--hair);
+}
+#dayAhead button {
+  color: var(--bone);
+}
+#inbox h2 {
+  color: var(--bone);
+  font-weight: 450;
+}
+#clearAll {
+  color: var(--ash);
+}
+.notification-item,
+.notification-dismiss {
+  border-bottom-color: var(--hair);
+}
+.notification-item small {
+  color: rgba(var(--eye-rgb), 0.85);
+  letter-spacing: 0.03em;
+}
+.notification-item p,
+.notification-dismiss {
+  color: var(--ash);
+}
+
+/* ---------- Toasts and tips ------------------------------------------------------------ */
+#toast,
+.tip-bubble,
+html[data-skin] .tip-bubble {
+  background: var(--panel-a);
+  color: var(--bone);
+  border: 1px solid var(--hair-strong);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5);
+}
+#toast {
+  border-radius: 18px;
+  border-top-color: rgba(var(--eye-rgb), 0.3);
+}
+.tip-bubble::after {
+  border: inherit;
+  border-width: 0;
+}
+
+/* ---------- Eye.D. (the identification record) and the Awakening ------------------- */
+#awaken button {
+  border-color: var(--hair-strong);
+  background: transparent;
+  color: var(--bone);
+}
+#awaken button[data-aw='keep'],
+#awaken #bEnter {
+  background: var(--bone);
+  border-color: var(--bone);
+  color: var(--void);
+}
+#awaken .ghost {
+  border-color: var(--hair);
+  color: var(--ash);
+}
+#birth {
+  background:
+    radial-gradient(70% 50% at 50% 38%, rgba(var(--eye-rgb), 0.08), transparent 70%),
+    radial-gradient(circle at 50% 40%, #111418, #000 72%);
+}
+#awaken .bcard {
+  border-radius: var(--lid);
+  padding: 20px 20px 16px;
+  background:
+    radial-gradient(60% 80px at 50% 0, rgba(var(--eye-rgb), 0.1), transparent),
+    linear-gradient(180deg, var(--panel-a), var(--panel-b));
+  border: 1px solid var(--hair);
+  border-top-color: rgba(var(--eye-rgb), 0.28);
+}
+#birth.open {
+  align-items: safe center;
+  overflow-y: auto;
+}
+#bEye {
+  width: min(100%, 36vh);
+  margin: 4px auto;
+  display: block;
+}
+#awaken .bcard.rare {
+  border-color: rgba(143, 184, 255, 0.38);
+}
+#awaken .bcard.mythic {
+  border-color: rgba(255, 207, 122, 0.5);
+}
+#awaken .btop {
+  align-items: baseline;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--ash);
+}
+#awaken .btop .bmark {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--bone);
+}
+#awaken #bId {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.12em;
+  color: var(--ash);
+}
+#awaken .bname {
+  font-weight: 250;
+  letter-spacing: -0.02em;
+}
+#awaken .bwords {
+  color: var(--ash);
+}
+#awaken .bgrid {
+  border-top-color: var(--hair);
+  gap: 12px 16px;
+}
+#awaken .bgrid div span {
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--dim);
+  text-transform: lowercase;
+}
+#awaken .bgrid div b {
+  font-weight: 450;
+}
+#awaken .bquirks {
+  color: var(--ash);
+}
+#awaken .bnext {
+  color: var(--dim);
+}
+.bsig {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  height: 18px;
+  margin: 16px 2px 0;
+  opacity: 0.75;
+}
+.bsig i {
+  flex: 1;
+  border-radius: 1px;
+  background: rgba(231, 226, 217, 0.22);
+  transform: scaleY(0.55);
+}
+.bsig i.on {
+  background: rgba(var(--eye-rgb), 0.85);
+  transform: none;
+}
+.bissuer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--dim);
+}
+
+/* ---------- Safe mode keeps the same quiet palette ------------------------------------- */
+.safe-mode-panel {
+  background: var(--void);
+  color: var(--bone);
+}
+.safe-actions .safe-primary {
+  background: var(--bone);
+  color: var(--void);
+  border-color: var(--bone);
+}
+
+/* ---------- Motion preferences ---------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .eyes-wordmark .wm-lid,
+  .eye-clear-panel,
+  .eye-clear-dialog > div,
+  #linkSheet,
+  .sheet {
+    animation: none !important;
+  }
+}
+html[data-motion='off'] .eyes-wordmark .wm-lid {
+  animation: none !important;
+}
+
+/* ---------- Narrow, short and wide screens ----------------------------------------------- */
+@media (max-width: 360px) {
+  header,
+  html[data-skin] header {
+    left: 20px;
+    right: 8px;
+  }
+  .optic .sheet-head h1 {
+    font-size: 30px;
+  }
+  .setting select,
+  html[data-skin] .setting select {
+    min-width: 96px;
+    padding-right: 28px;
+  }
+}
+@media (max-height: 650px) {
+  .eye-clear-panel,
+  .eye-clear-dialog > div,
+  #linkSheet {
+    padding-top: 12px;
+  }
+}
+@media (min-width: 600px) {
+  header,
+  html[data-skin] header {
+    left: calc(50% - 196px);
+    right: calc(50% - 204px);
+  }
+  .eyes-wordmark {
+    height: 17px;
+  }
+}

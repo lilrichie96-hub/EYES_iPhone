@@ -1,62 +1,36 @@
-# EYES for iPhone (web app) · v1.0.0
+# EYES for iPhone · v1.1.1
 
-The eye without the launcher, for iPhones. Plain static files: no build step, no server code.
-Same genes, births, growth, evolution and Eye.D. cards as the Android app (shares `haven-dna.js` /
-`awakening.js`), and **Eye Contact works with Android EYES/HAVEN** (same HL1 codes, same encrypted relay).
+**The real EYES, minus the launcher.** This is the same page that runs inside the Android app (EYES 3.2),
+with the Android bridge answered in the browser. So her Eye has the same body, moods, sleep, dreams,
+quirks, greetings, eyelid and iris detail, skins, Eye.D. card, growth, evolution and full-body Eye Contact
+reactions as an Android EYES. Only the launcher parts (apps, dock, folders, notifications, music, battery)
+are switched off.
 
-## For Patch: hosting on GitHub Pages (about 5 minutes)
-1. On GitHub, create a new **public** repository, e.g. `eyes`.
-2. Upload **everything in this folder** to the root of the repo (keep the `icons/` folder and the hidden
-   `.nojekyll` file). The web uploader works: "Add file → Upload files", drag the folder contents in, commit.
-3. Repo **Settings → Pages** → Source: **Deploy from a branch**, Branch: **main**, folder **/ (root)** → Save.
-4. Wait a minute; the site appears at `https://<github-username>.github.io/eyes/` (shown on the Pages screen).
-   It must be HTTPS (GitHub Pages always is).
-5. Send that link to whoever is getting an eye.
+New in 1.1 (and in Android 3.2): **Senses** in The Optic
+- **Tilt to look**: tip the phone and its gaze rolls toward the low side (iPhone asks once for motion access).
+- **Bedside**: left still and flat at night (or alone late at night), it falls asleep and the screen dims
+  around it. Touch it or pick the phone up to wake it. Optional: keep the screen on while it sleeps.
+- **Their eye nearby**: in Eye Contact, their Eye rests faintly in its corner, brighter right after a signal.
+Also in 1.1.1: **one eye renderer** everywhere (birth, home, Eye.D., Eye Contact, their peeking eye)
+are the very same picture, shared with Android 3.2 (`eye-render.js`).
+Also: a **Keepsake code** (The Optic → Help & backup) that restores the Eye, its growth and settings.
 
-Updating later: upload the changed files over the old ones. Bump `CACHE` in `sw.js` when you do, so phones
-pick up the new version (they also update by themselves on the next launch with signal).
+## Updating the site (Patch)
+Upload **all** these files over the old ones in the GitHub repo (keep `icons/` and `.nojekyll`).
+1.0's `eyes-app.js` and `eyes-boot.js` are no longer used; delete them or leave them, either is fine.
+Phones pick it up on their next launch with signal.
 
-## For her: getting the eye
-1. Open the link **in Safari** on the iPhone.
-2. Share button → **Add to Home Screen** → Add.
-3. Open **EYES from the Home Screen** (not Safari) and tap **Wake your eye**. The eye lives in the Home
-   Screen app; Safari keeps separate storage, which is why the page asks to be installed first.
-4. Tap **··· → Keepsake** and save the code in Notes. It restores the eye if the app is ever removed
-   ("I have a keepsake code" on the first screen).
+**Her Eye survives the update**: same storage keys (`haven.dna.v1`, `haven.growth.v1`) and the same Eye
+Contact link (`eyes.link.v1`), so she stays paired. Her 1.0 copy of your Eye carries over too.
 
-## Eye Contact with an Android EYES
-- On the Android: Eye Contact → create an invite → send her the message (or she makes one and sends it to you).
-- On the iPhone: Eye Contact → **I have an invite** → paste → Connect. The green dot means linked.
-- Pulse / spark / calm buttons appear once linked. A pulse answered within 9 s becomes **resonance**.
-- Joining a new code replaces whatever link that phone had before (one link per eye, as on Android).
-- iPhones can't run things in the background: signals play when EYES is open. Signals that arrive while it's
-  closed (up to 12 h) show as "while you were away".
-- Android 3.0 shows a 3.1/iPhone eye without its birth nudge (colour/temperament lean); 3.1 shows it exactly.
-
-## What's not here (iOS limits)
-No launcher, widgets, lock screen, or haptics. No push notifications yet.
+## First-time setup (unchanged)
+Safari → link → Share → Add to Home Screen → open EYES from the Home Screen → Wake your Eye.
+Eye Contact: The Optic (top-right) → Eye Contact → I have an invite / Make an invite.
 
 ## Files
-`index.html` shell · `eyes-app.js` home, sheets, signal effects, keepsake · `eyes-link.js` Eye Contact protocol ·
-`haven-dna.js`, `awakening.js`, `awakening.css` shared with Android 3.1 (awakening has two tiny hooks:
-`EYES_HOLD_BIRTH` and `EYES_HOME_TARGET`) · `sw.js` offline cache · `manifest.webmanifest`, `icons/`.
-
-## Eye Contact protocol (decoded from the Android app's native HavenLink)
-- Code `HL1-` + base64url(32 random bytes) = the shared AES-256 key.
-- Topic on https://ntfy.sh: `haven_link_` + hex(SHA-256(ascii "HAVEN-LINK-TOPIC-1" ‖ key)) first 22 bytes.
-- Message body: `HL1.` + base64url(iv[12] ‖ AES-GCM ciphertext+tag[16]) of JSON
-  `{v:1, s:<sender id>, k:<pulse|spark|calm|resonance|hello|profile>, t:<ms>, n:<16-char nonce>, p?:<profile json ≤1024 B>}`.
-- Subscribe: `GET /<topic>/json?since=<last id | 30m>`; publish: `POST /<topic>` (priority min, no Firebase).
-- Pairing: the joiner posts `hello`; the first other sender heard becomes the peer and gets `hello` back.
-  Receivers drop: >12 h old, own id, non-peer after pairing, repeated nonce, profile before pairing;
-  signals >10 min old don't play live.
-
-## Current GitHub Pages address
-
-Once **Settings → Pages → Deploy from a branch → main → /(root)** has been saved and the Pages deployment completes, the app is available at:
-
-https://lilrichie96-hub.github.io/EYES_iPhone/
-
-If that address displays 404, check the repository **Actions** tab for a completed **pages build and deployment** workflow and verify Pages still uses `main` / `/(root)`.
-
-EYES iPhone v1.0.0
+The Android 3.2 web assets (`index.html`, `launcher.js`, `presence.js`, `personality.js`, …) plus:
+`eyes-web-shim.js` (window.Phone in the browser) · `eyes-link.js` (Eye Contact protocol, verified against
+Android's Java crypto) · `eyes-web-shell.js` (install/welcome, keepsake, trims The Optic) · `eyes-web.css` ·
+`sw.js` · `manifest.webmanifest` · `icons/`. `eyes-senses.js` is shared with Android 3.2.
+Android-only files (app-management, iris, home-gestures…) are present because launcher.js loads them; on
+iPhone they have nothing to show.

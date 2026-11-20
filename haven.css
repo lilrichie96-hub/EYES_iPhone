@@ -1,0 +1,2743 @@
+:root {
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+  color: #d8e4e8;
+  background: #070e14;
+  font-synthesis: none;
+  --soft: #82969f;
+  --line: #1d2c34;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+body {
+  margin: 0;
+  overflow: hidden;
+  touch-action: pan-y;
+  user-select: none;
+}
+button,
+input,
+select {
+  font: inherit;
+}
+button {
+  color: inherit;
+  cursor: pointer;
+  border: 0;
+  background: none;
+}
+button:focus-visible,
+[role='button']:focus-visible,
+select:focus-visible {
+  outline: 2px solid #91d2d5;
+  outline-offset: 4px;
+}
+button:disabled {
+  opacity: 0.25;
+}
+button[hidden],
+[hidden] {
+  display: none !important;
+}
+#home {
+  touch-action: none;
+  height: 100dvh;
+  min-height: 400px;
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 48%, #0c1c25 0%, #070e14 65%);
+}
+header {
+  position: absolute;
+  left: 30px;
+  right: 22px;
+  top: 13px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 2;
+}
+.wordmark {
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: #77949f;
+}
+.icon-button {
+  font-size: 23px;
+  width: 48px;
+  height: 48px;
+  color: #82969f;
+}
+#timeBlock {
+  position: absolute;
+  top: 12.5%;
+  left: 32px;
+  right: 32px;
+  z-index: 1;
+}
+#clock {
+  padding: 0;
+  font-size: 58px;
+  font-weight: 250;
+  letter-spacing: -3px;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.dayline {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-top: 9px;
+  font-size: 12px;
+  color: #8ba0aa;
+  letter-spacing: 0.4px;
+}
+#battery {
+  border-left: 1px solid #29404b;
+  padding-left: 15px;
+  color: #6f919e;
+}
+#nextAlarm {
+  padding: 12px 0;
+  font-size: 11px;
+  color: #83a2ae;
+}
+#world {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+#coreHit {
+  position: absolute;
+  left: 50%;
+  top: 49%;
+  width: 220px;
+  height: 220px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  z-index: 1;
+  touch-action: none;
+}
+#music {
+  position: absolute;
+  left: 50%;
+  top: 49%;
+  width: 270px;
+  height: 144px;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 400ms var(--ease);
+}
+#music.shown {
+  opacity: 1;
+}
+.transport {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  height: 75px;
+  margin-top: 5px;
+}
+.transport button {
+  width: 48px;
+  height: 48px;
+  padding: 13px;
+  color: #c5e9e9;
+}
+svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.transport #playPause {
+  padding: 11px;
+  border-radius: 50%;
+  background: #c4e5e511;
+  color: #edffff;
+}
+.track {
+  margin: 2px 25px 0;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #e1f4f3;
+}
+.artist {
+  margin: 5px 30px;
+  font-size: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #7dabb2;
+}
+#notice {
+  position: absolute;
+  z-index: 3;
+  left: 34px;
+  right: 34px;
+  top: 67%;
+  text-align: center;
+  padding: 14px 16px;
+  border-radius: 20px;
+  background: #15252d80;
+  opacity: 0;
+  transform: translateY(7px);
+  transition:
+    opacity 400ms var(--ease),
+    transform 400ms var(--ease);
+}
+#notice.shown {
+  opacity: 1;
+  transform: translateY(0);
+}
+#notice span,
+#notice strong {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+#noticeApp {
+  color: #6e9aa6;
+  font-size: 10px;
+  margin-bottom: 6px;
+}
+#noticeTitle {
+  font-size: 12px;
+  font-weight: 450;
+}
+#noticeText {
+  color: #8aa0a9;
+  font-size: 11px;
+  margin-top: 5px;
+}
+#dock {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 95px;
+  display: flex;
+  gap: clamp(4px, 2vw, 12px);
+  justify-content: center;
+  z-index: 4;
+}
+.dock-app {
+  flex: 0 1 58px;
+  min-width: 0;
+  height: 66px;
+  text-align: center;
+  padding: 6px 0;
+  position: relative;
+}
+.dock-app > img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  filter: saturate(0.55);
+  opacity: 0.9;
+}
+.dock-app > span:last-child {
+  display: block;
+  margin-top: 6px;
+  font-size: 9px;
+  color: #82969f;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dock-empty {
+  font-size: 11px;
+  color: #506976;
+  padding: 12px;
+}
+footer {
+  position: absolute;
+  bottom: 19px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  z-index: 4;
+}
+#drawerOpen {
+  width: 100px;
+  height: 54px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: #7d99a6;
+}
+.upmark {
+  width: 8px;
+  height: 8px;
+  border-left: 1px solid #7d99a6;
+  border-top: 1px solid #7d99a6;
+  transform: rotate(45deg);
+}
+.sheet {
+  position: fixed;
+  z-index: 10;
+  inset: 0;
+  overflow: auto;
+  padding: 22px 25px 32px;
+  background: #0b151d;
+  overscroll-behavior: contain;
+  animation: enter 420ms var(--ease);
+}
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+.sheet h1 {
+  font-weight: 350;
+  font-size: 28px;
+  letter-spacing: -0.7px;
+  margin: 0;
+}
+.sheet h2,
+.dialog h2 {
+  font-size: 17px;
+  font-weight: 450;
+  margin: 26px 0 15px;
+}
+.intro {
+  font-size: 14px;
+  color: #89a0aa;
+  margin: -12px 0 38px;
+}
+.search {
+  height: 52px;
+  border: 1px solid #23343f;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  border-radius: 16px;
+  padding: 0 15px;
+  color: #7d99a6;
+}
+.search svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+.search input {
+  color: #d8e4e8;
+  background: none;
+  border: none;
+  outline: none;
+  min-width: 0;
+  width: 100%;
+  font-size: 15px;
+}
+.hint {
+  font-size: 11px;
+  color: #68818e;
+  margin: 15px 0 23px;
+}
+.app-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 25px 9px;
+}
+.app {
+  min-width: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  padding: 3px 0;
+}
+.app > img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+.app > span:last-child {
+  font-size: 10px;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+  color: #a8b9c1;
+}
+.app.pinned:after {
+  content: '';
+  position: absolute;
+  top: 1px;
+  right: 14px;
+  width: 5px;
+  height: 5px;
+  background: #9cd1d2;
+  border-radius: 50%;
+}
+.setting {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  border-bottom: 1px solid var(--line);
+  width: 100%;
+  padding: 21px 0;
+  text-align: left;
+  font-size: 15px;
+}
+.setting small {
+  display: block;
+  font-size: 11px;
+  line-height: 1.6;
+  color: #7993a0;
+  margin-top: 6px;
+}
+.setting select {
+  background: #172832;
+  border: 1px solid #34505e;
+  border-radius: 10px;
+  color: #c7e0e4;
+  padding: 10px 8px;
+}
+.detail {
+  font-size: 11px;
+  line-height: 1.8;
+  color: #698490;
+  margin: 18px 0 20px;
+}
+.version {
+  font-size: 10px;
+  color: #4f6c7b;
+  margin-top: 36px;
+  letter-spacing: 1px;
+}
+.shortcut-settings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 14px 0 22px;
+}
+.shortcut-settings button {
+  font-size: 12px;
+  padding: 12px 15px;
+  background: #172a34;
+  border-radius: 12px;
+}
+.manage-shortcuts {
+  font-size: 12px;
+  color: #a3cfd1;
+  padding: 9px 12px;
+  border: 1px solid #385462;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+#dayAhead {
+  border-bottom: 1px solid var(--line);
+  padding: 7px 0 22px;
+  font-size: 14px;
+  color: #9bb3bd;
+  line-height: 1.9;
+}
+#dayAhead button {
+  display: block;
+  padding: 12px 0;
+  color: #b9d6da;
+}
+.notification-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  padding: 18px 0;
+}
+.notification-item small {
+  font-size: 10px;
+  color: #668895;
+}
+.notification-item strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 450;
+  margin: 7px 0;
+}
+.notification-item p {
+  font-size: 12px;
+  color: #879fa9;
+  line-height: 1.7;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.dialog {
+  position: fixed;
+  z-index: 20;
+  inset: 0;
+  background: #0009;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+}
+.dialog > div {
+  background: #12222c;
+  border: 1px solid #29414d;
+  border-radius: 24px;
+  width: 100%;
+  padding: 25px;
+}
+.dialog h2 {
+  margin-top: 3px;
+}
+.dialog p {
+  font-size: 13px;
+  color: #95aeb9;
+  line-height: 1.7;
+}
+.dialog button {
+  padding: 13px 18px;
+  border-radius: 12px;
+  font-size: 13px;
+}
+.dialog .primary {
+  background: #a3cfd1;
+  color: #0b2028;
+  margin: 9px 8px 0 0;
+}
+.dialog .secondary-action {
+  background: #23414c;
+  color: #d8eeee;
+  margin: 9px 8px 0 0;
+}
+.app.iris-pinned:before {
+  content: '';
+  position: absolute;
+  top: 1px;
+  left: 14px;
+  width: 5px;
+  height: 5px;
+  background: #e1b9ff;
+  border-radius: 50%;
+}
+#toast {
+  position: fixed;
+  bottom: 32px;
+  left: 25px;
+  right: 25px;
+  z-index: 30;
+  text-align: center;
+  background: #24414d;
+  color: #d3e8e9;
+  font-size: 12px;
+  line-height: 1.6;
+  padding: 15px;
+  border-radius: 16px;
+}
+html[data-motion='off'] *,
+html[data-motion='off'] *:before,
+html[data-motion='off'] *:after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (max-height: 650px) {
+  #timeBlock {
+    top: 11%;
+  }
+  #clock {
+    font-size: 43px;
+  }
+  #dock {
+    bottom: 70px;
+  }
+  #notice {
+    top: 65%;
+    padding: 9px;
+  }
+  #noticeText {
+    display: none;
+  }
+  footer {
+    bottom: 6px;
+  }
+  #coreHit {
+    width: 175px;
+    height: 175px;
+  }
+}
+@media (min-width: 600px) {
+  #timeBlock {
+    left: calc(50% - 190px);
+    right: calc(50% - 190px);
+  }
+  header {
+    left: calc(50% - 190px);
+    right: calc(50% - 190px);
+  }
+  .sheet {
+    padding-left: max(30px, calc(50% - 250px));
+    padding-right: max(30px, calc(50% - 250px));
+  }
+  .app-grid {
+    gap: 25px;
+  }
+  #notice {
+    left: calc(50% - 170px);
+    right: calc(50% - 170px);
+  }
+}
+
+/* Controls are drawn from the iris. These are transparent, accessible touch targets. */
+#music {
+  inset: 0;
+  transform: none;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  transition: none;
+  opacity: 1;
+}
+#music .transport {
+  position: absolute;
+  inset: 0;
+  display: block;
+  height: auto;
+  margin: 0;
+  pointer-events: none;
+}
+#music .transport button {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  padding: 0;
+  width: 48px;
+  height: 48px;
+  border: 0;
+  background: transparent !important;
+  border-radius: 50%;
+  pointer-events: auto;
+}
+#music .transport button:disabled {
+  pointer-events: none;
+}
+#music .track,
+#music .artist {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  width: 250px;
+  max-width: 70vw;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 420ms var(--ease);
+  text-shadow: 0 1px 12px #5eafb220;
+}
+#music.shown .track,
+#music.shown .artist {
+  opacity: 1;
+}
+#music .track {
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.2px;
+  color: #9fc4ca;
+}
+#music .artist {
+  font-size: 10px;
+  color: #577b89;
+}
+#home[data-notice='shown'] #music .track,
+#home[data-notice='shown'] #music .artist {
+  opacity: 0;
+}
+
+#irisReach {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+#irisGlint,
+.iris-shortcut,
+#irisVolume,
+#irisMeter {
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+#irisGlint {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  z-index: 4;
+  touch-action: none;
+}
+#irisVolume {
+  pointer-events: auto;
+  border-radius: 50%;
+  touch-action: none;
+}
+#irisMeter {
+  width: max-content;
+  color: #b3d6da;
+  font-size: 11px;
+  letter-spacing: 0.13em;
+  top: 65%;
+  pointer-events: none;
+}
+#music:has(#irisMeter:not([hidden])) .track,
+#music:has(#irisMeter:not([hidden])) .artist {
+  opacity: 0;
+}
+.iris-shortcut {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 6px;
+  width: 76px;
+  min-height: 66px;
+  padding: 8px 3px;
+  border: 1px solid #86c7cd30;
+  border-radius: 21px;
+  color: #a8ccd4;
+  background: #10202ae8;
+  pointer-events: auto;
+  animation: iris-arrive 220ms var(--ease);
+  transition:
+    background 160ms,
+    border-color 160ms;
+  touch-action: none;
+}
+.iris-shortcut.selected,
+.iris-shortcut:focus-visible {
+  background: #1c3a44;
+  border-color: #93d5dc90;
+  color: #e7fdff;
+}
+.iris-shortcut > img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  pointer-events: none;
+}
+.iris-shortcut > span:last-child {
+  font-size: 10px;
+  max-width: 68px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+@keyframes iris-arrive {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.87);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* App-management pass: restrained native-feeling organization panels. */
+.management-sheet {
+  z-index: 15;
+  padding-bottom: 52px;
+}
+.folder-sheet {
+  z-index: 17;
+}
+#pinSheet {
+  z-index: 21;
+}
+#folderPicker {
+  z-index: 22;
+}
+#folderSheet .sheet-head {
+  margin-bottom: 24px;
+}
+.folder-name-label {
+  display: block;
+  color: #91abb5;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+.folder-name-label input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid #2e4a58;
+  border-radius: 12px;
+  padding: 14px;
+  margin-top: 9px;
+  background: #122530;
+  color: #e4f2f3;
+  font-size: 18px;
+}
+.manage-list {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 22px;
+}
+.manage-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: #10232d;
+  border: 1px solid #263e4a;
+  border-radius: 15px;
+  padding: 7px;
+  min-width: 0;
+  min-height: 58px;
+}
+.manage-row > img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.manage-row span {
+  font-size: 12px;
+  flex: 1;
+  min-width: 20px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.manage-row button {
+  flex-shrink: 0;
+}
+.mini-action {
+  font-size: 12px;
+  color: #a8c4cf;
+  padding: 8px 5px;
+  min-width: 24px;
+}
+.drag-handle {
+  touch-action: none;
+  padding: 10px 7px;
+  min-width: 34px;
+  font-size: 23px;
+  line-height: 1;
+  color: #afd9e1;
+}
+.drag-handle.dragging,
+.dock-app.dragging {
+  opacity: 0.7;
+  filter: drop-shadow(0 0 12px #8bcdda8c);
+}
+.manage-row.drop-target,
+.dock-app.drop-target {
+  border-color: #94dce3;
+  background: #213945;
+  box-shadow: 0 0 0 1px #94dce366;
+}
+.dock-app {
+  border: 1px solid transparent;
+  border-radius: 14px;
+  touch-action: pan-y;
+}
+.dock-folder img {
+  filter: saturate(0.9);
+}
+.folder-action {
+  background: #8cbfc4;
+  color: #0c1a23;
+  border-radius: 12px;
+  padding: 13px 16px;
+  margin: 6px 0 13px;
+  font-size: 13px;
+}
+.folder-choice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 40vh;
+  overflow: auto;
+}
+.folder-choice {
+  display: block;
+  text-align: left;
+  padding: 12px 14px;
+  min-height: 44px;
+  border: 1px solid #2d4855;
+  border-radius: 12px;
+  background: #162b35;
+  color: #c5e2e5;
+  font-size: 13px;
+}
+.folder-choice.selected {
+  border-color: #9bced2;
+  background: #294751;
+}
+.danger-action {
+  display: block;
+  color: #ffa9ab;
+  border: 1px solid #874b52;
+  border-radius: 12px;
+  padding: 12px;
+  margin-top: 26px;
+  font-size: 13px;
+}
+.app-actions > div {
+  max-height: 88vh;
+  overflow-y: auto;
+}
+.action-grid {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 6px 0;
+}
+.action-grid button {
+  flex: 1;
+  min-width: 106px;
+  border: 1px solid #355160;
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 12px;
+}
+.app-actions .action-grid button.primary {
+  border: none;
+  background: #b3dadd;
+  color: #102530;
+  margin: 0;
+}
+.app-actions .action-grid button.secondary-action {
+  background: #244451;
+  color: #e0f2f4;
+  margin: 0;
+}
+.app-shortcut-section {
+  border-top: 1px solid #2f4855;
+  margin-top: 13px;
+  padding-top: 3px;
+}
+.app-shortcut-section .hint {
+  margin: 10px 0;
+}
+.app-shortcut-section .folder-choice-list button {
+  border: 1px solid #3c5662;
+  border-radius: 10px;
+  background: #1c3541;
+  color: #c8e9ec;
+  text-align: left;
+  padding: 10px 12px;
+}
+.finish-action {
+  margin-top: 14px;
+  padding: 12px 16px;
+  border: 1px solid #35505e;
+  border-radius: 12px;
+  font-size: 13px;
+}
+@media (max-width: 365px) {
+  .manage-row {
+    gap: 4px;
+    padding: 5px;
+  }
+  .manage-row > img {
+    width: 26px;
+    height: 26px;
+  }
+  .mini-action {
+    padding: 7px 3px;
+    font-size: 11px;
+  }
+  .drag-handle {
+    min-width: 29px;
+    padding: 7px 3px;
+  }
+}
+
+/* 1.3.1 — Android-like Home shortcut placement without obscuring the living core */
+#homeApps {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+.home-app {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: min(19vw, 72px);
+  min-width: 48px;
+  min-height: 66px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 4px;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  pointer-events: auto;
+  touch-action: none;
+  text-align: center;
+  background: #0d1e280b;
+}
+.home-app > img {
+  width: 39px;
+  height: 39px;
+  object-fit: contain;
+  pointer-events: none;
+}
+.home-app > span:last-child {
+  font-size: 10px;
+  color: #a9c4cc;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  max-width: 100%;
+  pointer-events: none;
+  text-shadow: 0 1px 8px #000;
+}
+.home-app:focus-visible {
+  outline: 2px solid #8bd3d7;
+}
+.home-app.press-armed,
+.dock-app.press-armed,
+.app.press-armed {
+  background: #24404c66;
+  box-shadow: 0 0 0 1px #b4f0e086;
+  transform: translate(-50%, -50%) scale(1.06);
+}
+.dock-app.press-armed,
+.app.press-armed {
+  transform: scale(1.05);
+}
+.home-app.drop-target,
+.dock-app.drop-target {
+  background: #3a576685;
+  border-color: #b4f7eb;
+  box-shadow: 0 0 17px #91dade35;
+}
+#home:has(#irisReach:not([hidden])) #homeApps {
+  opacity: 0.12;
+  pointer-events: none;
+}
+#home:has(#irisReach:not([hidden])) #homeApps button {
+  pointer-events: none;
+}
+#homeDragLayer {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  touch-action: none;
+}
+#homeDropTargets {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.home-drop-target {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 70px;
+  height: 78px;
+  border: 1px dashed #8ec5d358;
+  border-radius: 19px;
+  background: #75b1c00a;
+  pointer-events: none;
+  transition:
+    background 130ms,
+    border-color 130ms;
+}
+.home-drop-target.highlighted {
+  background: #9bd9e331;
+  border-color: #c5ffff;
+  box-shadow: 0 0 19px #b5e4e32b;
+}
+#homeDragGhost {
+  position: fixed;
+  transform: translate(-50%, -61%) scale(1.11);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 82px;
+  pointer-events: none;
+  filter: drop-shadow(0 8px 12px #000a);
+  transition: filter 170ms;
+}
+#homeDragGhost > img {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+}
+#homeDragGhost > span:last-child {
+  font-size: 11px;
+  color: #e5ffff;
+  text-align: center;
+  max-width: 80px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 2px 8px #000;
+}
+#homeDragGhost.over-folder {
+  filter: drop-shadow(0 0 19px #9fdcefff);
+}
+#homeDragTip {
+  position: absolute;
+  bottom: 39px;
+  left: 10%;
+  right: 10%;
+  text-align: center;
+  padding: 9px;
+  border: 1px solid #476773;
+  border-radius: 14px;
+  color: #cce8e8;
+  background: #183039da;
+  font-size: 12px;
+  pointer-events: none;
+}
+@media (max-height: 680px) {
+  .home-app {
+    min-height: 48px;
+    width: 52px;
+    padding: 2px;
+  }
+  .home-app > img {
+    width: 27px;
+    height: 27px;
+  }
+  .home-app > span:last-child {
+    font-size: 8px;
+  }
+  .home-drop-target {
+    width: 53px;
+    height: 56px;
+  }
+}
+
+/* Living folders: miniature app-icon tiles, rather than identical generic icons.
+   Uses the installed app icons already on the phone. */
+.folder-preview {
+  display: inline-grid;
+  position: relative;
+  flex: none;
+  box-sizing: border-box;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  padding: 5px;
+  border-radius: 13px;
+  border: 1px solid color-mix(in srgb, var(--folder-accent, #84c4ca) 56%, #304a56);
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--folder-accent, #84c4ca) 25%, #122431),
+    #0b1b27 85%
+  );
+  box-shadow:
+    inset 0 1px 1px #f1ffff15,
+    0 3px 9px #0003;
+  overflow: hidden;
+}
+.folder-preview::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: 10px;
+  border: 1px solid #efffff0d;
+  pointer-events: none;
+}
+.folder-preview-grid {
+  position: relative;
+  z-index: 1;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 2px;
+  width: 100%;
+  height: 100%;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  max-width: none !important;
+}
+.folder-mini {
+  display: grid !important;
+  place-items: center;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 4px;
+  background: #ffffff10;
+  color: #cde9e9;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  font-size: 9px !important;
+  line-height: 1 !important;
+}
+.folder-mini img {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  margin: 0 !important;
+  object-fit: contain !important;
+  filter: none !important;
+  opacity: 1 !important;
+  pointer-events: none;
+}
+.folder-mini.folder-more {
+  background: color-mix(in srgb, var(--folder-accent, #84c4ca) 29%, #1a2f3b);
+  color: #f1ffff !important;
+  font-size: 8px !important;
+  font-weight: 600 !important;
+}
+.folder-mini.folder-blank {
+  background: #ffffff08;
+  color: #87aeb9 !important;
+}
+.dock-app > .folder-preview {
+  width: 38px;
+  height: 38px;
+  padding: 4px;
+  border-radius: 12px;
+  margin: 0 auto;
+}
+.home-app > .folder-preview {
+  width: 43px;
+  height: 43px;
+  padding: 5px;
+  border-radius: 13px;
+}
+.iris-shortcut > .folder-preview {
+  width: 33px;
+  height: 33px;
+  padding: 4px;
+  border-radius: 10px;
+}
+.manage-row > .folder-preview {
+  width: 34px;
+  height: 34px;
+  padding: 4px;
+  border-radius: 10px;
+}
+#homeDragGhost > .folder-preview {
+  width: 53px;
+  height: 53px;
+  padding: 6px;
+  border-radius: 15px;
+}
+@media (max-height: 680px) {
+  .home-app > .folder-preview {
+    width: 30px;
+    height: 30px;
+    padding: 3px;
+    border-radius: 9px;
+  }
+  .home-app > .folder-preview .folder-preview-grid {
+    gap: 1px;
+  }
+}
+
+/* 1.4.1 — The eye remains the star while small shortcut sheets are open. */
+.eye-clear-panel {
+  position: fixed;
+  inset: auto 12px max(10px, var(--inset-bottom)) 12px;
+  width: auto;
+  max-height: min(36dvh, 420px);
+  overflow: auto;
+  padding: 14px 16px 16px;
+  z-index: 16;
+  border: 1px solid #48708093;
+  border-radius: 24px;
+  background: linear-gradient(145deg, #102631f5, #0b1a24f8);
+  box-shadow:
+    0 18px 50px #0008,
+    0 0 22px #74b8c017;
+  overscroll-behavior: contain;
+  animation: eye-sheet-enter 320ms var(--ease);
+}
+.eye-clear-panel .sheet-head {
+  margin: 0 0 10px;
+}
+.eye-clear-panel .sheet-head h1 {
+  font-size: 19px;
+  letter-spacing: -0.3px;
+  font-weight: 450;
+}
+.eye-clear-panel .sheet-head .icon-button {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+}
+.eye-clear-panel .hint {
+  font-size: 10px;
+  margin: 3px 0 7px;
+  line-height: 1.45;
+}
+.eye-clear-panel .setting {
+  padding: 10px 0;
+  font-size: 13px;
+}
+.eye-clear-panel .manage-list {
+  margin: 8px 0 12px;
+}
+.eye-clear-panel .detail {
+  margin: 10px 0;
+  font-size: 10px;
+}
+.eye-clear-panel .folder-name-label {
+  margin-top: 9px;
+}
+.eye-clear-panel .folder-name-label input {
+  padding: 9px;
+  font-size: 15px;
+}
+.eye-clear-panel .manage-row {
+  min-height: 43px;
+}
+.eye-clear-panel .folder-action {
+  margin: 6px 0;
+}
+.eye-clear-panel .danger-action {
+  margin-top: 10px;
+}
+/* The default folder view is a fast, four-column launcher—not an editor. */
+#folderSheet {
+  z-index: 19;
+}
+#folderDisplayName {
+  max-width: 68vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.folder-launch-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px 3px;
+  max-height: calc(min(36dvh, 420px) - 120px);
+  min-height: 50px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.folder-launch-app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 5px;
+  min-width: 0;
+  min-height: 65px;
+  border-radius: 12px;
+  padding: 6px 2px 4px;
+  touch-action: manipulation;
+}
+.folder-launch-app:active,
+.folder-launch-app:focus-visible {
+  background: #2e536188;
+}
+.folder-launch-app img {
+  width: 33px;
+  height: 33px;
+  object-fit: contain;
+}
+.folder-launch-app span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #b7d6dc;
+  font-size: 10px;
+}
+.folder-empty-note {
+  grid-column: 1/-1;
+  text-align: center;
+  color: #8fb3bd;
+  padding: 12px 0;
+  font-size: 12px;
+}
+.folder-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 7px;
+}
+.folder-toolbar button {
+  padding: 7px 11px;
+  font-size: 11px;
+}
+#folderEditor {
+  border-top: 1px solid #365561;
+  margin-top: 10px;
+  padding-top: 9px;
+}
+#folderEditor:not([hidden]) ~ .folder-launch-grid {
+  max-height: 10vh;
+}
+#folderSheet.is-editing .folder-launch-grid {
+  max-height: 90px;
+}
+#folderSheet.is-editing {
+  max-height: min(48dvh, 480px);
+}
+#folderSheet.is-editing #folderEntries {
+  max-height: 160px;
+  overflow: auto;
+}
+#folderSheet.is-editing #folderChoices {
+  max-height: 190px;
+  overflow-y: auto;
+}
+#folderSheet.is-editing #folderChoiceList {
+  max-height: 160px;
+}
+#inbox {
+  z-index: 15;
+}
+#inbox .sheet-head {
+  margin-bottom: 2px;
+}
+#inbox #dayAhead {
+  font-size: 11px;
+  padding: 4px 0 10px;
+}
+#inbox h2 {
+  font-size: 13px;
+  margin: 12px 0 2px;
+}
+#inbox .notification-item {
+  padding: 9px 0;
+}
+#inbox .notification-item p {
+  margin-top: 3px;
+}
+#organizeSheet {
+  z-index: 17;
+}
+/* App menus and folder pickers also float below the iris, without a dark scrim. */
+.eye-clear-dialog {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 12px max(10px, var(--inset-bottom));
+  background: transparent;
+  pointer-events: none;
+}
+.eye-clear-dialog > div {
+  width: 100%;
+  max-width: 520px;
+  max-height: min(36dvh, 420px);
+  padding: 15px 16px;
+  overflow: auto;
+  border: 1px solid #527c8899;
+  border-radius: 24px;
+  background: linear-gradient(150deg, #142c38f7, #0b1b25fa);
+  box-shadow:
+    0 18px 48px #000a,
+    0 0 20px #75c0c020;
+  pointer-events: auto;
+  animation: eye-sheet-enter 320ms var(--ease);
+}
+.eye-clear-dialog .sheet-head {
+  margin-bottom: 5px;
+}
+.eye-clear-dialog h2 {
+  margin: 1px 0 6px;
+  font-size: 16px;
+}
+.eye-clear-dialog p {
+  margin: 5px 0;
+  font-size: 11px;
+}
+.eye-clear-dialog .action-grid {
+  gap: 5px;
+  margin: 4px 0;
+}
+.eye-clear-dialog .action-grid button {
+  padding: 8px 6px;
+  font-size: 11px;
+  min-width: 100px;
+}
+.eye-clear-dialog .app-shortcut-section {
+  margin-top: 7px;
+}
+.eye-clear-dialog .finish-action {
+  margin-top: 7px;
+  padding: 7px 12px;
+}
+.eye-clear-dialog .folder-choice-list {
+  max-height: 19dvh;
+}
+@keyframes eye-sheet-enter {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+/* On shorter displays, preserve the eye even if that means panels must scroll. */
+@media (max-height: 600px) {
+  .eye-clear-panel {
+    max-height: 36dvh;
+    padding: 9px 12px;
+  }
+  .eye-clear-dialog > div {
+    max-height: 37dvh;
+    padding: 9px 12px;
+  }
+  .folder-launch-grid {
+    max-height: calc(36dvh - 80px);
+  }
+  .folder-launch-app {
+    min-height: 49px;
+  }
+  .folder-launch-app img {
+    height: 24px;
+    width: 24px;
+  }
+  #folderSheet.is-editing {
+    max-height: 42dvh;
+  }
+}
+@media (min-width: 600px) {
+  .eye-clear-panel {
+    left: calc(50% - 230px);
+    right: calc(50% - 230px);
+    padding: 14px 16px;
+  }
+}
+
+/* The app drawer opens as a small tray so the eye can greet it. Expand remains available. */
+#drawer.drawer-peek {
+  z-index: 15;
+}
+#drawer .drawer-controls {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+#drawer .drawer-controls .manage-shortcuts {
+  padding: 7px 10px;
+  font-size: 11px;
+}
+#drawer.drawer-peek .search {
+  height: 43px;
+  border-radius: 12px;
+}
+#drawer.drawer-peek .hint {
+  font-size: 10px;
+  line-height: 1.4;
+  margin: 6px 0 9px;
+}
+#drawer.drawer-peek .app-grid {
+  max-height: calc(min(36dvh, 420px) - 142px);
+  min-height: 48px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  gap: 15px 8px;
+  padding: 3px 0 5px;
+}
+#drawer.drawer-peek .app {
+  gap: 5px;
+}
+#drawer.drawer-peek .app > img {
+  width: 37px;
+  height: 37px;
+}
+#drawer.drawer-peek .app > span:last-child {
+  font-size: 10px;
+}
+#drawer.drawer-peek.expanded {
+  inset: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: auto;
+  max-height: none;
+  padding: 22px 25px 32px;
+  border: none;
+  border-radius: 0;
+  background: #0b151d;
+  box-shadow: none;
+}
+#drawer.drawer-peek.expanded .sheet-head {
+  margin-bottom: 18px;
+}
+#drawer.drawer-peek.expanded .search {
+  height: 52px;
+}
+#drawer.drawer-peek.expanded .hint {
+  margin: 15px 0 23px;
+}
+#drawer.drawer-peek.expanded .app-grid {
+  max-height: none;
+  overflow: visible;
+  gap: 25px 9px;
+}
+#drawer.drawer-peek.expanded .app > img {
+  width: 48px;
+  height: 48px;
+}
+#drawer.drawer-peek.expanded .app {
+  gap: 9px;
+}
+@media (max-height: 600px) {
+  #drawer.drawer-peek .hint {
+    margin: 4px 0;
+    font-size: 9px;
+  }
+  #drawer.drawer-peek .app-grid {
+    max-height: calc(36dvh - 107px);
+  }
+  #drawer.drawer-peek .app > img {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+/* 1.5.0 — Music focus grows from the living iris, without a blocking widget. */
+#home #timeBlock,
+#home #homeApps,
+#home #dock,
+#home footer,
+#home header {
+  transition: opacity 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+#home.music-focus #timeBlock {
+  opacity: 0.32;
+}
+#home.music-focus #homeApps {
+  opacity: 0.18;
+  pointer-events: none;
+}
+#home.music-focus #homeApps button {
+  pointer-events: none;
+}
+#home.music-focus #dock {
+  opacity: 0.28;
+}
+#home.music-focus footer {
+  opacity: 0.24;
+}
+#home.music-focus #music {
+  z-index: 6;
+}
+#home.music-focus #music .track,
+#home.music-focus #music .artist {
+  opacity: 0 !important;
+}
+#musicFocusDetails {
+  position: absolute;
+  z-index: 7;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(320px, 84vw);
+  max-width: 84vw;
+  padding: 12px 13px 9px;
+  pointer-events: none;
+  text-align: center;
+  background: radial-gradient(ellipse at 50% 0%, #22434c22, #0b1b2300 85%);
+}
+#musicFocusEyebrow {
+  font-size: 9px;
+  letter-spacing: 0.26em;
+  color: #69aab4;
+  margin-bottom: 8px;
+}
+#focusTitle {
+  font-size: 19px;
+  font-weight: 450;
+  color: #e0ffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 0 14px #90e6e53d;
+}
+#focusArtist {
+  font-size: 12px;
+  color: #9fbec5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 5px;
+}
+.music-focus-timeline {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: min(240px, 100%);
+  margin: 12px auto 0;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.07em;
+  color: #84a6b3;
+}
+.music-focus-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  font-size: 9px;
+  letter-spacing: 0.015em;
+  color: #628895;
+  margin-top: 9px;
+}
+#focusClose {
+  pointer-events: auto;
+  color: #bbdce2;
+  border: 1px solid #456c7480;
+  border-radius: 11px;
+  padding: 6px 12px;
+  background: #102c367a;
+  font-size: 10px;
+}
+#focusClose:focus-visible {
+  outline: 2px solid #b7eff0;
+}
+@media (max-height: 650px) {
+  #musicFocusDetails {
+    padding: 4px 9px 3px;
+  }
+  #musicFocusEyebrow {
+    font-size: 8px;
+    margin-bottom: 3px;
+  }
+  #focusTitle {
+    font-size: 14px;
+  }
+  #focusArtist {
+    font-size: 10px;
+    margin-top: 2px;
+  }
+  .music-focus-timeline {
+    margin: 4px auto 0;
+  }
+  .music-focus-footer {
+    margin-top: 3px;
+    font-size: 8px;
+  }
+  #focusClose {
+    padding: 3px 7px;
+  }
+}
+
+/* 1.6 — two lightweight music character controls; no extra on-Home buttons. */
+#musicMotion {
+  min-width: 94px;
+}
+#musicTint {
+  width: 22px;
+  height: 22px;
+  margin: 0 9px;
+  accent-color: #8fdce2;
+  flex: 0 0 auto;
+}
+@media (max-width: 360px) {
+  #musicMotion {
+    min-width: 82px;
+  }
+  #musicTint {
+    margin-right: 3px;
+  }
+}
+
+/* 1.7.0 — explicit playback-only capture; never a stealth background toggle. */
+#liveAudioToggle {
+  min-width: 107px;
+  white-space: nowrap;
+}
+#liveAudioToggle[data-on='true'] {
+  border-color: #5dbfb1;
+  background: #143e3c;
+  color: #b7f7eb;
+}
+#liveAudioToggle:disabled {
+  opacity: 0.65;
+}
+.live-audio-setting {
+  gap: 12px;
+}
+.live-audio-setting > span {
+  min-width: 0;
+}
+#liveAudioStatus {
+  line-height: 1.45;
+}
+.live-audio-explainer {
+  max-width: 620px;
+  line-height: 1.55;
+  margin: 0 0 18px;
+  padding: 0 2px;
+  color: #94b1ba;
+}
+@media (max-width: 390px) {
+  #liveAudioToggle {
+    min-width: 91px;
+    font-size: 11px;
+    padding: 8px 7px;
+  }
+  .live-audio-setting {
+    gap: 6px;
+  }
+}
+
+/* HAVEN 1.8 — Living Interface. The app constellation is actually part of
+   the core; editing and long folder lists still use the familiar tray. */
+#livingConstellation {
+  position: fixed;
+  inset: 0;
+  z-index: 18;
+  pointer-events: none;
+  overflow: hidden;
+}
+.constellation-node {
+  position: absolute;
+  left: calc(50% + var(--orbit-x));
+  top: calc(49% + var(--orbit-y));
+  transform: translate(-50%, -50%);
+  width: 61px;
+  min-height: 64px;
+  padding: 7px 5px 5px;
+  border: 1px solid #79c6cf56;
+  border-radius: 19px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background: radial-gradient(ellipse at 45% 12%, #315964bb, #0c202dce 78%);
+  box-shadow:
+    0 0 22px #47b9c019,
+    0 12px 25px #0008,
+    inset 0 0 18px #86dcde15;
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+  pointer-events: auto;
+  touch-action: manipulation;
+  animation: constellation-unfold 540ms cubic-bezier(0.19, 0.87, 0.21, 1.05) both;
+  animation-delay: var(--arrival-delay, 0ms);
+}
+.constellation-node > img {
+  width: 31px;
+  height: 31px;
+  object-fit: contain;
+  filter: saturate(0.84);
+}
+.constellation-node > span:last-child {
+  display: block;
+  max-width: 100%;
+  font-size: 9px;
+  line-height: 1.15;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  color: #cfedf1;
+  text-shadow: 0 1px 9px #000;
+}
+.constellation-node:focus-visible,
+.constellation-node:active {
+  outline: 1px solid #c7ffff;
+  background: #295363e8;
+  box-shadow:
+    0 0 28px #77e9e789,
+    0 0 0 2px #a8edf24d;
+}
+.constellation-more {
+  color: #d8ffff;
+  font-size: 16px;
+  font-weight: 350;
+  letter-spacing: 0.02em;
+  border-style: dashed;
+}
+#home.folder-unfolded #homeApps {
+  opacity: 0.19;
+  pointer-events: none;
+  transition: opacity 220ms;
+}
+#home.folder-unfolded #homeApps button {
+  pointer-events: none;
+}
+#home.folder-unfolded #dock {
+  opacity: 0.52;
+  transition: opacity 220ms;
+}
+#folderSheet.constellation-active:not(.is-editing) .folder-launch-grid {
+  display: none;
+}
+#folderSheet.constellation-active:not(.is-editing) {
+  padding-top: 11px;
+  padding-bottom: 11px;
+  max-height: 140px;
+}
+#folderSheet.constellation-active .sheet-head {
+  margin-bottom: 3px;
+}
+#folderSheet.constellation-active .folder-toolbar {
+  margin-top: 3px;
+}
+#folderViewToggle {
+  border-color: #477785;
+}
+@keyframes constellation-unfold {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translate(calc(-1 * var(--orbit-x)), calc(-1 * var(--orbit-y)))
+      scale(0.1);
+    filter: brightness(1.6);
+  }
+  74% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.09);
+    filter: brightness(1.2);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+    filter: brightness(1);
+  }
+}
+/* Notification cards emerge as tiny droplets from the eye before unfolding.
+   Still entirely functional: one tap opens the original Android notification. */
+#notice {
+  transform: translateY(-18vh) scale(0.18);
+  transform-origin: 50% 20%;
+  border-radius: 80px;
+  filter: brightness(1.7);
+  background: #17404a97;
+  transition:
+    opacity 390ms var(--ease),
+    transform 570ms cubic-bezier(0.17, 0.83, 0.23, 1),
+    border-radius 500ms,
+    filter 550ms;
+}
+#notice.shown {
+  transform: translateY(0) scale(1);
+  border-radius: 20px;
+  filter: brightness(1);
+}
+/* Don't animate or obscure the eye when the phone opts out of motion. */
+html[data-motion='off'] .constellation-node {
+  opacity: 1;
+  transform: translate(-50%, -50%);
+}
+html[data-motion='off'] #notice {
+  transform: translateY(0) scale(1);
+}
+@media (max-width: 380px) {
+  .constellation-node {
+    width: 54px;
+    min-height: 59px;
+    padding: 5px 3px;
+    border-radius: 15px;
+  }
+  .constellation-node > img {
+    width: 27px;
+    height: 27px;
+  }
+  .constellation-node > span:last-child {
+    font-size: 8px;
+  }
+}
+@media (max-height: 619px) {
+  #livingConstellation {
+    display: none;
+  }
+  #folderSheet .folder-launch-grid {
+    display: grid !important;
+  }
+  #folderSheet:not(.is-editing) {
+    max-height: min(36dvh, 420px);
+  }
+}
+
+#livingConstellation.is-retracting {
+  pointer-events: none;
+}
+#livingConstellation.is-retracting .constellation-node {
+  pointer-events: none;
+  animation: constellation-retract 320ms cubic-bezier(0.46, 0, 0.82, 0.3) both;
+  animation-delay: 0ms;
+}
+@keyframes constellation-retract {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+    filter: brightness(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) translate(calc(-1 * var(--orbit-x)), calc(-1 * var(--orbit-y)))
+      scale(0.06);
+    filter: brightness(1.8);
+  }
+}
+
+/* HAVEN LINK 1.9 — an invitation to two nonverbal living cores. */
+#linkOpen .link-glyph {
+  color: #9acdd8;
+  letter-spacing: -8px;
+  font-size: 19px;
+  padding-right: 12px;
+  text-shadow: 0 0 18px #7fcbdd7e;
+}
+#linkSheet {
+  max-height: min(51dvh, 495px);
+  left: 12px;
+  right: 12px;
+  padding: 13px 17px max(15px, var(--inset-bottom));
+  border-color: #5e91a477;
+  background: linear-gradient(150deg, #152d38f8, #0a1b24fa);
+  box-shadow:
+    0 0 30px #67cdd923,
+    0 18px 52px #000a;
+}
+#linkSheet .sheet-head {
+  margin-bottom: 2px;
+}
+#linkSheet h1 {
+  font-size: 19px;
+  letter-spacing: 0.06em;
+}
+#linkSheet .link-connection {
+  font-size: 11px;
+  color: #94c5d0;
+  margin: 4px 0 0;
+}
+#linkSheet .link-intro {
+  font-size: 11px;
+  color: #a3c3cc;
+  line-height: 1.45;
+  margin: 7px 0 10px;
+}
+.link-actions {
+  display: flex;
+  gap: 9px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 10px 0;
+}
+#linkSheet .primary {
+  border: 1px solid #7bc3cb82;
+  border-radius: 11px;
+  background: #224752;
+  color: #d7f5f5;
+  padding: 9px 13px;
+  font-size: 12px;
+}
+#linkSheet .manage-shortcuts {
+  padding: 9px 11px;
+}
+#linkSheet .link-label {
+  display: block;
+  color: #8cb5c0;
+  font-size: 10px;
+  margin: 8px 0 5px;
+}
+#linkSheet input {
+  width: 100%;
+  max-width: 100%;
+  background: #061823;
+  border: 1px solid #375f6f;
+  border-radius: 12px;
+  padding: 11px 12px;
+  color: #d8feff;
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+  letter-spacing: 0.025em;
+}
+#linkCode {
+  user-select: all;
+  word-break: break-all;
+}
+#linkSheet .link-three {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 11px;
+  margin: 10px auto 8px;
+}
+.link-three button {
+  min-width: 0;
+  min-height: 69px;
+  border: 1px solid #6fb5c75a;
+  border-radius: 18px;
+  background: radial-gradient(ellipse at 50% 20%, #356c7870, #122b37b3);
+  box-shadow:
+    inset 0 0 15px #76dbda0c,
+    0 0 15px #56bdbd12;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  justify-content: center;
+}
+.link-three button > span {
+  font-size: 30px;
+  font-weight: 350;
+  line-height: 1.15;
+  color: #bbf1f1;
+}
+.link-three button:nth-child(2) > span {
+  color: #ffe5b0;
+}
+.link-three button:nth-child(3) > span {
+  color: #b4c6ff;
+}
+.link-three button small {
+  font-size: 10px;
+  color: #9bbdc5;
+}
+.link-three button:active {
+  background: #396e7f;
+}
+.link-three button:disabled {
+  opacity: 0.33;
+}
+#linkSheet .link-hint {
+  font-size: 10px;
+  line-height: 1.55;
+  color: #8fb1ba;
+  margin: 6px 0;
+}
+#linkSheet .link-feedback {
+  min-height: 15px;
+  font-size: 11px;
+  color: #a5d7df;
+  margin: 7px 0;
+}
+#linkSheet .link-privacy {
+  font-size: 9px;
+  line-height: 1.5;
+  color: #698d99;
+  border-top: 1px solid #52788535;
+  padding-top: 9px;
+  margin: 9px 0 0;
+}
+#linkUnlink {
+  border-color: #855c6680 !important;
+  color: #e6b7bd !important;
+}
+html[data-motion='off'] #linkSheet {
+  animation: none;
+}
+@media (max-height: 680px) {
+  #linkSheet {
+    max-height: 55dvh;
+    padding: 8px 13px;
+  }
+  .link-three button {
+    min-height: 46px;
+  }
+  .link-three button > span {
+    font-size: 23px;
+  }
+  #linkSheet .link-intro {
+    margin: 3px 0;
+  }
+  #linkSheet .link-privacy {
+    font-size: 8px;
+  }
+}
+
+/* HAVEN 2.0 — Eye materials, not alternate interfaces.
+   Original has NO overrides, so it retains the original 1.9 pixels/layout.
+   Inkborn only borrows color, never changes structure or interaction. */
+.skin-setting select {
+  min-width: 117px;
+  text-align-last: center;
+}
+.skin-setting small {
+  max-width: 230px;
+}
+/* HAVEN skins: Ember, Frost and Nebula recolour the interface around the same eye. */
+html[data-skin='ember'] {
+  --skin-accent: #dfac85;
+  --skin-deep: #321a08;
+  --skin-glow: #e7a979;
+  --skin-line: #654b37;
+  --skin-tint: #eacab2;
+  --line: #443122;
+}
+html[data-skin='ember'] #home {
+  background: radial-gradient(ellipse at 50% 49%, #211207 0%, #150c05 64%, #0f0904 100%);
+}
+html[data-skin='ember'] .wordmark,
+html[data-skin='ember'] .dayline,
+html[data-skin='ember'] #battery {
+  color: #bea693;
+}
+html[data-skin='ember'] .icon-button,
+html[data-skin='ember'] #drawerOpen,
+html[data-skin='ember'] .upmark {
+  color: #c5aa95;
+  border-color: #c5aa95;
+}
+html[data-skin='ember'] .sheet {
+  background: #1c1109;
+}
+html[data-skin='ember'] .eye-clear-panel {
+  border-color: #8f694c66;
+  background: linear-gradient(145deg, #29180bf5, #201105fa);
+  box-shadow:
+    0 18px 50px #0008,
+    0 0 23px #e2996215;
+}
+html[data-skin='ember'] .iris-shortcut {
+  border-color: #e7ac7e59;
+  background: #281609e9;
+  color: #e8c7ad;
+  box-shadow: 0 0 14px #d8a0751a;
+}
+html[data-skin='ember'] .iris-shortcut.selected {
+  background: #432916;
+  border-color: #fec89ebd;
+  color: #fff5ee;
+}
+html[data-skin='ember'] .constellation-node {
+  border-color: #c1957357;
+  background: radial-gradient(ellipse at 43% 14%, #4c3422b8, #221206dd 80%);
+  box-shadow:
+    0 0 24px #d4884e1b,
+    0 12px 25px #0009,
+    inset 0 0 18px #ffba8610;
+}
+html[data-skin='ember'] .folder-preview {
+  --folder-accent: #d9a47b;
+  border-color: #b17f5876;
+  background: linear-gradient(145deg, #3e2411, #25160a 83%);
+}
+html[data-skin='ember'] #notice {
+  background: #311b0ace;
+  box-shadow: 0 0 18px #e7a97920;
+  border: 1px solid #ae7e5953;
+}
+html[data-skin='ember'] #noticeApp,
+html[data-skin='ember'] .link-connection,
+html[data-skin='ember'] #musicFocusEyebrow {
+  color: #e0b99b;
+}
+html[data-skin='ember'] .manage-shortcuts,
+html[data-skin='ember'] .setting select,
+html[data-skin='ember'] .shortcut-settings button {
+  border-color: #684c37;
+  color: #e5cbb8;
+  background-color: #2e1c0f;
+}
+html[data-skin='ember'] .link-three button {
+  border-color: #c48e6556;
+  background: radial-gradient(ellipse at 50% 20%, #5c3c2470, #2b1708ba);
+}
+html[data-skin='ember'] .link-three button:first-child > span {
+  color: #ffdabe;
+}
+html[data-skin='ember'] .home-app.drop-target,
+html[data-skin='ember'] .dock-app.drop-target {
+  background: #68483069;
+  border-color: #f9c9a5;
+  box-shadow: 0 0 15px #e1a06e33;
+}
+html[data-skin='ember'] .setting:focus-visible,
+html[data-skin='ember'] button:focus-visible,
+html[data-skin='ember'] select:focus-visible {
+  outline-color: #edc7aa;
+}
+html[data-skin='frost'] {
+  --skin-accent: #b6cbd8;
+  --skin-deep: #14232d;
+  --skin-glow: #b0cada;
+  --skin-line: #4a5b65;
+  --skin-tint: #dfe8ee;
+  --line: #2f3b43;
+}
+html[data-skin='frost'] #home {
+  background: radial-gradient(ellipse at 50% 49%, #0f181e 0%, #0a1013 64%, #070b0e 100%);
+}
+html[data-skin='frost'] .wordmark,
+html[data-skin='frost'] .dayline,
+html[data-skin='frost'] #battery {
+  color: #b4bfc5;
+}
+html[data-skin='frost'] .icon-button,
+html[data-skin='frost'] #drawerOpen,
+html[data-skin='frost'] .upmark {
+  color: #b8c4cb;
+  border-color: #b8c4cb;
+}
+html[data-skin='frost'] .sheet {
+  background: #0f161b;
+}
+html[data-skin='frost'] .eye-clear-panel {
+  border-color: #677f8e66;
+  background: linear-gradient(145deg, #141f26f5, #0d171cfa);
+  box-shadow:
+    0 18px 50px #0008,
+    0 0 23px #9bbcd015;
+}
+html[data-skin='frost'] .iris-shortcut {
+  border-color: #b5cddc59;
+  background: #131e24e9;
+  color: #dae5eb;
+  box-shadow: 0 0 14px #a6bfcf1a;
+}
+html[data-skin='frost'] .iris-shortcut.selected {
+  background: #25353f;
+  border-color: #daeaf3bd;
+  color: #ffffff;
+}
+html[data-skin='frost'] .constellation-node {
+  border-color: #9cb0bd57;
+  background: radial-gradient(ellipse at 43% 14%, #31404ab8, #0e181edd 80%);
+  box-shadow:
+    0 0 24px #85a9c01b,
+    0 12px 25px #0009,
+    inset 0 0 18px #c5dfee10;
+}
+html[data-skin='frost'] .folder-preview {
+  --folder-accent: #acc3d1;
+  border-color: #8099a976;
+  background: linear-gradient(145deg, #1f2f39, #131c22 83%);
+}
+html[data-skin='frost'] #notice {
+  background: #16242cce;
+  box-shadow: 0 0 18px #b0cada20;
+  border: 1px solid #8098a753;
+}
+html[data-skin='frost'] #noticeApp,
+html[data-skin='frost'] .link-connection,
+html[data-skin='frost'] #musicFocusEyebrow {
+  color: #c9d7e0;
+}
+html[data-skin='frost'] .manage-shortcuts,
+html[data-skin='frost'] .setting select,
+html[data-skin='frost'] .shortcut-settings button {
+  border-color: #4b5c68;
+  color: #e1e9ed;
+  background-color: #19242b;
+}
+html[data-skin='frost'] .link-three button {
+  border-color: #91abbb56;
+  background: radial-gradient(ellipse at 50% 20%, #374c5870, #121f27ba);
+}
+html[data-skin='frost'] .link-three button:first-child > span {
+  color: #f6fafc;
+}
+html[data-skin='frost'] .home-app.drop-target,
+html[data-skin='frost'] .dock-app.drop-target {
+  background: #44596669;
+  border-color: #ddeaf2;
+  box-shadow: 0 0 15px #a5c1d333;
+}
+html[data-skin='frost'] .setting:focus-visible,
+html[data-skin='frost'] button:focus-visible,
+html[data-skin='frost'] select:focus-visible {
+  outline-color: #dbe6ed;
+}
+html[data-skin='nebula'] {
+  --skin-accent: #ab8ddf;
+  --skin-deep: #180932;
+  --skin-glow: #a682e5;
+  --skin-line: #4a3966;
+  --skin-tint: #ccb9eb;
+  --line: #302444;
+}
+html[data-skin='nebula'] #home {
+  background: radial-gradient(ellipse at 50% 49%, #110821 0%, #0b0515 64%, #08040f 100%);
+}
+html[data-skin='nebula'] .wordmark,
+html[data-skin='nebula'] .dayline,
+html[data-skin='nebula'] #battery {
+  color: #a798c0;
+}
+html[data-skin='nebula'] .icon-button,
+html[data-skin='nebula'] #drawerOpen,
+html[data-skin='nebula'] .upmark {
+  color: #ab9ac6;
+  border-color: #ab9ac6;
+}
+html[data-skin='nebula'] .sheet {
+  background: #10091d;
+}
+html[data-skin='nebula'] .eye-clear-panel {
+  border-color: #67509066;
+  background: linear-gradient(145deg, #170c29f5, #0f0620fa);
+  box-shadow:
+    0 18px 50px #0008,
+    0 0 23px #966ae015;
+}
+html[data-skin='nebula'] .iris-shortcut {
+  border-color: #aa87e659;
+  background: #150a28e9;
+  color: #c8b4e9;
+  box-shadow: 0 0 14px #9e7cd81a;
+}
+html[data-skin='nebula'] .iris-shortcut.selected {
+  background: #281743;
+  border-color: #c7a8fcbd;
+  color: #faf8ff;
+}
+html[data-skin='nebula'] .constellation-node {
+  border-color: #9479c157;
+  background: radial-gradient(ellipse at 43% 14%, #33244cb8, #110722dd 80%);
+  box-shadow:
+    0 0 24px #8356d21b,
+    0 12px 25px #0009,
+    inset 0 0 18px #b78eff10;
+}
+html[data-skin='nebula'] .folder-preview {
+  --folder-accent: #a282d9;
+  border-color: #7c5eb176;
+  background: linear-gradient(145deg, #22123e, #150b25 83%);
+}
+html[data-skin='nebula'] #notice {
+  background: #190b31ce;
+  box-shadow: 0 0 18px #a682e520;
+  border: 1px solid #7c5eae53;
+}
+html[data-skin='nebula'] #noticeApp,
+html[data-skin='nebula'] .link-connection,
+html[data-skin='nebula'] #musicFocusEyebrow {
+  color: #b9a3e0;
+}
+html[data-skin='nebula'] .manage-shortcuts,
+html[data-skin='nebula'] .setting select,
+html[data-skin='nebula'] .shortcut-settings button {
+  border-color: #4b3969;
+  color: #cdbfe6;
+  background-color: #1b102e;
+}
+html[data-skin='nebula'] .link-three button {
+  border-color: #8c6bc456;
+  background: radial-gradient(ellipse at 50% 20%, #3a265d70, #16092bba);
+}
+html[data-skin='nebula'] .link-three button:first-child > span {
+  color: #dbc7ff;
+}
+html[data-skin='nebula'] .home-app.drop-target,
+html[data-skin='nebula'] .dock-app.drop-target {
+  background: #46326969;
+  border-color: #c9aff8;
+  box-shadow: 0 0 15px #9d76df33;
+}
+html[data-skin='nebula'] .setting:focus-visible,
+html[data-skin='nebula'] button:focus-visible,
+html[data-skin='nebula'] select:focus-visible {
+  outline-color: #c8b3ed;
+}
+@media (max-width: 390px) {
+  .skin-setting select {
+    min-width: 101px;
+  }
+  .skin-setting small {
+    max-width: 187px;
+  }
+}
+
+/* Backup row */
+.backup-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.backup-actions button {
+  padding: 8px 13px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--skin-tint, #d8e4e8);
+}
+.backup-actions button:active {
+  background: rgba(255, 255, 255, 0.06);
+}
+.backup-paste {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 0 18px;
+  border-bottom: 1px solid var(--line);
+}
+.backup-paste[hidden] {
+  display: none;
+}
+.backup-paste textarea {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 84px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.25);
+  color: inherit;
+  font:
+    12px/1.5 ui-monospace,
+    monospace;
+}
+.backup-paste .backup-actions {
+  justify-content: flex-end;
+}
+/* Safe mode: a plain, dependable home if HAVEN fails to start */
+.safe-offscreen {
+  position: fixed;
+  left: -9999px;
+  top: 0;
+  opacity: 0;
+}
+html.safe-mode body > *:not(#safeMode) {
+  display: none !important;
+}
+.safe-mode-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  overflow: auto;
+  padding: 28px 22px 40px;
+  background: #070e14;
+  color: #d8e4e8;
+  font-family: system-ui, sans-serif;
+}
+.safe-head h1 {
+  font-size: 22px;
+  font-weight: 600;
+  margin: 12px 0 6px;
+}
+.safe-head p {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #8aa1ab;
+  margin: 0 0 18px;
+}
+.safe-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.safe-actions button {
+  padding: 10px 14px;
+  border: 1px solid #23363f;
+  border-radius: 999px;
+  font-size: 14px;
+}
+.safe-actions .safe-primary {
+  background: #d8e4e8;
+  color: #070e14;
+  border-color: #d8e4e8;
+}
+.safe-search {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  border: 1px solid #23363f;
+  border-radius: 12px;
+  background: #0d1a22;
+  color: inherit;
+  font-size: 15px;
+}
+.safe-list {
+  display: flex;
+  flex-direction: column;
+}
+.safe-app {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 4px;
+  border-bottom: 1px solid #15232b;
+  text-align: left;
+  font-size: 15px;
+}
+.safe-app img {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+}
+.safe-empty {
+  color: #8aa1ab;
+  font-size: 14px;
+  padding: 12px 4px;
+}
+.safe-detail {
+  margin-top: 22px;
+  font-size: 11px;
+  color: #4f6670;
+  word-break: break-word;
+}
+
+/* Full screen: everything that sits near the top edge clears the camera cutout. */
+:root {
+  --inset-top: max(env(safe-area-inset-top, 0px), var(--native-inset-top, 0px));
+  --inset-bottom: max(env(safe-area-inset-bottom, 0px), var(--native-inset-bottom, 0px));
+}
+header {
+  top: calc(13px + var(--inset-top));
+}
+#timeBlock {
+  top: calc(12.5% + var(--inset-top) * 0.6);
+}
+.sheet {
+  padding-top: calc(22px + var(--inset-top));
+}
+.safe-mode-panel {
+  padding-top: calc(28px + var(--inset-top));
+}
+
+/* Clearing notifications */
+.notification-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+#clearAll {
+  font-size: 12px;
+  color: var(--skin-tint, #9fb6bf);
+  padding: 6px 2px;
+}
+.notification-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  transform: translateX(var(--swipe, 0px));
+  transition:
+    transform 220ms var(--ease),
+    opacity 220ms var(--ease);
+  touch-action: pan-y;
+}
+.notification-row.swiping {
+  transition: none;
+}
+.notification-row.leaving {
+  transform: translateX(var(--leave, 110%));
+  opacity: 0;
+  pointer-events: none;
+}
+.notification-row .notification-item {
+  flex: 1;
+  min-width: 0;
+}
+.notification-dismiss {
+  align-self: stretch;
+  padding: 0 4px 0 14px;
+  font-size: 18px;
+  color: #6f8994;
+  border-bottom: 1px solid var(--line);
+}
+
+/* Tips: a small bubble beside the thing it explains */
+.tip-bubble {
+  position: fixed;
+  z-index: 40;
+  max-width: min(280px, calc(100vw - 32px));
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: #24414d;
+  color: #e3f1f2;
+  font-size: 13px;
+  line-height: 1.45;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(4px);
+  transition:
+    opacity 260ms var(--ease),
+    transform 260ms var(--ease);
+}
+.tip-bubble.shown {
+  opacity: 1;
+  transform: none;
+}
+.tip-bubble::after {
+  content: '';
+  position: absolute;
+  left: calc(var(--arrow-x, 50%) - 6px);
+  width: 12px;
+  height: 12px;
+  background: inherit;
+  transform: rotate(45deg);
+}
+.tip-bubble[data-place='below']::after {
+  top: -5px;
+}
+.tip-bubble[data-place='above']::after {
+  bottom: -5px;
+}
+html[data-skin='ember'] .tip-bubble {
+  background: #4a2e1c;
+}
+html[data-skin='frost'] .tip-bubble {
+  background: #33495a;
+}
+html[data-skin='nebula'] .tip-bubble {
+  background: #352a55;
+}
+
+/* Easier pairing */
+.link-paste-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.link-paste-row input {
+  flex: 1;
+  min-width: 0;
+}
+.link-paste-row button {
+  flex-shrink: 0;
+}
+
+/* Edge-to-edge: keep the dock, the Apps handle and toasts above the navigation bar. */
+footer {
+  bottom: calc(19px + var(--inset-bottom));
+}
+#dock {
+  bottom: calc(95px + var(--inset-bottom));
+}
+#toast {
+  bottom: calc(32px + var(--inset-bottom));
+}
+@media (max-height: 650px) {
+  footer {
+    bottom: calc(6px + var(--inset-bottom));
+  }
+  #dock {
+    bottom: calc(70px + var(--inset-bottom));
+  }
+}
+
+/* Swiping the peek card away */
+#notice {
+  touch-action: pan-y;
+  transition:
+    opacity 400ms var(--ease),
+    transform 400ms var(--ease),
+    translate 260ms var(--ease);
+}

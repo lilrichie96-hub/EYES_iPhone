@@ -1,0 +1,12 @@
+/* LINK sheet: your HAVEN and your friend's, side by side (haven-friend.js). */
+.link-friends { margin: 4px 0 16px; }
+.link-friends .lf-pair { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 6px; }
+.link-friends .lf-eye { text-align: center; min-width: 0; }
+.link-friends .lf-eye canvas { width: 100%; max-width: 150px; aspect-ratio: 1; display: block; margin: 0 auto; }
+.link-friends .lf-eye b { display: block; font-weight: 400; font-size: 15px; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.link-friends .lf-eye small { display: block; font-size: 11px; opacity: 0.6; margin-top: 2px; }
+.link-friends .lf-eye small.t-uncommon { color: #8fe3b4; opacity: 1; }
+.link-friends .lf-eye small.t-rare { color: #8fb8ff; opacity: 1; }
+.link-friends .lf-eye small.t-mythic { color: #ffcf7a; opacity: 1; }
+.link-friends .lf-link { opacity: 0.45; font-size: 18px; }
+.link-friends .lf-match { text-align: center; font-size: 13px; opacity: 0.75; margin: 10px 0 0; }

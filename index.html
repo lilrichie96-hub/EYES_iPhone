@@ -1,102 +1,582 @@
 <!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
-  <meta name="color-scheme" content="dark">
-  <meta name="theme-color" content="#000000">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src https://ntfy.sh; manifest-src 'self'; worker-src 'self'">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="EYES">
-  <meta name="description" content="EYES by FRAY, INC. Weird. Understated. Alive.">
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <link rel="icon" href="icons/icon-192.png">
-  <title>EYES</title>
-  <link rel="stylesheet" href="awakening.css">
-  <link rel="stylesheet" href="eyes-web.css">
-</head>
-<body>
-  <!-- home: just the eye -->
-  <main id="home" hidden>
-    <header class="top">
-      <svg class="wordmark" viewBox="-1.2 -1.2 62.4 22.4" role="img" aria-label="EYES"><path d="M12 0H0V8.4M0 11.6V20H12"/><path d="M5 10H11.6"/><path d="M16.8 0L22 7.6L27.2 0"/><path d="M22 12.8V20"/><circle cx="22" cy="10.3" r="1.3"/><path d="M44 0H32V8.4M32 11.6V20H44"/><path d="M37 10H43.6"/><path d="M60 1.5C58 0.4 56.5 0 54.5 0C51 0 49 2 49 5C49 11 60 9 60 15C60 18 58 20 54.5 20C52.5 20 50.5 19.4 48.6 18"/></svg>
-      <button class="iconbtn" id="moreBtn" type="button" aria-label="More">···</button>
-    </header>
-    <canvas id="fx" aria-hidden="true"></canvas>
-    <canvas id="homeEye" aria-label="Your eye. Touch it, drag to have it follow your finger."></canvas>
-    <canvas id="friendEye" aria-hidden="true"></canvas>
-    <div id="eyeName"><b id="nameTxt"></b><span id="wordsTxt"></span></div>
-    <p id="toast" aria-live="polite"></p>
-    <div id="signals" hidden>
-      <button type="button" data-sig="pulse" aria-label="Send a pulse"><i class="g-pulse"></i><span>pulse</span></button>
-      <button type="button" data-sig="spark" aria-label="Send a spark"><i class="g-spark"></i><span>spark</span></button>
-      <button type="button" data-sig="calm" aria-label="Send calm"><i class="g-calm"></i><span>calm</span></button>
-    </div>
-    <nav class="dock">
-      <button type="button" id="idBtn">Eye.D.</button>
-      <button type="button" id="linkBtn"><span class="dot" id="linkDot"></span>Eye Contact</button>
-    </nav>
-  </main>
+<html lang="en"
+  ><head
+    ><meta charset="utf-8" /><meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover" /><meta
+      name="color-scheme"
+      content="dark" /><meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src https://ntfy.sh; manifest-src 'self'; worker-src 'self'" /><meta name="apple-mobile-web-app-capable" content="yes" /><meta name="mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" /><meta name="apple-mobile-web-app-title" content="EYES" /><meta name="theme-color" content="#000000" /><meta name="description" content="EYES by FRAY, INC. Weird. Understated. Alive." /><link rel="manifest" href="manifest.webmanifest" /><link rel="apple-touch-icon" href="icons/apple-touch-icon.png" /><link rel="icon" href="icons/icon-192.png" /><title
+      >EYES</title
+    ><link rel="stylesheet" href="awakening.css" /><link rel="stylesheet" href="haven-friend.css" /><link rel="stylesheet" href="haven.css" /><link rel="stylesheet" href="eyes.css" /><link rel="stylesheet" href="eyes-web.css"
+  /></head>
+  <body>
+    <main id="home">
+      <header
+        ><span class="wordmark"><svg class="eyes-wordmark" viewBox="-1.2 -1.2 62.4 22.4" role="img" aria-label="EYES"
+          ><path d="M12 0H0V8.4M0 11.6V20H12" /><path class="wm-lid" d="M5 10H11.6" /><path
+            d="M16.8 0L22 7.6L27.2 0"
+          /><path d="M22 12.8V20" /><circle class="wm-pupil" cx="22" cy="10.3" r="1.3" /><path
+            d="M44 0H32V20H44"
+          /><path class="wm-lid" d="M37 10H42.4" /><path
+            d="M57.8 5A3.8 3.8 0 1 0 54 8.8M54 11.2A3.8 3.8 0 1 1 50.2 15" /></svg
+        ></span
+        ><button id="settingsOpen" aria-label="Open The Optic" class="icon-button optic-button"
+          ><svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="8.2" />
+            <path d="M12 8.4L20.31 13.2M15.12 10.2V19.8M15.12 13.8L6.8 18.6M12 15.6L3.69 10.8M8.88 13.8V4.2M8.88 10.2L17.2 5.4" /></svg
+        ></button></header
+      >
+      <section id="timeBlock"
+        ><button id="clock" aria-label="Open alarms">12:00</button
+        ><div class="dayline"><span id="date"></span><span id="battery">100%</span></div
+        ><button id="nextAlarm" hidden></button
+      ></section>
+      <canvas id="world" aria-hidden="true"></canvas>
+      <div
+        id="coreHit"
+        role="button"
+        tabindex="0"
+        aria-expanded="false"
+        aria-controls="irisReach"
+        aria-label="Your Eye. Show notifications and day ahead"
+      ></div>
+      <button id="irisGlint" aria-label="Peek at notification" hidden></button>
+      <div
+        id="livingConstellation"
+        role="group"
+        aria-label="Folder apps unfolding around the Eye"
+        hidden
+      ></div>
+      <div id="irisReach" role="group" aria-label="Iris shortcuts" hidden></div>
+      <section id="music" aria-label="Music controls" hidden>
+        <div
+          id="irisVolume"
+          role="slider"
+          tabindex="0"
+          aria-label="Media volume"
+          aria-orientation="vertical"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-valuenow="0"
+          hidden
+        ></div>
+        <div id="irisMeter" aria-hidden="true" hidden></div>
+        <div class="transport"
+          ><button id="previous" aria-label="Previous track"></button
+          ><button
+            id="playPause"
+            aria-label="Pause"
+            aria-controls="musicFocusDetails"
+            aria-expanded="false"
+            aria-keyshortcuts="Shift+F10"
+          ></button
+          ><button id="next" aria-label="Next track"></button
+        ></div>
+        <div id="track" class="track"></div><div id="artist" class="artist"></div>
+        <div id="musicFocusDetails" aria-label="Music focus" hidden>
+          <div id="musicFocusEyebrow">NOW PLAYING</div>
+          <div class="music-focus-title" id="focusTitle">Now playing</div>
+          <div class="music-focus-artist" id="focusArtist"></div>
+          <div class="music-focus-timeline" id="focusTimeline" hidden>
+            <span id="focusElapsed">0:00</span><span id="focusDuration">0:00</span>
+          </div>
+          <div class="music-focus-footer">
+            <span>Hold to focus · Swipe to control</span>
+            <button id="focusClose" type="button" aria-label="Close music focus">Close</button>
+          </div>
+        </div>
+      </section>
+      <button id="notice" hidden
+        ><span id="noticeApp"></span><strong id="noticeTitle"></strong><span id="noticeText"></span
+      ></button>
+      <section id="homeApps" aria-label="Home screen apps"></section>
+      <section id="dock" aria-label="Five app dock"></section>
+      <footer
+        ><button id="drawerOpen" aria-label="Open apps"
+          ><span class="upmark"></span><span>Apps</span></button
+        ></footer
+      >
+    </main>
+    <section id="drawer" class="sheet eye-clear-panel drawer-peek" aria-label="Apps" hidden
+      ><div class="sheet-head"
+        ><h1>Apps</h1
+        ><div class="drawer-controls"
+          ><button id="drawerExpand" aria-expanded="false" class="manage-shortcuts">Expand</button
+          ><button class="close icon-button" aria-label="Close apps">×</button></div
+        ></div
+      ><label class="search"
+        ><svg viewBox="0 0 24 24">
+          <circle cx="10" cy="10" r="6" />
+          <path d="m15 15 5 5" /></svg
+        ><input
+          id="search"
+          type="search"
+          autocomplete="off"
+          placeholder="Find an app"
+          aria-label="Search apps" /></label
+      ><p class="hint"
+        >Hold an app to drag it onto Home, or let go for Home, dock, iris and app
+        actions.</p
+      ><div id="appGrid" class="app-grid"></div><p id="empty" hidden>No apps found.</p></section
+    >
+    <section id="settings" class="sheet optic" aria-label="The Optic" hidden
+      ><div class="sheet-head"
+        ><h1>The Optic</h1
+        ><button class="close icon-button" aria-label="Close The Optic">×</button></div
+      ><p class="intro">Adjustments for you, and for the thing in your phone.</p>
 
-  <!-- before an eye exists -->
-  <section id="welcome" class="screen" hidden>
-    <div class="inner">
-      <svg class="eyemark" viewBox="0 0 120 70" aria-hidden="true"><path d="M4 35C24 6 96 6 116 35C96 64 24 64 4 35Z"/><circle cx="60" cy="35" r="16"/><circle class="p" cx="60" cy="35" r="5"/></svg>
-      <h1>EYES</h1>
-      <p class="tag">Weird. Understated. Alive.</p>
-      <p class="lead">Something is waiting to be woken. You only get one, and it will be yours.</p>
-      <button type="button" class="primary" id="wakeBtn">Wake your eye</button>
-      <button type="button" class="link" id="restoreOpen">I have a keepsake code</button>
-      <div id="restoreBox" hidden>
-        <textarea id="restoreTxt" rows="3" placeholder="Paste your keepsake code" autocomplete="off" spellcheck="false"></textarea>
-        <button type="button" id="restoreGo">Bring it back</button>
-        <p class="err" id="restoreErr"></p>
+      <h2 class="optic-group">Your Eye</h2
+      ><button id="yourHaven" class="setting" type="button"
+        ><span>Eye.D.<small id="yourHavenInfo">Its identification record</small></span
+        ><span class="row-go" aria-hidden="true"></span></button
+      ><button id="linkOpen" class="setting"
+        ><span
+          >Eye Contact<small id="linkSettingsStatus"
+            >A private signal between two Eyes</small
+          ></span
+        ><span class="link-glyph" aria-hidden="true"><i></i><i></i></span></button>
+
+      <h2 class="optic-group">Appearance</h2
+      ><div class="setting skin-setting"
+        ><span
+          >Eye material<small id="skinDescription" aria-live="polite"
+            >Its own colours, from its DNA.</small
+          ></span
+        ><select id="skinStyle" aria-label="Eye material"
+          ><option value="original">Your Eye</option
+          ><option value="ember">Ember</option
+          ><option value="frost">Frost</option
+          ><option value="nebula">Nebula</option></select
+        ></div
+      ><div class="setting"
+        ><span
+          >Album colours<small
+            >Blend colours from album art into the iris. Nothing is uploaded.</small
+          ></span
+        ><input
+          type="checkbox"
+          id="musicTint"
+          aria-label="Use album-inspired iris colours"
+          checked /></div>
+
+      <h2 class="optic-group">Display</h2
+      ><div class="setting fullscreen-setting" id="fullscreenRow" hidden
+        ><span
+          >Hide status bar<small
+            >EYES fills the whole screen. Swipe down from the very top to see the status
+            bar.</small
+          ></span
+        ><input type="checkbox" id="fullscreen" aria-label="Hide the status bar" checked /></div
+      ><div class="setting"
+        ><span>Motion<small>Off freezes every animation.</small></span
+        ><select id="motion" aria-label="Motion"
+          ><option value="auto">Auto</option
+          ><option value="on">On</option
+          ><option value="off">Off</option></select
+        ></div
+      ><p class="detail"
+        >Auto follows your phone’s reduced-motion setting. Frame rates slow on low battery and
+        Battery Saver. The Eye rests when you leave home.</p>
+
+      <h2 class="optic-group">Home, dock &amp; app shortcuts</h2
+      ><button id="setHome" class="setting"
+        ><span>Make EYES home<small id="homeStatus">Choose your default launcher</small></span
+        ><span class="row-go" aria-hidden="true"></span></button
+      ><div class="setting"
+        ><span>Dock<small>Up to five apps or folders. Drag to reorder.</small></span
+        ><button class="manage-shortcuts" id="dockManage">Organize</button></div
+      ><div id="pinSettings" class="shortcut-settings"></div
+      ><div class="setting"
+        ><span
+          >Iris shortcuts<small>App shortcuts that open from the Eye. Up to four, separate from the dock.</small></span
+        ><button class="manage-shortcuts" id="irisManage">Organize</button></div
+      ><div id="irisSettings" class="shortcut-settings"></div
+      ><div class="setting"
+        ><span>Folders<small>Create, rename and fill folders for Home, the dock and the iris.</small></span
+        ><button class="manage-shortcuts" id="folderManage" type="button">Organize</button></div>
+
+      <h2 class="optic-group">Notifications &amp; permissions</h2
+      ><button id="setAccess" class="setting"
+        ><span>Notifications &amp; music access<small id="accessStatus">Allow notifications &amp; music</small></span
+        ><span class="row-go" aria-hidden="true"></span></button
+      ><p class="detail"
+        >Notifications stay on this phone. No account. Calls and timers are noticed through
+        their notifications; Android controls the system alert screen.</p>
+
+      <h2 class="optic-group">Music</h2
+      ><div class="setting"
+        ><span
+          >Music energy<small
+            >Auto follows genre tags when apps provide them. Drift, Flow and Pulse are always
+            available.</small
+          ></span
+        ><select id="musicMotion" aria-label="Music visualizer motion"
+          ><option value="auto">Auto</option
+          ><option value="drift">Drift</option
+          ><option value="flow">Flow</option
+          ><option value="pulse">Pulse</option></select
+        ></div
+      ><div class="setting live-audio-setting"
+        ><span
+          >Real audio reactions<small id="liveAudioStatus"
+            >Off · The iris uses its usual music animation</small
+          ></span
+        ><button
+          class="manage-shortcuts"
+          id="liveAudioToggle"
+          aria-label="Start live playback visualization"
+          >Start Live Audio</button
+        ></div
+      ><p class="detail live-audio-explainer"
+        >Optional and started only by you. Android asks for an audio permission (labeled microphone)
+        and a <strong>full-screen capture confirmation</strong>. EYES uses that approval for
+        <strong>playback sound only</strong>. It does not open your microphone, inspect screen
+        images, or save or upload audio. Keep the music playing, approve the prompt, then close
+        The Optic to see the Eye react. Stop anytime, including from Android's notification.
+        Capture ends when you leave EYES. Some music apps block playback capture; the usual iris
+        animation keeps working.</p>
+
+      <h2 class="optic-group">Help &amp; backup</h2
+      ><div class="setting tips-setting"
+        ><span
+          >Tips<small id="tipsStatus"
+            >Each hidden gesture is explained once, the first time it matters.</small
+          ></span
+        ><span class="backup-actions"
+          ><button id="tipsReset" type="button">Show again</button></span
+        ></div
+      ><div class="setting backup-setting"
+        ><span
+          >Back up your home<small id="backupStatus" aria-live="polite"
+            >Dock, home screen, iris shortcuts, folders and settings, as text you can keep
+            anywhere.</small
+          ></span
+        ><span class="backup-actions"
+          ><button id="backupCopy" type="button">Copy</button
+          ><button id="backupRestore" type="button">Restore</button></span
+        ></div
+      ><div id="backupPaste" class="backup-paste" hidden>
+        <textarea
+          id="backupText"
+          rows="4"
+          aria-label="EYES backup text"
+          placeholder="Paste a backup here"
+        ></textarea
+        ><span class="backup-actions"
+          ><button id="backupCancel" type="button">Cancel</button
+          ><button id="backupApply" type="button">Restore now</button></span
+        ></div
+      ><p class="detail"
+        >The Eye watches what you drag, reacts to folders and shortcuts, and notices when you come
+        home. Hold the iris and slide to a shortcut; hold a glint to peek at a notification. While
+        music plays: tap the pupil to pause, hold for focus, swipe sideways to skip, or up and down
+        for volume.</p
+      ><div class="setting stats-setting"
+        ><span
+          >Eye stats<small id="eyeStats" aria-live="polite"
+            >Spend a few seconds on the home screen, then check back.</small
+          ></span
+        ></div>
+
+      <div class="optic-colophon"
+        ><span class="optic-mark" aria-hidden="true"><svg class="eyes-wordmark" viewBox="-1.2 -1.2 62.4 22.4" aria-hidden="true"
+          ><path d="M12 0H0V8.4M0 11.6V20H12" /><path class="wm-lid" d="M5 10H11.6" /><path
+            d="M16.8 0L22 7.6L27.2 0"
+          /><path d="M22 12.8V20" /><circle class="wm-pupil" cx="22" cy="10.3" r="1.3" /><path
+            d="M44 0H32V20H44"
+          /><path class="wm-lid" d="M37 10H42.4" /><path
+            d="M57.8 5A3.8 3.8 0 1 0 54 8.8M54 11.2A3.8 3.8 0 1 1 50.2 15" /></svg></span
+        ><p class="version">EYES for iPhone 1.1.1</p
+        ><p class="maker">FRAY, INC. · They’re in your phone now.</p></div
+      ></section>
+
+    <section
+      id="linkSheet"
+      class="sheet eye-clear-panel link-sheet"
+      aria-label="Eye Contact: pairing and nonverbal signals"
+      hidden
+    >
+      <div class="sheet-head"
+        ><div
+          ><h1
+            ><span class="ec-glyph" aria-hidden="true"><i></i><b></b><i></i></span>Eye Contact</h1
+          ><p id="linkConnection" class="link-connection" role="status">No Eye Contact yet</p></div
+        ><button id="linkClose" type="button" class="icon-button" aria-label="Return to settings"
+          >×</button
+        ></div
+      >
+      <p class="link-intro"
+        >Two Eyes on two phones. No messages, words or feeds. Just a signal sent across the distance.</p
+      >
+      <div id="linkUnpaired">
+        <div class="link-actions">
+          <button type="button" id="linkCreate" class="primary">Make Eye Contact</button>
+          <button type="button" id="linkJoinToggle" class="manage-shortcuts">I have an invite</button>
+        </div>
+        <div id="linkJoinForm" hidden>
+          <label class="link-label" for="linkJoinCode">Your friend's private pairing code</label>
+          <div class="link-paste-row">
+            <input
+              id="linkJoinCode"
+              type="text"
+              maxlength="600"
+              spellcheck="false"
+              autocapitalize="off"
+              autocomplete="off"
+              placeholder="Paste your friend's invite"
+            />
+            <button id="linkPaste" type="button" class="manage-shortcuts">Paste</button>
+          </div>
+          <button id="linkJoin" type="button" class="primary">Connect eyes</button>
+        </div>
       </div>
-      <p class="fine">EYES by FRAY, INC.</p>
+      <div id="linkConnected" hidden>
+        <div id="linkFriends" class="link-friends" hidden></div>
+        <div class="link-three">
+          <button
+            id="linkSendPulse"
+            type="button"
+            aria-label="Send a pulse to your friend’s Eye"
+            title="Pulse"
+            ><span aria-hidden="true">◉</span><small>Pulse</small></button
+          >
+          <button
+            id="linkSendSpark"
+            type="button"
+            aria-label="Send a spark to your friend’s Eye"
+            title="Spark"
+            ><span aria-hidden="true">✦</span><small>Spark</small></button
+          >
+          <button
+            id="linkSendCalm"
+            type="button"
+            aria-label="Send a calming wave to your friend’s Eye"
+            title="Calm"
+            ><span aria-hidden="true">∿</span><small>Calm</small></button
+          >
+        </div>
+        <p class="link-hint"
+          >Hold two fingers on the iris to send a pulse. Answer each other’s pulse quickly and the two
+          Eyes resonate.</p
+        >
+        <div class="link-actions"
+          ><button id="linkRevealCode" class="manage-shortcuts" type="button"
+            >Show invite code</button
+          ><button id="linkUnlink" class="manage-shortcuts" type="button">End Eye Contact</button></div
+        >
+      </div>
+      <div id="linkCodeWrap" hidden>
+        <label class="link-label" for="linkCode"
+          >Private invite · Share only with your friend</label
+        >
+        <input
+          id="linkCode"
+          type="text"
+          readonly
+          spellcheck="false"
+          aria-label="Secret pairing code"
+        />
+        <div class="link-actions"
+          ><button id="linkShareCode" type="button" class="primary" hidden>Send invite</button
+          ><button id="linkCopyCode" type="button" class="manage-shortcuts">Copy code</button
+          ><button id="linkHideCode" type="button" class="manage-shortcuts">Hide</button></div
+        >
+      </div>
+      <p id="linkFeedback" class="link-feedback" role="status"></p>
+      <p class="link-privacy"
+        >Opt-in. No messages or personal activity are shared. Signals are encrypted on your phone. A
+        free third-party relay (ntfy.sh) carries the ciphertext and can see connection metadata.
+        Only someone with your secret code can join. Signals arrive while EYES is open; short-lived
+        ones may wait for you to come back. End Eye Contact at any time.</p
+      >
+    </section>
+    <section
+      id="inbox"
+      class="sheet eye-clear-panel"
+      aria-label="Day ahead and notifications"
+      hidden
+      ><div class="sheet-head"
+        ><h1 id="greeting">Your day</h1
+        ><button class="close icon-button" aria-label="Close day ahead">×</button></div
+      ><div id="dayAhead"></div
+      ><div class="notification-head"
+        ><h2>Notifications</h2><button id="clearAll" type="button" hidden>Clear all</button></div
+      ><div id="notificationList"></div
+    ></section>
+    <section
+      id="organizeSheet"
+      class="sheet management-sheet eye-clear-panel"
+      aria-label="Organize shortcuts"
+      hidden
+    >
+      <div class="sheet-head"
+        ><h1>Organize home</h1
+        ><button id="organizeClose" class="icon-button" aria-label="Close organizer">×</button></div
+      >
+      <p class="hint"
+        >Hold and move icons right on Home or the dock, or use the arrows here.</p
+      >
+      <div class="setting"
+        ><span>Home screen <small id="organizeHomeCount">0/12</small></span
+        ><button id="organizeAddHome" class="manage-shortcuts">+ Folder</button></div
+      >
+      <div id="organizeHome" class="manage-list"></div>
+      <div class="setting"
+        ><span>Dock <small id="organizeDockCount">0/5</small></span
+        ><button id="organizeAddDock" class="manage-shortcuts">+ Folder</button></div
+      >
+      <div id="organizeDock" class="manage-list"></div>
+      <div class="setting"
+        ><span>Iris shortcuts <small id="organizeIrisCount">0/4</small></span
+        ><button id="organizeAddIris" class="manage-shortcuts">+ Folder</button></div
+      >
+      <div id="organizeIris" class="manage-list"></div>
+      <p class="detail"
+        >Long-press apps in the app drawer to add them. Drag a dock app onto an existing folder to
+        move it inside.</p
+      >
+    </section>
+    <section
+      id="folderSheet"
+      class="sheet management-sheet folder-sheet eye-clear-panel"
+      aria-label="Folder shortcuts"
+      hidden
+    >
+      <div class="sheet-head"
+        ><div><h1 id="folderDisplayName">Folder</h1><p id="folderCount" class="hint"></p></div
+        ><button id="folderClose" class="icon-button" aria-label="Close folder">×</button></div
+      >
+      <div id="folderLaunchGrid" class="folder-launch-grid" aria-label="Apps in folder"></div>
+      <div class="folder-toolbar"
+        ><button
+          id="folderViewToggle"
+          class="manage-shortcuts"
+          aria-expanded="false"
+          aria-controls="folderLaunchGrid"
+          >All apps</button
+        ><button
+          id="folderEditToggle"
+          class="manage-shortcuts"
+          aria-expanded="false"
+          aria-controls="folderEditor"
+          >Edit folder</button
+        ></div
+      >
+      <div id="folderEditor" hidden>
+        <label class="folder-name-label"
+          >Folder name
+          <input id="folderName" maxlength="36" autocomplete="off" aria-label="Folder name"
+        /></label>
+        <div id="folderEntries" class="manage-list"></div>
+        <button id="folderAdd" class="primary folder-action">+ Add or remove apps</button>
+        <div id="folderChoices" hidden
+          ><label class="search"
+            ><input
+              id="folderFilter"
+              placeholder="Find an app for this folder"
+              autocomplete="off"
+              aria-label="Search folder apps" /></label
+          ><div id="folderChoiceList" class="folder-choice-list"></div
+        ></div>
+        <button id="folderDelete" class="danger-action">Delete folder</button>
+      </div>
+    </section>
+    <section id="folderPicker" class="dialog eye-clear-dialog" aria-label="Choose a folder" hidden>
+      <div
+        ><div class="sheet-head"
+          ><h2>Add to folder</h2
+          ><button id="folderPickClose" aria-label="Close folder picker" class="icon-button"
+            >×</button
+          ></div
+        >
+        <div id="folderPickList" class="folder-choice-list"></div
+        ><p id="folderPickEmpty" class="detail" hidden>No folders yet.</p
+        ><button id="folderPickNew" class="primary">+ Create a folder with this app</button></div
+      >
+    </section>
+    <section
+      id="pinSheet"
+      class="dialog app-actions eye-clear-dialog"
+      aria-label="App actions"
+      hidden
+      ><div>
+        <h2 id="pinTitle">Manage app</h2><p id="pinHelp">Choose where it lives.</p>
+        <div class="action-grid"
+          ><button id="pinHome" class="primary">Add to Home</button
+          ><button id="pinConfirm" class="secondary-action">Add to dock</button
+          ><button id="irisConfirm" class="secondary-action">Add to iris</button
+          ><button id="pinFolder" class="secondary-action">Add to folder</button></div
+        >
+        <div class="action-grid"
+          ><button id="pinInfo">App Info</button><button id="pinUninstall">Uninstall…</button></div
+        >
+        <div class="app-shortcut-section"
+          ><p id="appShortcutStatus" class="hint"></p
+          ><div id="appShortcutList" class="folder-choice-list"></div
+        ></div>
+        <button id="pinCancel" class="finish-action">Done</button></div
+      >
+    </section>
+    <div id="homeDragLayer" hidden>
+      <div id="homeDropTargets" aria-hidden="true"></div>
+      <div id="homeDragGhost" aria-hidden="true"></div>
+      <div id="homeDragTip" aria-live="polite"></div>
     </div>
-  </section>
-
-  <!-- in Safari on iPhone: install first, so the eye lives in the Home Screen app -->
-  <section id="install" class="screen" hidden>
-    <div class="inner">
-      <svg class="eyemark" viewBox="0 0 120 70" aria-hidden="true"><path d="M4 35C24 6 96 6 116 35C96 64 24 64 4 35Z"/><circle cx="60" cy="35" r="16"/><circle class="p" cx="60" cy="35" r="5"/></svg>
-      <h1>EYES</h1>
-      <p class="lead">Put EYES on your Home Screen first. Your eye is born there and lives there.</p>
-      <ol class="steps">
-        <li>Tap <b>Share</b> <svg class="share" viewBox="0 0 20 24" aria-hidden="true"><path d="M10 1V15M5 6L10 1L15 6M4 10H2V23H18V10H16"/></svg> at the bottom of Safari</li>
-        <li>Choose <b>Add to Home Screen</b></li>
-        <li>Open <b>EYES</b> from your Home Screen</li>
-      </ol>
-      <p class="fine">Waking it here in Safari would keep it in Safari, apart from the Home Screen app.</p>
-      <button type="button" class="link" id="installAnyway">Wake it in the browser anyway</button>
-    </div>
-  </section>
-
-  <!-- sheets -->
-  <div id="scrim" hidden></div>
-  <section class="sheet" id="linkSheet" role="dialog" aria-label="Eye Contact" hidden>
-    <div class="grab"></div>
-    <h2>Eye Contact</h2>
-    <div id="linkBody"></div>
-  </section>
-  <section class="sheet" id="moreSheet" role="dialog" aria-label="More" hidden>
-    <div class="grab"></div>
-    <h2>Keepsake</h2>
-    <p class="sub">If this phone is ever reset or EYES is removed, this code brings your eye back exactly as it is. Keep it somewhere safe, like your Notes.</p>
-    <textarea id="keepTxt" rows="3" readonly></textarea>
-    <div class="row"><button type="button" id="keepCopy">Copy</button><button type="button" id="keepShare" class="ghost">Share…</button></div>
-    <h2 class="mt">Sound</h2>
-    <div class="row"><button type="button" id="soundBtn" class="ghost">Signal sounds: on</button></div>
-    <p class="fine">EYES for iPhone · <span id="ver"></span><br>Eye Contact is end-to-end encrypted. The relay only ever sees scrambled bytes.</p>
-  </section>
-
-  <script src="eyes-boot.js"></script>
-  <script src="haven-dna.js"></script>
-  <script src="awakening.js"></script>
-  <script src="eyes-link.js"></script>
-  <script src="eyes-app.js"></script>
-</body>
-</html>
+    <div id="toast" role="status" hidden></div>
+    <!-- EYES for iPhone: before there is an eye -->
+    <section id="welcome" class="eyes-screen" hidden>
+      <div class="inner">
+        <svg class="eyemark" viewBox="0 0 120 70" aria-hidden="true"><path d="M4 35C24 6 96 6 116 35C96 64 24 64 4 35Z"/><circle cx="60" cy="35" r="16"/><circle class="p" cx="60" cy="35" r="5"/></svg>
+        <h1>EYES</h1>
+        <p class="tag">Weird. Understated. Alive.</p>
+        <p class="lead">Something is waiting to be woken. You only get one, and it will be yours.</p>
+        <button type="button" class="primary" id="wakeBtn">Wake your Eye</button>
+        <button type="button" class="link" id="restoreOpen">I have a keepsake code</button>
+        <div id="restoreBox" hidden>
+          <textarea id="restoreTxt" rows="3" placeholder="Paste your keepsake code" autocomplete="off" spellcheck="false"></textarea>
+          <button type="button" id="restoreGo">Bring it back</button>
+          <p class="err" id="restoreErr"></p>
+        </div>
+        <p class="fine">EYES by FRAY, INC.</p>
+      </div>
+    </section>
+    <section id="install" class="eyes-screen" hidden>
+      <div class="inner">
+        <svg class="eyemark" viewBox="0 0 120 70" aria-hidden="true"><path d="M4 35C24 6 96 6 116 35C96 64 24 64 4 35Z"/><circle cx="60" cy="35" r="16"/><circle class="p" cx="60" cy="35" r="5"/></svg>
+        <h1>EYES</h1>
+        <p class="lead">Put EYES on your Home Screen first. Your Eye is born there and lives there.</p>
+        <ol class="steps">
+          <li>Tap <b>Share</b> <svg class="share" viewBox="0 0 20 24" aria-hidden="true"><path d="M10 1V15M5 6L10 1L15 6M4 10H2V23H18V10H16"/></svg> at the bottom of Safari</li>
+          <li>Choose <b>Add to Home Screen</b></li>
+          <li>Open <b>EYES</b> from your Home Screen</li>
+        </ol>
+        <p class="fine">Waking it here in Safari would keep it in Safari, apart from the Home Screen app.</p>
+        <button type="button" class="link" id="installAnyway">Wake it in the browser anyway</button>
+      </div>
+    </section>
+    <script src="eyes-link.js"></script>
+    <script src="eyes-web-shim.js"></script>
+    <script src="safety.js"></script>
+    <script src="haven-dna.js"></script>
+    <script src="awakening.js"></script>
+    <script src="haven-life.js"></script>
+    <script src="haven-friend.js"></script>
+    <script src="presence.js"></script
+    ><script src="home-gestures.js"></script
+    ><script src="app-management.js"></script
+    ><script src="iris.js"></script
+    ><script src="skin-system.js"></script
+    ><script src="eye-detail.js"></script
+    ><script src="eye-render.js"></script
+    ><script src="eye-dive.js"></script
+    ><script src="haven-link-ui.js"></script
+    ><script src="link-effects.js"></script>
+    <script src="personality.js"></script>
+    <script src="tips.js"></script>
+    <script src="eyes-brand.js"></script>
+    <script src="eyes-senses.js"></script>
+    <script src="launcher.js"></script>
+    <script src="eyes-web-shell.js"></script> </body
+></html>

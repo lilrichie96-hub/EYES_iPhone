@@ -146,335 +146,34 @@ class Eye {
   }
   blinkNow(slow) { this.blinkT = performance.now() / 1000; this.slowBlink = !!slow; this.blinkQueue = 0; }
   rvk(k) { const v = this.rv ? clamp(this.rv[k]) : 1; return k === 'pattern' ? v * (this.dna.growthPattern || 1) : v; }
+  // One renderer for every eye (eye-render.js): this class only decides where it looks, when it blinks,
+  // how it feels and how much of it exists yet. The picture is the home screen's eye, exactly.
   draw(t) {
-    const d = this.dna, L = d.looks, ctx = this.ctx, S = this.canvas.width;
-    const cx = S / 2, cy = S / 2, R = S * 0.36;
+    const ctx = this.ctx, S = this.canvas.width;
     ctx.clearRect(0, 0, S, S);
-    const rvB = this.rvk('body'), rvI = this.rvk('iris'), rvU = this.rvk('pupil'), rvG = this.rvk('glass'), rvR = this.rvk('rare');
-    if (rvB <= 0) return;
-    ctx.save();
-    if (this.rv) {
-      const u = rvB, back = 1 + 2.2 * Math.pow(u - 1, 3) + 1.2 * Math.pow(u - 1, 2); // ease-out-back
-      const sc = mix(0.4, 1, back);
-      ctx.translate(cx, cy); ctx.scale(sc, sc); ctx.translate(-cx, -cy);
-      ctx.globalAlpha = clamp(u * 1.6);
-    }
-    // subtle idle jitter: slow, small
-    const jt = t * d.motion.jitterRate;
-    const jx = (Math.sin(jt * 2.1) + Math.sin(jt * 3.7 + 1.3) * 0.5) * d.motion.jitter;
-    const jy = (Math.sin(jt * 2.9 + 0.4) + Math.sin(jt * 4.3) * 0.5) * d.motion.jitter;
-    const gx = cx + (this.gaze.x * 0.3 + jx) * R, gy = cy + (this.gaze.y * 0.3 + jy) * R;
-    const A = d.accent, B = d.accent2, glow = L.glow;
-    const light = clamp(0.92 * glow);
-
-    // ambient glow around the marble
-    let g = ctx.createRadialGradient(cx, cy, R * 0.6, cx, cy, R * 1.55);
-    g.addColorStop(0, col(A, 0.5, 0.22 * glow));
-    g.addColorStop(1, col(A, 0.2, 0));
-    ctx.fillStyle = g; ctx.fillRect(0, 0, S, S);
-    if (d.has.halo && rvR > 0) {
-      ctx.globalAlpha = rvR;
-      ctx.strokeStyle = col(lift(B, 0.2), 1, 0.16 + Math.sin(t * 1.3) * 0.05);
-      ctx.lineWidth = S * 0.006;
-      ctx.beginPath(); ctx.arc(cx, cy, R * 1.17, 0, TAU); ctx.stroke();
-      ctx.strokeStyle = col(lift(A, 0.2), 1, 0.1 + Math.sin(t * 1.3 + 1.5) * 0.04);
-      ctx.beginPath(); ctx.arc(cx, cy, R * 1.29, 0, TAU); ctx.stroke();
-      ctx.globalAlpha = 1;
-    }
-
-    ctx.save();
-    ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.clip();
-    // body
-    g = ctx.createRadialGradient(gx, gy - R * 0.12, R * 0.05, cx, cy, R * 1.12);
-    g.addColorStop(0, col(A, 0.55, light));
-    g.addColorStop(0.42, col(A, 0.27, light));
-    g.addColorStop(1, col(A, 0.06, 0.96));
-    ctx.fillStyle = g; ctx.fillRect(cx - R, cy - R, R * 2, R * 2);
-
-    // iris
-    const irisR = R * 0.62 * L.irisSize;
-    const pupilR = R * 0.19 * L.pupilSize * this.pupil;
-    g = ctx.createRadialGradient(gx, gy, 0, gx, gy, irisR);
-    g.addColorStop(0, col(A, 0.98, light));
-    g.addColorStop(0.28, col(A, 0.78, light));
-    g.addColorStop(0.6, col(A, 0.44, 0.8));
-    g.addColorStop(1, col(A, 0.3, 0));
-    ctx.globalAlpha = rvI;
-    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(gx, gy, irisR * mix(0.3, 1, rvI), 0, TAU); ctx.fill();
-    ctx.globalAlpha = 1;
-    if (d.has.twoTone && rvR > 0) {
-      ctx.globalAlpha = rvR;
-      ctx.save();
-      ctx.beginPath();
-      const ang = (L.patternSeed % 628) / 100;
-      ctx.moveTo(gx, gy);
-      ctx.arc(gx, gy, irisR * 1.02, ang, ang + Math.PI);
-      ctx.closePath(); ctx.clip();
-      g = ctx.createRadialGradient(gx, gy, 0, gx, gy, irisR);
-      g.addColorStop(0, col(B, 1, light));
-      g.addColorStop(0.3, col(B, 0.8, light));
-      g.addColorStop(0.62, col(B, 0.46, 0.8));
-      g.addColorStop(1, col(B, 0.3, 0));
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(gx, gy, irisR, 0, TAU); ctx.fill();
-      ctx.restore();
-      ctx.globalAlpha = 1;
-    }
-    this.drawPattern(ctx, gx, gy, irisR, pupilR, t);
-    if (this.dna.branch) {                    // grown detail (your HAVEN, or a linked friend's)
-      ctx.save(); ctx.translate(cx, cy);
-      HavenDNA.paintDetail(ctx, { dna: this.dna, gx: gx - cx, gy: gy - cy, irisR, pupilR, size: R, t: t * 1000, alpha: rvI * (this.detailK ?? 1), own: true, tint: () => 'rgba(0,0,0,0)' });
-      ctx.restore();
-    }
-    if (d.has.galaxy && rvR > 0) {
-      ctx.globalCompositeOperation = 'lighter';
-      ctx.globalAlpha = rvR;
-      for (const s of d.galaxy) {
-        const tw = 0.5 + 0.5 * Math.sin(t * s.sp + s.ph);
-        const rr = pupilR + (irisR * 0.95 - pupilR) * s.at;
-        const a = s.a + t * 0.05;
-        ctx.fillStyle = `rgba(255,255,255,${0.15 + tw * 0.75})`;
-        ctx.beginPath(); ctx.arc(gx + Math.cos(a) * rr, gy + Math.sin(a) * rr, S * 0.0035 * s.s * (0.6 + tw * 0.6), 0, TAU); ctx.fill();
-      }
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.globalAlpha = 1;
-    }
-    if (d.has.fleck && rvR > 0) {
-      ctx.globalAlpha = rvR;
-      const rr = pupilR + (irisR - pupilR) * d.fleck.at;
-      const fx = gx + Math.cos(d.fleck.a) * rr, fy = gy + Math.sin(d.fleck.a) * rr;
-      g = ctx.createRadialGradient(fx, fy, 0, fx, fy, R * 0.07);
-      g.addColorStop(0, 'rgba(255,214,120,0.95)'); g.addColorStop(1, 'rgba(255,190,90,0)');
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(fx, fy, R * 0.07, 0, TAU); ctx.fill();
-      ctx.globalAlpha = 1;
-    }
-
-    // birthmark: the light it was born from, kept in its iris
-    if (d.birthmark && rvI > 0) {
-      const b = d.birthmark, rr = pupilR + (irisR - pupilR) * b.at, a = b.a + t * d.looks.spin * 0.3;
-      const bx = gx + Math.cos(a) * rr, by = gy + Math.sin(a) * rr, br = R * 0.075 * b.s;
-      ctx.globalAlpha = rvI * (this.markK ?? 1);
-      g = ctx.createRadialGradient(bx, by, 0, bx, by, br);
-      g.addColorStop(0, col(lift(b.rgb, 0.35), 1, 0.8)); g.addColorStop(0.45, col(b.rgb, 1, 0.38)); g.addColorStop(1, col(b.rgb, 1, 0));
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(bx, by, br, 0, TAU); ctx.fill();
-      ctx.globalAlpha = 1;
-    }
-    // pupil: a glowing core in its own shape
-    ctx.globalAlpha = rvU;
-    g = ctx.createRadialGradient(gx, gy, 0, gx, gy, pupilR * 1.25);
-    g.addColorStop(0, `rgba(240,255,252,${light})`);
-    g.addColorStop(0.3, col(lift(A, 0.82), 1, light * 0.98));
-    g.addColorStop(0.62, col(lift(A, 0.2), 1, light * 0.85));
-    g.addColorStop(1, col(A, 0.8, 0));
-    ctx.fillStyle = g;
-    this.pupilPath(ctx, gx, gy, pupilR, t);
-    if (d.pupil.id === 'ring') {
-      ctx.strokeStyle = g; ctx.lineWidth = pupilR * 0.42; ctx.stroke();
-      ctx.fillStyle = col(A, 0.2, 0.6); ctx.beginPath(); ctx.arc(gx, gy, pupilR * 0.5, 0, TAU); ctx.fill();
-    } else ctx.fill();
-    // soft bloom
-    g = ctx.createRadialGradient(gx, gy, 0, gx, gy, pupilR * 2.4);
-    g.addColorStop(0, col(lift(A, 0.5), 1, 0.25 * light)); g.addColorStop(1, col(A, 1, 0));
-    ctx.globalCompositeOperation = 'lighter';
-    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(gx, gy, pupilR * 2.4, 0, TAU); ctx.fill();
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.globalAlpha = 1;
-    // shine sweep across the newly formed glass
-    if (this.sweep >= 0 && this.sweep <= 1) {
-      const sx = mix(cx - R * 1.6, cx + R * 1.6, ease(this.sweep));
-      const sg = ctx.createLinearGradient(sx - R * 0.35, cy - R, sx + R * 0.35, cy + R);
-      sg.addColorStop(0, 'rgba(255,255,255,0)'); sg.addColorStop(0.5, 'rgba(255,255,255,0.32)'); sg.addColorStop(1, 'rgba(255,255,255,0)');
-      ctx.globalCompositeOperation = 'lighter';
-      ctx.fillStyle = sg; ctx.fillRect(cx - R, cy - R, R * 2, R * 2);
-      ctx.globalCompositeOperation = 'source-over';
-    }
-
-    // lids
-    this.drawLids(ctx, cx, cy, R);
-    ctx.restore();
-
-    // rim
-    ctx.globalAlpha = (this.rv ? clamp(rvB * 1.6) : 1) * rvG;
-    let rimCol = lift(A, 0.35);
-    if (d.has.aurora && rvR > 0.5) rimCol = hslToRgb([(t * 40) % 360, 0.75, 0.68]);
-    ctx.lineWidth = S * 0.006;
-    g = ctx.createLinearGradient(cx - R, cy - R, cx + R, cy + R);
-    g.addColorStop(0, col(rimCol, 1, 0.42 * L.rim));
-    g.addColorStop(0.5, col(rimCol, 1, 0.06 * L.rim));
-    g.addColorStop(1, col(d.has.aurora && rvR > 0.5 ? hslToRgb([(t * 40 + 140) % 360, 0.75, 0.65]) : rimCol, 1, 0.25 * L.rim));
-    ctx.strokeStyle = g; ctx.beginPath(); ctx.arc(cx, cy, R - S * 0.003, 0, TAU); ctx.stroke();
-
-    if ((this.dna.stage || 0) >= 3 && (this.crownK ?? 1) > 0) {
-      ctx.save(); ctx.translate(cx, cy); ctx.globalAlpha = this.crownK ?? 1;
-      HavenDNA.paintCrown(ctx, { dna: this.dna, rx: R, ry: R, t: t * 1000, amount: 1, own: true, tint: () => 'rgba(0,0,0,0)' });
-      ctx.restore();
-    }
-    // glass shine: stays put while the iris moves underneath (sells the marble)
-    this.drawShine(ctx, cx, cy, R);
-    ctx.restore();
-  }
-  pupilPath(ctx, x, y, r, t) {
-    const id = this.dna.pupil.id;
-    ctx.beginPath();
-    if (id === 'tall') ctx.ellipse(x, y, r * 0.62, r * 1.18, 0, 0, TAU);
-    else if (id === 'wide') ctx.ellipse(x, y, r * 1.22, r * 0.66, 0, 0, TAU);
-    else if (id === 'star') {
-      const n = 5, rot = -Math.PI / 2 + t * 0.15;
-      for (let i = 0; i <= n * 2; i++) {
-        const rr = i % 2 ? r * 0.55 : r * 1.25, a = rot + (i / (n * 2)) * TAU;
-        i ? ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr) : ctx.moveTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
-      }
-      ctx.closePath();
-    } else if (id === 'crescent') {
-      ctx.arc(x, y, r * 1.1, 0.25 * Math.PI, 1.75 * Math.PI, false);
-      ctx.arc(x + r * 0.55, y, r * 0.8, 1.6 * Math.PI, 0.4 * Math.PI, true);
-      ctx.closePath();
-    } else if (id === 'heart') {
-      const s = r * 1.15;
-      ctx.moveTo(x, y + s * 0.85);
-      ctx.bezierCurveTo(x - s * 1.25, y + s * 0.05, x - s * 0.7, y - s * 1.05, x, y - s * 0.4);
-      ctx.bezierCurveTo(x + s * 0.7, y - s * 1.05, x + s * 1.25, y + s * 0.05, x, y + s * 0.85);
-      ctx.closePath();
-    } else ctx.arc(x, y, r, 0, TAU);
-  }
-  drawPattern(ctx, gx, gy, irisR, pupilR, t) {
-    const d = this.dna, P = this.pattern, S = this.canvas.width;
-    const inner = pupilR * 1.15, span = irisR * 0.96 - inner;
-    const spin = t * d.looks.spin;
-    const rvP = this.rvk('pattern');
-    if (rvP <= 0) return;
-    const c1 = col(lift(d.accent2, 0.35), 1, 0.3), c2 = col(lift(d.accent, 0.5), 1, 0.22);
-    ctx.save();
-    ctx.globalCompositeOperation = 'lighter';
-    ctx.lineCap = 'round';
-    const id = d.pattern.id;
-    if (id !== 'rays') ctx.globalAlpha = rvP;
-    if (id === 'rays') {
-      for (let fi = 0; fi < P.length; fi++) {
-        const f = P[fi];
-        const grow = clamp((rvP * 1.4 - fi / P.length * 0.4) / 1);   // fibers draw in around the iris
-        if (grow <= 0) continue;
-        const a = f.a + spin * 0.3, r1 = inner, r2 = inner + span * f.len * grow;
-        ctx.strokeStyle = col(lift(d.accent2, 0.4), 1, 0.3 * f.a2);
-        ctx.lineWidth = S * 0.0035 * f.w;
-        ctx.beginPath();
-        ctx.moveTo(gx + Math.cos(a) * r1, gy + Math.sin(a) * r1);
-        ctx.quadraticCurveTo(gx + Math.cos(a + f.curl) * (r1 + r2) / 2, gy + Math.sin(a + f.curl) * (r1 + r2) / 2,
-          gx + Math.cos(a) * r2, gy + Math.sin(a) * r2);
-        ctx.stroke();
-      }
-    } else if (id === 'rings') {
-      for (const ring of P) {
-        ctx.setLineDash([S * 0.004 * ring.dash, S * 0.004 * ring.gap]);
-        ctx.lineDashOffset = ring.off + t * 6 * d.looks.spin * 10;
-        ctx.strokeStyle = c1; ctx.lineWidth = S * 0.004 * ring.w;
-        ctx.beginPath(); ctx.arc(gx, gy, inner + span * ring.at, 0, TAU); ctx.stroke();
-      }
-      ctx.setLineDash([]);
-    } else if (id === 'speckle') {
-      for (const s of P) {
-        const rr = inner + span * s.at, a = s.a + spin * 0.2;
-        ctx.fillStyle = col(lift(d.accent2, 0.45), 1, 0.4 * s.a2);
-        ctx.beginPath(); ctx.arc(gx + Math.cos(a) * rr, gy + Math.sin(a) * rr, S * 0.004 * s.s, 0, TAU); ctx.fill();
-      }
-    } else if (id === 'swirl') {
-      for (const arm of P) {
-        ctx.strokeStyle = c1; ctx.lineWidth = S * 0.004 * arm.w;
-        ctx.beginPath();
-        for (let i = 0; i <= 24; i++) {
-          const u = i / 24, rr = inner + span * u, a = arm.a + spin + u * arm.twist;
-          i ? ctx.lineTo(gx + Math.cos(a) * rr, gy + Math.sin(a) * rr) : ctx.moveTo(gx + Math.cos(a) * rr, gy + Math.sin(a) * rr);
-        }
-        ctx.stroke();
-      }
-    } else if (id === 'petal') {
-      const p = P[0];
-      for (let L = 0; L < p.layers; L++) {
-        const base = inner + span * (0.45 + L * 0.28);
-        ctx.strokeStyle = L % 2 ? c2 : c1; ctx.lineWidth = S * 0.005;
-        ctx.beginPath();
-        for (let i = 0; i <= 96; i++) {
-          const a = (i / 96) * TAU, rr = base * (1 - p.depth * 0.5 + p.depth * 0.5 * Math.cos(a * p.n + spin * 2 + L));
-          i ? ctx.lineTo(gx + Math.cos(a) * rr, gy + Math.sin(a) * rr) : ctx.moveTo(gx + Math.cos(a) * rr, gy + Math.sin(a) * rr);
-        }
-        ctx.stroke();
-      }
-    } else if (id === 'cells') {
-      ctx.strokeStyle = c1; ctx.lineWidth = S * 0.003;
-      for (const c of P) {
-        const rr = inner + span * c.at, a = c.a + spin * 0.2;
-        const x = gx + Math.cos(a) * rr, y = gy + Math.sin(a) * rr, s = irisR * c.s;
-        ctx.beginPath();
-        for (let i = 0; i <= 6; i++) { const q = c.rot + (i / 6) * TAU; i ? ctx.lineTo(x + Math.cos(q) * s, y + Math.sin(q) * s) : ctx.moveTo(x + Math.cos(q) * s, y + Math.sin(q) * s); }
-        ctx.stroke();
-      }
-    }
-    ctx.restore();
-  }
-  drawLids(ctx, cx, cy, R) {
-    const d = this.dna;
-    const blink = this.blink || 0;
-    const lk = this.lidK ?? 1;
-    const rest = clamp(d.lidRest + this.mood.squint * 0.3 - this.mood.wide * d.lidRest, 0, 0.6) * lk;
-    // look-down drops the top lid a little, like a real gaze would
-    const follow = clamp(this.gaze.y * 0.08, -0.05, 0.08);
-    const top = mix(rest + follow, 1.04, blink);               // 0 = fully open, 1 = closed at middle
-    const bottom = mix((0.04 + this.mood.squint * 0.12) * lk, 0.98, blink);
-    const tilt = d.lidTilt * (1 - blink);
-    const edgeTop = cy - R + top * R * 1.04;
-    const edgeBot = cy + R - bottom * R * 0.98;
-    const lidFill = col(d.accent, 0.035, 1);
-    const lineCol = col(lift(d.accent, 0.3), 1, 0.18);
-    // top lid
-    ctx.save();
-    ctx.translate(cx, edgeTop); ctx.rotate(tilt); ctx.translate(-cx, -edgeTop);
-    ctx.beginPath();
-    ctx.moveTo(cx - R * 1.6, cy - R * 2);
-    ctx.lineTo(cx - R * 1.6, edgeTop - R * 0.1);
-    ctx.quadraticCurveTo(cx, edgeTop + R * 0.32 * (1 - blink * 0.8), cx + R * 1.6, edgeTop - R * 0.1);
-    ctx.lineTo(cx + R * 1.6, cy - R * 2);
-    ctx.closePath();
-    ctx.fillStyle = lidFill; ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(cx - R * 1.6, edgeTop - R * 0.1);
-    ctx.quadraticCurveTo(cx, edgeTop + R * 0.32 * (1 - blink * 0.8), cx + R * 1.6, edgeTop - R * 0.1);
-    ctx.strokeStyle = lineCol; ctx.lineWidth = R * 0.014; ctx.stroke();
-    ctx.restore();
-    // bottom lid
-    ctx.beginPath();
-    ctx.moveTo(cx - R * 1.6, cy + R * 2);
-    ctx.lineTo(cx - R * 1.6, edgeBot + R * 0.1);
-    ctx.quadraticCurveTo(cx, edgeBot - R * 0.2, cx + R * 1.6, edgeBot + R * 0.1);
-    ctx.lineTo(cx + R * 1.6, cy + R * 2);
-    ctx.closePath();
-    ctx.fillStyle = lidFill; ctx.fill();
-  }
-  drawShine(ctx, cx, cy, R) {
-    const d = this.dna, a = d.looks.shineAngle;
-    const sx = cx + Math.cos(a) * R * 0.52, sy = cy + Math.sin(a) * R * 0.52;
-    ctx.save();
-    ctx.globalCompositeOperation = 'lighter';
-    const id = d.shine.id;
-    const soft = (x, y, rx, ry, rot, alpha) => {
-      ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.scale(1, ry / rx);
-      const g = ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
-      g.addColorStop(0, `rgba(255,255,255,${alpha})`); g.addColorStop(0.55, `rgba(255,255,255,${alpha * 0.35})`); g.addColorStop(1, 'rgba(255,255,255,0)');
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, rx, 0, TAU); ctx.fill(); ctx.restore();
-    };
-    if (id === 'oval') soft(sx, sy, R * 0.16, R * 0.07, a + Math.PI / 2 + 0.4, 0.55);
-    else if (id === 'twin') { soft(sx, sy, R * 0.1, R * 0.06, 0.6, 0.6); soft(sx + R * 0.14, sy + R * 0.09, R * 0.045, R * 0.035, 0, 0.5); }
-    else if (id === 'window') {
-      ctx.save(); ctx.translate(sx, sy); ctx.rotate(-0.25);
-      ctx.fillStyle = 'rgba(255,255,255,0.22)';
-      const w = R * 0.1, h = R * 0.12, gap = R * 0.025;
-      for (const [ox, oy] of [[-1, -1], [0, -1], [-1, 0], [0, 0]]) ctx.fillRect(ox * (w + gap) + gap / 2, oy * (h + gap) + gap / 2, w, h);
-      ctx.restore();
-    } else if (id === 'crescent') {
-      ctx.strokeStyle = 'rgba(255,255,255,0.28)'; ctx.lineWidth = R * 0.05; ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.arc(cx, cy, R * 0.82, Math.PI * 1.08, Math.PI * 1.42); ctx.stroke();
-    }
-    // a faint reflected window on the lower glass
-    soft(cx + R * 0.35, cy + R * 0.55, R * 0.22, R * 0.05, -0.5, 0.06);
-    ctx.restore();
+    if (!window.HavenRender) return;
+    const D = window.HavenDNA, mine = D && D.dna && D.dna();
+    const d = mine && mine.seed === this.dna.seed ? mine : this.dna;     // this phone's eye: draw its grown self
+    const blink = this.blink || 0, lk = this.lidK ?? 1;
+    // lids as the home screen holds them: resting (DNA) + mood + a blink; none at all while it forms
+    const rest = clamp(0.1 + (D ? D.lid(d) : 0) + this.mood.squint * 0.45 - this.mood.wide * 0.25, 0, 0.8) * lk;
+    const follow = clamp(this.gaze.y * 0.1, -0.05, 0.1) * lk;
+    const upper = clamp(mix(rest + follow, 1, blink)), lower = clamp(mix((0.02 + this.mood.squint * 0.18) * lk, 1, blink));
+    // the faint idle tremble every eye has
+    const jt = t * d.motion.jitterRate, j = d.motion.jitter * 3;
+    const jx = (Math.sin(jt * 2.1) + Math.sin(jt * 3.7 + 1.3) * 0.5) * j, jy = (Math.sin(jt * 2.9 + 0.4) + Math.sin(jt * 4.3) * 0.5) * j;
+    const look = D ? D.looks(d) : { pupil: 1 };
+    const rv = this.rv ? (k) => clamp(this.rv[k]) : null;
+    HavenRender.paintEye(ctx, {
+      dna: d, cx: S / 2, cy: S / 2, size: S * 0.36,
+      gaze: { x: this.gaze.x + jx, y: this.gaze.y + jy },
+      lids: { upper, lower },
+      pupilScale: look.pupil * this.pupil,
+      t: t * 1000, light: 1, breathing: Math.sin((t * TAU) / 4.6),
+      reveal: rv ? { body: rv('body'), iris: rv('iris'), pupil: rv('pupil'), pattern: rv('pattern'), glass: rv('glass'), rare: rv('rare') } : null,
+      sweep: this.sweep,
+      haloReach: 1.3                                                // its canvas is only so big
+    });
   }
 }
 
@@ -752,9 +451,8 @@ const Awaken = (() => {
   function flyHome() {
     document.getElementById('birth').classList.remove('open'); cardEye = null;
     actions.classList.remove('show'); nameEl.style.opacity = 0; meta.style.opacity = 0; hint.style.opacity = 0;
-    const home = window.EYES_HOME_TARGET ? window.EYES_HOME_TARGET() : { x: innerWidth * 0.5, y: innerHeight * 0.49, r: Math.min(innerWidth * 0.235, 101, innerHeight * 0.125) };
-    const s = home.r * dpr / (off.width * 0.36);
-    fly = { x: home.x * dpr, y: home.y * dpr, s };
+    const s = Math.min(innerWidth * 0.235, 101, innerHeight * 0.125) * dpr / (off.width * 0.36);
+    fly = { x: innerWidth * 0.5 * dpr, y: innerHeight * 0.49 * dpr, s };
     box.style.background = 'transparent';
     if (eye) { eye.follow = null; eye.reactUntil = Infinity; eye.setTarget(0, 0); eye.blinkNow(); }
     setPhase('home');
@@ -1315,6 +1013,6 @@ function maybeEvolve() {
   if (g && g.pending) Awaken.evolve(HavenDNA.takePending());
 }
 addEventListener('haven:greet', () => setTimeout(maybeEvolve, 700));
-const boot = () => { if (!HavenDNA.has()) { if (!window.EYES_HOLD_BIRTH) Awaken.start(); } else setTimeout(maybeEvolve, 1200); };
+const boot = () => { if (!HavenDNA.has()) { if (!window.EYES_HOLD_BIRTH) Awaken.start(); } else setTimeout(maybeEvolve, 1200); };   // EYES for iPhone starts the birth itself
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();
