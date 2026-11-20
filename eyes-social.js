@@ -28,7 +28,7 @@
   // ---------- sheets ----------
   let sheet = null, sheetEyes = [], raf = 0, stack = [];
   function openSheet(title, render, opts = {}) {
-    if (sheet && !opts.push) closeSheet(true);
+    if (sheet && !opts.push && !opts.preserveStack) closeSheet(true);
     if (sheet && opts.push) stack.push(sheet.dataset.view);
     if (!sheet) {
       sheet = document.createElement('section'); sheet.id = 'eyesSheet'; sheet.setAttribute('role', 'dialog');
@@ -144,7 +144,7 @@
   const inviteText = (code) => `Eye contact? Open EYES → The Optic → Friends → I have an invite, and paste this:\n${code}`;
   function shareInvite(code) { if (navigator.share) navigator.share({ text: inviteText(code) }).catch(() => {}); else navigator.clipboard && navigator.clipboard.writeText(inviteText(code)).then(() => caption('Invite copied: send it to them'), () => {}); }
 
-  function friendDetail(f) {
+  function friendDetail(f, refreshing) {
     views['friend:' + (f.code || 'native')] = () => friendDetail(f);
     openSheet(f.native ? 'Your first Eye Contact' : nameOf(f), (b) => {
       const mine = HavenDNA.dna(), d = f.profile && HavenDNA.friendDNA(f.profile);
@@ -167,6 +167,10 @@
         b.insertAdjacentHTML('beforeend', `<div class="es-missed"><b>While you were away</b>${f.missed.slice().reverse().map((m) => `<div>${esc(m.k)} · ${esc(ago(m.t))}</div>`).join('')}</div>`);
         F().clearMissed(f);
       }
+      if (!d && !f.native) {
+        b.insertAdjacentHTML('beforeend', '<p class="es-note">Your friend is connected, but their Eye has not introduced itself yet. Keep EYES open on both phones for a moment.</p><div class="es-row"><button type="button" id="esRefreshProfile">Ask their Eye to try again</button></div>');
+        $('esRefreshProfile').onclick = () => { F().refreshProfile(f); caption('Asking their Eye to introduce itself…'); };
+      }
       if (f.native) {
         b.insertAdjacentHTML('beforeend', '<div class="es-row"><button type="button" id="esNativeManage">Manage this link</button></div>');
         $('esNativeManage').onclick = () => { closeSheet(); const o = $('linkOpen'); if (o) { o.dataset.eyesPass = '1'; o.click(); } };
@@ -176,7 +180,8 @@
         const rm = $('esRemove'); rm.onclick = () => { if (rm.dataset.sure) { F().remove(f); back(); return; } rm.dataset.sure = 1; rm.textContent = 'Tap again to remove'; setTimeout(() => { rm.dataset.sure = ''; rm.textContent = 'Remove friend'; }, 3000); };
       }
       b.querySelectorAll('[data-sig]').forEach((btn) => { btn.onclick = () => sendFrom(btn); });
-    }, { view: 'friend:' + (f.code || 'native'), push: true });
+    }, { view: 'friend:' + (f.code || 'native'), push: !refreshing, preserveStack: !!refreshing });
+    if (!refreshing && !f.native && !f.profile) F().refreshProfile(f);
   }
 
   // ---------- notifications + connections ----------
@@ -308,7 +313,11 @@
     Fr.on('incoming', (f, kind) => { visit(f); Haven.receive({ type: 'havenLink', event: 'incoming', kind, _eyes: 1 }); if (sheet && sheet.dataset.view === 'friends') views.friends(); });
     Fr.on('outgoing', (f, kind) => { visit(f); Haven.receive({ type: 'havenLink', event: 'outgoing', kind, _eyes: 1 }); });
     Fr.on('paired', (f) => { caption('Eye contact made'); react('link-hello'); if (sheet) views.friends(); });
-    Fr.on('profile', (f, first) => { if (first) { visit(f, 6000); react('link-hello'); caption(`${f.profile.name || 'Their Eye'} is looking back`); } if (sheet && sheet.dataset.view === 'friends') views.friends(); });
+    Fr.on('profile', (f, first) => {
+      if (first) { visit(f, 6000); react('link-hello'); caption(`${f.profile.name || 'Their Eye'} is looking back`); }
+      if (sheet && sheet.dataset.view === 'friends') views.friends();
+      else if (sheet && sheet.dataset.view === 'friend:' + (f.code || 'native')) friendDetail(f, true);
+    });
     Fr.on('here', (f) => { if (document.visibilityState === 'visible' && f.profile && !(sheet)) { visit(f, 5000); react('peek'); caption(`${nameOf(f)} is here`, 3000); } });
     Fr.on('missed', () => setTimeout(awayReport, 900));
     Fr.on('change', () => { if (sheet && sheet.dataset.view === 'friends') { clearTimeout(boot.t); boot.t = setTimeout(() => sheet && sheet.dataset.view === 'friends' && views.friends(), 300); } });
