@@ -542,18 +542,44 @@
         <p class="fine">EYES by FRAY, INC.</p>
       </div>
     </section>
-    <section id="install" class="eyes-screen" hidden>
+    <section id="install" class="eyes-screen eyes-install" aria-label="How to add EYES to your iPhone Home Screen" hidden>
       <div class="inner">
         <svg class="eyemark" viewBox="0 0 120 70" aria-hidden="true"><path d="M4 35C24 6 96 6 116 35C96 64 24 64 4 35Z"/><circle cx="60" cy="35" r="16"/><circle class="p" cx="60" cy="35" r="5"/></svg>
+        <p class="install-kicker">GIVE YOUR EYE A HOME</p>
         <h1>EYES</h1>
-        <p class="lead">Put EYES on your Home Screen first. Your Eye is born there and lives there.</p>
-        <ol class="steps">
-          <li>Tap <b>Share</b> <svg class="share" viewBox="0 0 20 24" aria-hidden="true"><path d="M10 1V15M5 6L10 1L15 6M4 10H2V23H18V10H16"/></svg> at the bottom of Safari</li>
-          <li>Choose <b>Add to Home Screen</b></li>
-          <li>Open <b>EYES</b> from your Home Screen</li>
+        <p class="lead">Make EYES its own little app on your iPhone.</p>
+        <p class="install-subtitle">Follow these steps in Safari. No App Store needed.</p>
+        <ol class="install-guide">
+          <li class="install-step">
+            <span class="install-number" aria-hidden="true">01</span>
+            <span class="install-copy"><strong>Open EYES in Safari</strong><span>If you opened this link inside Messages, Instagram, or another app, choose <b>Open in Safari</b> first.</span></span>
+          </li>
+          <li class="install-step">
+            <span class="install-number" aria-hidden="true">02</span>
+            <span class="install-copy"><strong>Tap Share <svg class="share" viewBox="0 0 20 24" aria-label="square with arrow pointing up" role="img"><path d="M10 1V15M5 6L10 1L15 6M4 10H2V23H18V10H16"/></svg></strong><span>Find the square-with-arrow icon in Safari. If you see the page menu instead, open it and tap <b>Share</b>.</span></span>
+          </li>
+          <li class="install-step">
+            <span class="install-number" aria-hidden="true">03</span>
+            <span class="install-copy"><strong>Tap Add to Home Screen</strong><span>Scroll down through the Share menu until you see <b>Add to Home Screen</b>.</span></span>
+          </li>
+          <li class="install-step">
+            <span class="install-number" aria-hidden="true">04</span>
+            <span class="install-copy"><strong>Tap Add</strong><span>Leave <b>Open as Web App</b> turned on if shown, then tap <b>Add</b> in the top corner.</span></span>
+          </li>
         </ol>
-        <p class="fine">Waking it here in Safari would keep it in Safari, apart from the Home Screen app.</p>
-        <button type="button" class="link" id="installAnyway">Wake it in the browser anyway</button>
+        <div class="install-finish">
+          <img src="icons/apple-touch-icon.png" width="40" height="40" alt="" />
+          <span><strong>You're done!</strong><span>Open the new <b>EYES</b> icon on your Home Screen, then tap <b>Wake your Eye</b>.</span></span>
+        </div>
+        <details class="install-help">
+          <summary>Can't find Add to Home Screen?</summary>
+          <p>In Safari, scroll to the bottom of the Share menu and tap <b>Edit Actions</b> to add it. If you're in another app's browser, copy this link and open it in Safari.</p>
+          <button type="button" id="installCopyLink">Copy EYES website link</button>
+          <p id="installCopyStatus" aria-live="polite"></p>
+        </details>
+        <p class="fine">EYES lives separately in the Home Screen app. Waking an Eye in Safari may not transfer it there.</p>
+        <p id="installExistingEye" class="fine install-existing" hidden>Already woke an Eye in Safari? Choose “Continue in Safari” below and save a Keepsake code in The Optic before moving.</p>
+        <button type="button" class="link" id="installAnyway">Continue in Safari instead</button>
       </div>
     </section>
     <script src="eyes-web-shim.js"></script>
