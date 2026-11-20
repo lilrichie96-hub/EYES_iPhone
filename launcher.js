@@ -220,14 +220,17 @@
     draw(now());
   }
   function setMotion(value) {
-    motion = ['auto', 'on', 'off'].includes(value) ? value : 'auto';
+    motion = ['auto', 'on', 'gentle', 'off'].includes(value) ? value : 'auto';
     save('haven.fresh.motion', motion);
     $('motion').value = motion;
     syncMotion();
   }
   function syncMotion() {
-    const on = motion !== 'off' && (motion !== 'auto' || systemMotion);
+    // Only Off stops him. Reduced motion (Auto) or Gentle keeps him alive, just calmer.
+    const on = motion !== 'off',
+      gentle = motion === 'gentle' || (motion === 'auto' && !systemMotion);
     document.documentElement.dataset.motion = on ? 'on' : 'off';
+    core.setGentle(gentle);
     core.setMotion(on, now());
     stopLoop();
     raf = 0;

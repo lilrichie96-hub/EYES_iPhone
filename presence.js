@@ -25,6 +25,8 @@
     'look-around': 12, firefly: 12, stretch: 12, yawn: 12, sigh: 12, dream: 8
   });
   const priorityOf = (name) => PRIORITY[name] || 35;
+  // Too big or too quick for someone who asked their phone for less motion.
+  const GENTLE_SKIP = new Set(['look-around', 'firefly', 'startle']);
   const colors = {
     idle: [111, 193, 202],
     night: [87, 136, 164],
@@ -67,6 +69,9 @@
         media: { playing: false }
       };
       this.motion = true;
+      // Gentle: the phone asks for reduced motion. He still blinks, breathes and looks around,
+      // but slowly: no darting glances, no bouncing, no big personality acts.
+      this.gentle = false;
       this.hidden = false;
       this.mode = 'idle';
       this.desired = 'idle';
@@ -133,6 +138,15 @@
         lift: 0,
         energy: next === 'charge' ? 1 : next === 'alert' ? 1.7 : this.state.charging ? 0.6 : 0
       };
+    }
+    setGentle(on) {
+      on = Boolean(on);
+      if (this.gentle === on) return;
+      this.gentle = on;
+      if (on && this.reaction && GENTLE_SKIP.has(this.reaction.name)) {
+        this.reaction = null;
+        this.blendFrom = null;
+      }
     }
     setMotion(on, t) {
       if (this.motion === on) return;
@@ -230,6 +244,7 @@
     }
     aim(x, y, t, duration = 230) {
       if (!this.motion) return;
+      if (this.gentle) duration = Math.max(420, duration * 2.4);
       this.gazeKind = 'smooth';
       this.gazeFrom = { ...this.gaze };
       this.gazeTarget = { x: clamp(x, -1, 1), y: clamp(y, -1, 1) };
@@ -262,8 +277,8 @@
       this.gazeFrom = { ...this.gaze };
       this.gazeTarget = { x: nx, y: ny };
       this.gazeAt = t;
-      this.gazeDuration = same ? 270 : 190;
-      this.nextGaze = t + 1450;
+      this.gazeDuration = this.gentle ? (same ? 650 : 520) : same ? 270 : 190;
+      this.nextGaze = t + (this.gentle ? 2200 : 1450);
       if (!same && !recently) {
         this.react('inspect', t, false, { x: nx, y: ny });
         this.attentionEvents.push({ kind: 'inspect', at: t, vector: { x: nx, y: ny }, target });
@@ -345,8 +360,8 @@
         const slow = this.state.battery <= 20 || this.state.hour >= 21 || this.state.hour < 6;
         // Mostly glance between nearby points, sometimes look far away, sometimes come back to you.
         const home = this.gazes % 5 === 0,
-          far = !home && this.random() < 0.15 + 0.3 * this.mood.curiosity;
-        const reach = far ? 1 : 0.55;
+          far = !home && !this.gentle && this.random() < 0.15 + 0.3 * this.mood.curiosity;
+        const reach = this.gentle ? 0.4 : far ? 1 : 0.55;
         this.gazeTarget = home
           ? { x: (this.random() - 0.5) * 0.12, y: (this.random() - 0.5) * 0.1 }
           : {
@@ -355,7 +370,11 @@
             };
         this.gazeAt = t;
         const jump = Math.hypot(this.gazeTarget.x - this.gaze.x, this.gazeTarget.y - this.gaze.y);
-        if (slow && this.random() < 0.45) {
+        if (this.gentle) {
+          // Drifts to the next spot instead of snapping there.
+          this.gazeKind = 'smooth';
+          this.gazeDuration = 1300 + jump * 1400;
+        } else if (slow && this.random() < 0.45) {
           this.gazeKind = 'smooth';
           this.gazeDuration = 2400;
         } else {
@@ -363,12 +382,12 @@
           this.gazeDuration = (95 + jump * 70) * (typeof HavenDNA !== 'undefined' ? HavenDNA.motion().snap : 1);
         }
         // Big eye movements often carry a blink with them.
-        if (jump > 0.6 && this.random() < 0.3 && t - this.blink.at > 1400) this.startBlink(t + 20);
+        if (!this.gentle && jump > 0.6 && this.random() < 0.3 && t - this.blink.at > 1400) this.startBlink(t + 20);
         // Curious: glances more often. Sleepy: lingers.
         const dnaMotion = typeof HavenDNA !== 'undefined' ? HavenDNA.motion() : null;
         const pace =
           (1.35 - 0.7 * this.mood.curiosity) * (1 + 0.5 * this.mood.sleepiness) * (dnaMotion ? dnaMotion.gazePace : 1);
-        this.nextGaze = t + ((slow ? 3600 : 1500) + this.random() * (slow ? 3000 : 2600)) * pace;
+        this.nextGaze = t + ((slow ? 3600 : 1500) + this.random() * (slow ? 3000 : 2600)) * pace * (this.gentle ? 1.7 : 1);
       }
       const g = clamp((t - this.gazeAt) / Math.max(1, this.gazeDuration));
       // Idle saccades snap and overshoot a hair, like a real eye; directed looks stay smooth.
@@ -448,6 +467,7 @@
         this.blendFrom = null;
         return false;
       }
+      if (this.gentle && GENTLE_SKIP.has(name)) return false;
       const priority = priorityOf(name) + (important ? 1 : 0);
       // Idle habits never claim gaze or body during a drag. Higher-priority gestures,
       // media controls, and real alerts are always allowed to take over.
@@ -459,7 +479,7 @@
         if (current.name === name && priority < 70 && t - current.at < 280) return false;
       }
       const previousPose = this.pose(t);
-      const duration =
+      const baseDuration =
         {
           touch: 950,
           notification: important ? 1500 : 1000,
@@ -511,6 +531,7 @@
           stir: 1300,
           dream: 800
         }[name] || 1100;
+      const duration = this.gentle ? Math.round(baseDuration * 1.35) : baseDuration;
       let variant = 0;
       if (name === 'pet') {
         this.petCount = t - this.lastPetAt < 18000 ? this.petCount + 1 : 0;
@@ -627,14 +648,14 @@
         m.fx = m.x;
         m.fy = m.y;
         const a = this.random() * Math.PI * 2,
-          r = 0.015 + this.random() * 0.022,
+          r = (0.015 + this.random() * 0.022) * (this.gentle ? 0.45 : 1),
           d = this.drowsy();
         m.tx = Math.cos(a) * r;
         m.ty = Math.sin(a) * r * 0.8;
         m.at = t;
-        m.next = t + (d ? 1800 : 950) + this.random() * (d ? 2600 : 1600);
+        m.next = t + ((d ? 1800 : 950) + this.random() * (d ? 2600 : 1600)) * (this.gentle ? 1.8 : 1);
       }
-      const u = ease((t - m.at) / 38);
+      const u = ease((t - m.at) / (this.gentle ? 180 : 38));
       m.x = mix(m.fx, m.tx, u);
       m.y = mix(m.fy, m.ty, u);
     }
@@ -1197,7 +1218,7 @@
       // During a choreographed gaze lead-in, retain the previous pose rather
       // than snapping to neutral before the new reaction starts.
       if (this.blendFrom && this.reaction && t < this.reaction.at)
-        return { ...this.blendFrom, name: 'anticipating' };
+        return this.soften({ ...this.blendFrom, name: 'anticipating' });
       // Crossfade on an interruption, so the body doesn't snap to its new pose.
       if (this.blendFrom && this.activeReaction(t)) {
         const age = t - this.reaction.at,
@@ -1207,7 +1228,18 @@
             p[key] = mix(this.blendFrom[key], p[key], k);
         } else this.blendFrom = null;
       }
-      return p;
+      return this.soften(p);
+    }
+    // Gentle keeps every pose but at about a third of the size: a lean, not a bounce.
+    soften(p) {
+      if (!this.gentle) return p;
+      const k = 0.35;
+      return {
+        ...p,
+        x: p.x * k, y: p.y * k, tilt: p.tilt * k,
+        sx: 1 + (p.sx - 1) * k, sy: 1 + (p.sy - 1) * k,
+        focus: 1 + (p.focus - 1) * 0.6, glow: 1 + (p.glow - 1) * 0.6
+      };
     }
     // Small, coordinated changes to the same luminous material, not pasted-on effects.
     material(t) {
