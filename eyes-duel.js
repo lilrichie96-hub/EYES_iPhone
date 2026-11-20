@@ -22,6 +22,9 @@
    Honesty: a challenge says "sent" only when the relay took it, the duel starts only on a real 'yes', an
    opponent's move is only ever shown after both moves are in, and silence is reported as silence.
 
+   Sound: synthesized in code (no files), only inside a duel and as one soft chirp when a challenge arrives. On by
+   default; the speaker button in the duel's header mutes it and is remembered (eyes.duel.sound). Never on the home screen.
+
    Phase 2 hooks (not built): EyesDuel.on('end', fn) gets {friend, result, rounds, mySpecial, theirSpecial};
    HOOKS.rematch / HOOKS.history are left null on purpose. */
 'use strict';
@@ -157,6 +160,7 @@
   function challenge(f) {
     if (!f || S) return false;
     if (!canDuel(f)) return false;
+    Sfx.unlock();
     const fromContact = !!(root.EyesContact && EyesContact.isOpen());
     S = newSession(f, 'a', rid(10));
     S.returnTo = fromContact ? f.code : null;
@@ -166,7 +170,7 @@
     send(f, { o: 'ask', id: S.id, sd: S.sdMine, ar: S.wMine, nm: myName().slice(0, 16) }).then((ok) => {
       if (!S || S.phase !== 'asking') return;
       if (!ok) { Scene.askFailed(); return; }
-      Scene.askSent();
+      Scene.askSent(); Sfx.play('look');
       S.askT = later(() => {
         if (!S || S.phase !== 'asking') return;
         send(S.f, { o: 'cancel', id: S.id });
@@ -228,6 +232,7 @@
     hideCall();
     call = { code: f.code, id: d.id, d, f, t, until: t + ASK_MS };
     Call.show(call);
+    Sfx.play('look');
     call.timer = setTimeout(() => { if (call && call.id === d.id) hideCall(); }, Math.max(1000, call.until - Date.now()));
   }
   function hideCall(note) { if (!call) return; clearTimeout(call.timer); Call.hide(note); call = null; }
@@ -238,6 +243,7 @@
   }
   function acceptCall() {
     if (!call || S) return;
+    Sfx.unlock();
     const c = call; hideCall();
     if (Date.now() > c.until) { flash('That challenge already faded.'); return; }
     const fromContact = !!(root.EyesContact && EyesContact.isOpen());
@@ -344,7 +350,7 @@
   // leaving EYES mid-duel: when it comes back after a while, that duel is over
   let hiddenAt = 0;
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') { hiddenAt = Date.now(); return; }
+    if (document.visibilityState === 'hidden') { hiddenAt = Date.now(); Sfx.sleep(); return; }
     const away = hiddenAt ? Date.now() - hiddenAt : 0; hiddenAt = 0;
     if (call && Date.now() > call.until) hideCall();
     if (!S) return;
@@ -354,6 +360,90 @@
       else if (['intro', 'pick', 'wait', 'play'].includes(S.phase)) { send(S.f, { o: 'bye', id: S.id }); end(null, 'away'); }
     }
   });
+
+  // ======================================================================================
+  // sound: synthesized, nothing loaded. Only inside a duel (and one soft chirp for a challenge), never the home screen.
+  // On by default; the speaker button in the duel remembers your choice (eyes.duel.sound).
+  // ======================================================================================
+  const Sfx = (() => {
+    const KEY = 'eyes.duel.sound';
+    let ac = null, master = null, noiseBuf = null, on = true;
+    try { on = localStorage.getItem(KEY) !== 'off'; } catch (e) {}
+    const played = [];                                   // for tests
+    function ensure() {
+      if (!on) return null;
+      try {
+        if (!ac) {
+          const AC = root.AudioContext || root.webkitAudioContext; if (!AC) return null;
+          ac = new AC();
+          master = ac.createGain(); master.gain.value = 0.42;
+          const comp = ac.createDynamicsCompressor(); master.connect(comp).connect(ac.destination);
+          noiseBuf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate);
+          const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+        }
+        if (ac.state === 'suspended') ac.resume();
+      } catch (e) { ac = null; }
+      return ac;
+    }
+    // call from a tap so iPhone lets the page make sound
+    function unlock() { if (on) ensure(); }
+    const env = (g, t, a, peak, rel) => { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, peak), t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + rel); };
+    function tone(t, { f0, f1, dur, type = 'sine', peak = 0.3, a = 0.008, vib = 0, vibHz = 0, filter = null }) {
+      const o = ac.createOscillator(), g = ac.createGain(); o.type = type;
+      o.frequency.setValueAtTime(f0, t); if (f1 && f1 !== f0) o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+      let node = o;
+      if (filter) { const fl = ac.createBiquadFilter(); fl.type = filter.type; fl.Q.value = filter.q || 1; fl.frequency.setValueAtTime(filter.f0, t); if (filter.f1) fl.frequency.exponentialRampToValueAtTime(filter.f1, t + dur); node.connect(fl); node = fl; }
+      if (vib) { const l = ac.createOscillator(), lg = ac.createGain(); l.frequency.value = vibHz; lg.gain.value = vib; l.connect(lg).connect(o.frequency); l.start(t); l.stop(t + dur + a + 0.05); }
+      env(g, t, a, peak, dur); node.connect(g).connect(master); o.start(t); o.stop(t + a + dur + 0.05);
+    }
+    function noise(t, dur, type, f0, f1, peak, q = 1) {
+      const s = ac.createBufferSource(); s.buffer = noiseBuf;
+      const f = ac.createBiquadFilter(); f.type = type; f.Q.value = q;
+      f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(f1, t + dur);
+      const g = ac.createGain(); env(g, t, 0.004, peak, dur);
+      s.connect(f).connect(g).connect(master); s.start(t); s.stop(t + dur + 0.05);
+    }
+    const SOUNDS = {
+      // a curious little "hm?": a challenge going out or arriving
+      look: (t) => { tone(t, { f0: 520, f1: 600, dur: 0.12, type: 'triangle', peak: 0.16 }); tone(t + 0.13, { f0: 640, f1: 820, dur: 0.16, type: 'triangle', peak: 0.16 }); },
+      // the two Eyes square up: a low swell, then "Stare!"
+      intro: (t) => { [55, 55.7, 82.5].forEach((hz, i) => tone(t, { f0: hz, f1: hz * 1.5, dur: 1.3, type: i === 2 ? 'triangle' : 'sawtooth', peak: 0.12, a: 0.5, filter: { type: 'lowpass', f0: 160, f1: 1400, q: 5 } })); noise(t + 0.3, 0.6, 'bandpass', 400, 3000, 0.08, 2); },
+      stare: (t) => { tone(t, { f0: 880, dur: 0.5, type: 'triangle', peak: 0.2 }); tone(t, { f0: 1320, dur: 0.6, type: 'sine', peak: 0.12 }); tone(t + 0.06, { f0: 1760, dur: 0.4, type: 'sine', peak: 0.06 }); },
+      lock: (t) => { tone(t, { f0: 1200, f1: 900, dur: 0.05, type: 'triangle', peak: 0.1 }); },
+      // moves
+      glare: (t) => { tone(t, { f0: 1100, f1: 260, dur: 0.22, type: 'sawtooth', peak: 0.3, filter: { type: 'lowpass', f0: 4200, f1: 900, q: 4 } }); tone(t, { f0: 660, f1: 180, dur: 0.18, type: 'triangle', peak: 0.16 }); noise(t, 0.08, 'highpass', 3000, 6000, 0.1); },
+      blink: (t) => { tone(t, { f0: 330, f1: 520, dur: 0.35, type: 'sine', peak: 0.14, a: 0.05 }); tone(t + 0.05, { f0: 660, f1: 990, dur: 0.4, type: 'sine', peak: 0.06, a: 0.08, vib: 8, vibHz: 9 }); },
+      charge: (t) => { tone(t, { f0: 220, f1: 880, dur: 0.75, type: 'triangle', peak: 0.13, a: 0.15, vib: 14, vibHz: 11 }); for (let i = 0; i < 4; i++) tone(t + 0.2 + i * 0.13, { f0: 1500 + i * 260, dur: 0.08, type: 'sine', peak: 0.05 }); },
+      glower: (t) => { tone(t, { f0: 210, f1: 60, dur: 0.5, type: 'sawtooth', peak: 0.24, filter: { type: 'lowpass', f0: 1800, f1: 200, q: 6 } }); tone(t, { f0: 70, f1: 40, dur: 0.5, type: 'sine', peak: 0.3 }); noise(t, 0.3, 'lowpass', 2500, 200, 0.18); },
+      clear: (t) => { tone(t, { f0: 1760, dur: 0.35, type: 'sine', peak: 0.16 }); tone(t, { f0: 2640, dur: 0.25, type: 'sine', peak: 0.07 }); tone(t + 0.04, { f0: 3520, dur: 0.15, type: 'sine', peak: 0.04 }); },
+      flurry: (t) => { for (let i = 0; i < 4; i++) tone(t + i * 0.09, { f0: 1300 + Math.random() * 500, f1: 500, dur: 0.07, type: 'square', peak: 0.1, filter: { type: 'lowpass', f0: 3200, q: 2 } }); },
+      hide: (t) => { tone(t, { f0: 900, f1: 260, dur: 0.16, type: 'sine', peak: 0.14 }); },
+      peek: (t) => { tone(t, { f0: 300, f1: 1100, dur: 0.12, type: 'sine', peak: 0.16 }); tone(t + 0.1, { f0: 1100, f1: 500, dur: 0.12, type: 'triangle', peak: 0.12 }); },
+      doze: (t) => { tone(t, { f0: 520, f1: 240, dur: 1.1, type: 'sine', peak: 0.12, a: 0.1, vib: 10, vibHz: 3 }); },
+      beam: (t) => { tone(t, { f0: 110, f1: 520, dur: 0.75, type: 'sawtooth', peak: 0.22, a: 0.04, filter: { type: 'lowpass', f0: 300, f1: 3500, q: 8 } }); tone(t, { f0: 55, f1: 80, dur: 0.8, type: 'sine', peak: 0.28 }); noise(t + 0.1, 0.6, 'bandpass', 600, 2500, 0.12, 1.5); },
+      heal: (t) => { [660, 880, 1100].forEach((hz, i) => tone(t + i * 0.08, { f0: hz, dur: 0.22, type: 'sine', peak: 0.07 })); },
+      // landing
+      hit: (t) => { tone(t, { f0: 150, f1: 50, dur: 0.18, type: 'sine', peak: 0.32 }); noise(t, 0.07, 'lowpass', 2200, 300, 0.16); },
+      bighit: (t) => { tone(t, { f0: 120, f1: 36, dur: 0.38, type: 'sine', peak: 0.45 }); noise(t, 0.25, 'lowpass', 3000, 120, 0.3); noise(t, 0.05, 'highpass', 3000, 7000, 0.12); },
+      blocked: (t) => { tone(t, { f0: 180, f1: 120, dur: 0.1, type: 'sine', peak: 0.16 }); noise(t, 0.06, 'lowpass', 900, 300, 0.1); },
+      miss: (t) => { noise(t, 0.22, 'bandpass', 3000, 600, 0.1, 3); },
+      sudden: (t) => { tone(t, { f0: 98, dur: 1.4, type: 'triangle', peak: 0.16, a: 0.02 }); tone(t, { f0: 147, dur: 1.2, type: 'sine', peak: 0.1, a: 0.02 }); },
+      // the end
+      win: (t) => { [523, 659, 784, 1047].forEach((hz, i) => tone(t + i * 0.1, { f0: hz, dur: i === 3 ? 0.6 : 0.18, type: 'triangle', peak: 0.16 })); tone(t + 0.3, { f0: 2093, dur: 0.5, type: 'sine', peak: 0.05 }); },
+      lose: (t) => { tone(t, { f0: 392, f1: 370, dur: 0.32, type: 'triangle', peak: 0.14 }); tone(t + 0.36, { f0: 349, f1: 262, dur: 0.7, type: 'triangle', peak: 0.14, vib: 6, vibHz: 6 }); },
+      dizzy: (t) => { tone(t, { f0: 700, f1: 220, dur: 0.9, type: 'sine', peak: 0.13, vib: 40, vibHz: 7 }); },
+      draw: (t) => { tone(t, { f0: 440, f1: 330, dur: 0.5, type: 'triangle', peak: 0.12 }); tone(t + 0.1, { f0: 660, f1: 495, dur: 0.5, type: 'triangle', peak: 0.08 }); }
+    };
+    function play(name, delay = 0) {
+      if (!on || !SOUNDS[name]) return;
+      const a = ensure(); if (!a || a.state === 'closed') return;
+      played.push(name); if (played.length > 200) played.shift();
+      try { SOUNDS[name](a.currentTime + 0.01 + delay); } catch (e) {}
+    }
+    function set(v) { on = !!v; try { localStorage.setItem(KEY, on ? 'on' : 'off'); } catch (e) {} if (on) ensure(); else if (ac) { try { ac.suspend(); } catch (e) {} } }
+    function sleep() { if (ac && ac.state === 'running') { try { ac.suspend(); } catch (e) {} } }
+    return { play, unlock, set, sleep, isOn: () => on, _played: played };
+  })();
 
   // ======================================================================================
   // the incoming challenge card (shows over anything)
@@ -413,7 +503,7 @@
       el.innerHTML = `<div class="ed-world"><canvas class="ed-sky" aria-hidden="true"></canvas><div class="ed-stage"></div><canvas class="ed-fx" aria-hidden="true"></canvas></div>
         <div class="ed-ui">
           <header class="ed-top"><button type="button" class="ed-icon ed-x" aria-label="Bow out"><span aria-hidden="true">×</span></button>
-            <div class="ed-title"><h2>Eye Duel</h2><p class="ed-round"></p></div><span class="ed-icon ed-spacer" aria-hidden="true"></span></header>
+            <div class="ed-title"><h2>Eye Duel</h2><p class="ed-round"></p></div><button type="button" class="ed-icon ed-snd" aria-label="Sound" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="cone" d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path class="w1" d="M15 9.2a4 4 0 0 1 0 5.6"/><path class="w2" d="M17.6 6.8a7.4 7.4 0 0 1 0 10.4"/><path class="x" d="M15.5 9.5l5 5M20.5 9.5l-5 5"/></svg></button></header>
           <div class="ed-tag ed-tag-them" aria-hidden="true"><b></b><span class="ed-hp"></span><span class="ed-pips"></span></div>
           <div class="ed-tag ed-tag-me" aria-hidden="true"><b></b><span class="ed-hp"></span><span class="ed-pips"></span></div>
           <div class="ed-banner" aria-hidden="true"><span></span></div>
@@ -425,6 +515,10 @@
       document.body.appendChild(el);
       world = el.querySelector('.ed-world'); sky = el.querySelector('.ed-sky'); fxc = el.querySelector('.ed-fx'); g = fxc.getContext('2d'); ui = el.querySelector('.ed-ui');
       el.querySelector('.ed-x').onclick = () => back();
+      const snd = el.querySelector('.ed-snd');
+      const showSnd = () => { snd.classList.toggle('off', !Sfx.isOn()); snd.setAttribute('aria-pressed', String(Sfx.isOn())); snd.setAttribute('aria-label', Sfx.isOn() ? 'Sound on. Tap to mute' : 'Sound off. Tap to unmute'); };
+      snd.onclick = () => { Sfx.set(!Sfx.isOn()); showSnd(); if (Sfx.isOn()) Sfx.play('lock'); };
+      showSnd();
       el.querySelector('[data-c=stay]').onclick = () => confirm(false);
       el.querySelector('[data-c=bow]').onclick = () => { confirm(false); surrender(); };
       me = body(true, myDna());
@@ -442,6 +536,7 @@
       stop(); clearInterval(pickTick);
       removeEventListener('resize', resize);
       el.remove(); el = null; fx = []; parts = []; floats = []; me = them = null;
+      setTimeout(() => { if (!el && !Call.isOpen()) Sfx.sleep(); }, 2500);
     }
     const isOpen = () => !!el;
     function wake() { if (!el) return; motion = motionMode(); el.dataset.motion = motion; start(); }
@@ -613,19 +708,20 @@
       them.word = S.wTheirs; me.word = S.wMine;
       them.aGoal = 1; if (them.eye) them.eye.closeK = 0;
       panel().innerHTML = ''; tags(); setRound('Round 1');
-      if (motion === 'off') { say(`${myName()} vs ${S.nmTheirs}. Stare!`); later2(done, 900); return; }
+      if (motion === 'off') { say(`${myName()} vs ${S.nmTheirs}. Stare!`); Sfx.play('stare'); later2(done, 900); return; }
+      Sfx.play('intro');
       // the two Eyes square up: a flash at the rift, each sizes the other up
       [me, them].forEach((b) => { b.sc = 0.82; b.alpha = 0.4; });
       banner('EYE DUEL', 'big');
       later2(() => { lookAt(me, them, 1.5); lookAt(them, me, 1.5); pop(me); pop(them); burst((me.x + them.x) / 2, (me.y + them.y) / 2, [235, 240, 255], 26, 160); shake = Math.max(shake, 5); }, dur(0.35) * 1000);
       later2(() => { personalityPose(me); personalityPose(them); }, dur(0.9) * 1000);
-      later2(() => banner('Stare!', 'go2'), dur(1.5) * 1000);
+      later2(() => { banner('Stare!', 'go2'); Sfx.play('stare'); }, dur(1.5) * 1000);
       later2(done, dur(2.3) * 1000);
     }
     function pick(r) {
       if (!el) return;
       setRound(r >= RULES.SUDDEN ? `Round ${r} · ×1.5` : `Round ${r}`);
-      if (r === RULES.SUDDEN) say('The cosmos grows impatient. Every hit lands harder now.');
+      if (r === RULES.SUDDEN) { say('The cosmos grows impatient. Every hit lands harder now.'); Sfx.play('sudden'); }
       tags();
       const st = meSt(), forced = RULES.legal(st, 'glare') === 'beam';
       const w = S.wMine, arch = RULES.ARCH[w];
@@ -664,6 +760,7 @@
       if (!el) return;
       const nm = m === 'special' ? RULES.SPECIAL[S.wMine] : m === 'beam' ? RULES.SPECIAL[S.wMine] : m[0].toUpperCase() + m.slice(1);
       panel().innerHTML = `<div class="ed-ask"><p class="ed-lead ed-locked"></p><p class="ed-sub">${S.their[S.state.r] ? '' : `Waiting for ${esc(S.nmTheirs)}…`}</p></div>`;
+      if (how === 'tap') Sfx.play('lock');
       panel().querySelector('.ed-locked').textContent = how === 'timeout' ? `${myName()} blinked on its own.` : `${nm}. Locked in.`;
       // your Eye readies itself (theirs gives nothing away)
       if (me.eye && motion !== 'off') { me.eye.pupilV += 1.2; lookAt(me, them, 1.4); }
@@ -682,7 +779,8 @@
       const text = narrate(eMe, eThem, nmMe, nmThem, motion === 'off');
       if (motion === 'off') {
         say(text, true); applyNumbers(D1);
-        [[me, eThem, eMe], [them, eMe, eThem]].forEach(([b, inc]) => { if (inc.dmg > 0 && b.eye) b.eye.blinkNow(); });
+        [eMe, eThem].forEach((e, i) => Sfx.play(MOVE_SFX[e.act] || '', i * 0.05));
+        [[me, eThem, eMe], [them, eMe, eThem]].forEach(([b, inc], i) => { if (inc.dmg > 0 && b.eye) b.eye.blinkNow(); if (inc.dmg > 0) Sfx.play(inc.dmg >= 25 ? 'bighit' : 'hit', 0.35 + i * 0.06); });
         kick(); later2(done, 1700); return;
       }
       const t = dur(1);
@@ -706,7 +804,9 @@
       if (motion === 'off') { me.dhp = D1.me.hp; them.dhp = D1.them.hp; }
       tags();
     }
+    const MOVE_SFX = { glare: 'glare', blink: 'blink', charge: 'charge', glower: 'glower', clear: 'clear', flurry: 'flurry', peek: 'hide', dream: 'doze', beam: 'beam' };
     function windUp(b, e, other) {
+      if (['blink', 'charge', 'peek', 'dream'].includes(e.act)) Sfx.play(MOVE_SFX[e.act], b.mine ? 0 : 0.04);
       if (!b.eye) return;
       const E = b.eye;
       switch (e.act) {
@@ -726,6 +826,8 @@
     }
     function release(b, other, e, inc) {
       const c = b.color, t0 = nowS();
+      if (['glare', 'glower', 'clear', 'flurry', 'beam'].includes(e.act)) Sfx.play(MOVE_SFX[e.act], b.mine ? 0 : 0.03);
+      if (e.act === 'peek' && (e.counter || e.poke)) Sfx.play('peek', dur(0.22));
       switch (e.act) {
         case 'glare': fx.push({ type: 'beam', from: b, to: other, c, t0, travel: dur(0.32), hold: dur(0.35), w: 3.2, core: 1.4 }); break;
         case 'glower': fx.push({ type: 'beam', from: b, to: other, c, t0, travel: dur(0.4), hold: dur(0.55), w: 9, core: 3.2, heavy: true }); break;
@@ -744,9 +846,10 @@
       const peekDelay = e.act === 'peek' ? 0.22 : 0;
       const show = () => {
         if (!el) return;
-        if (e.dodged) { float(target, 'missed', [200, 220, 235]); return; }
+        if (e.dodged) { float(target, 'missed', [200, 220, 235]); Sfx.play('miss'); return; }
         if (e.dmg > 0) {
           const big = e.dmg >= 25;
+          Sfx.play(e.blocked && ownE.act === 'blink' && !e.pierce ? 'blocked' : big ? 'bighit' : 'hit', target.mine ? 0 : 0.03);
           float(target, '−' + e.dmg, big ? [255, 214, 214] : [240, 244, 250], big);
           if (e.hits && e.hits.length > 1) e.hits.forEach((h, i) => later2(() => { recoil(target, attacker, 0.35); burst(target.x, target.y, attacker.color, 5, 90); }, i * 90));
           recoil(target, attacker, big ? 1.4 : 0.8);
@@ -755,10 +858,10 @@
           if (big && motion === 'on') shake = Math.max(shake, e.act === 'beam' ? 9 : 6);
           if (e.blocked && ownE.act === 'blink') float(target, e.pierce ? 'pierced!' : 'blocked', [200, 226, 240], false, 0.6);
           if (e.counter) float(attacker, 'gotcha', [255, 236, 170], false, 0.65);
-        } else if (ownE.act === 'blink' && ['glare', 'glower', 'flurry', 'beam'].includes(e.act)) float(target, 'blocked', [200, 226, 240]);
+        } else if (ownE.act === 'blink' && ['glare', 'glower', 'flurry', 'beam'].includes(e.act)) { float(target, 'blocked', [200, 226, 240]); Sfx.play('blocked'); }
       };
       if (peekDelay) later2(show, dur(peekDelay + 0.18) * 1000); else show();
-      if (ownE.heal > 0) later2(() => { float(target, '+' + ownE.heal, [168, 240, 200]); fx.push({ type: 'heal', b: target, t0: nowS(), dur: dur(1.2) }); }, 260);
+      if (ownE.heal > 0) later2(() => { float(target, '+' + ownE.heal, [168, 240, 200]); Sfx.play('heal'); fx.push({ type: 'heal', b: target, t0: nowS(), dur: dur(1.2) }); }, 260);
       if (ownE.gain > 0) later2(() => float(target, `+${ownE.gain} charge`, [190, 205, 255], false, 0.4), 120);
     }
     function react(b, inc, own, other) {
@@ -829,6 +932,9 @@
       if (winB) proud(winB, loseB);
       if (res === 'none') relaxAll();
       if (motion !== 'off' && (res === 'win' || res === 'loss')) banner(res === 'win' ? 'Victory' : 'Defeat', res);
+      if (res === 'win') Sfx.play('win'); else if (res === 'loss') Sfx.play('lose'); else if (res === 'draw') Sfx.play('draw');
+      if ((res === 'win' || res === 'loss') && (why === 'ko' || why === 'time')) Sfx.play('dizzy', 0.9);
+      if (res === 'draw') Sfx.play('dizzy', 0.6);
       later2(finale, motion === 'off' ? 200 : dur(1.5) * 1000);
       kick();
     }
@@ -1119,6 +1225,7 @@
     slot, challenge, canDuel, RULES, HOOKS,
     on(name, fn) { (listeners[name] = listeners[name] || []).push(fn); },
     isOpen: () => Scene.isOpen(),
-    _debug: { session: () => S, call: () => call, pick: (m) => lock(m, 'tap'), accept: acceptCall, decline, surrender }
+    sound: { isOn: () => Sfx.isOn(), set: (v) => Sfx.set(v) },
+    _debug: { sfx: (n, d) => Sfx.play(n, d), played: () => Sfx._played.slice(), session: () => S, call: () => call, pick: (m) => lock(m, 'tap'), accept: acceptCall, decline, surrender }
   };
 })(window);

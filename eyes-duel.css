@@ -39,6 +39,13 @@ html #eyesDuel .ed-top, html[data-skin] #eyesDuel .ed-top { position: relative; 
 #eyesDuel .ed-icon { width: 44px; height: 44px; flex: none; border-radius: 50%; display: grid; place-items: center; font-size: 26px; line-height: 1;
   color: var(--dim); background: rgba(228, 241, 243, 0.035); border: 1px solid rgba(228, 241, 243, 0.08); }
 #eyesDuel .ed-spacer { visibility: hidden; }
+/* the speaker: muted swaps the sound waves for a small x */
+#eyesDuel .ed-snd svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+#eyesDuel .ed-snd .cone { fill: currentColor; stroke: none; }
+#eyesDuel .ed-snd .x { display: none; }
+#eyesDuel .ed-snd.off { color: var(--faint); }
+#eyesDuel .ed-snd.off .w1, #eyesDuel .ed-snd.off .w2 { display: none; }
+#eyesDuel .ed-snd.off .x { display: inline; }
 #eyesDuel .ed-title { flex: 1; min-width: 0; text-align: center; }
 #eyesDuel .ed-title h2 { margin: 0; font-weight: 400; font-size: 15px; letter-spacing: 0.22em; text-transform: uppercase; }
 #eyesDuel .ed-round { margin: 2px 0 0; min-height: 1.3em; font-size: 12px; letter-spacing: 0.1em; color: var(--faint); }
