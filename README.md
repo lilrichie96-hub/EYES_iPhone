@@ -58,3 +58,5 @@ Once **Settings → Pages → Deploy from a branch → main → /(root)** has be
 https://lilrichie96-hub.github.io/EYES_iPhone/
 
 If that address displays 404, check the repository **Actions** tab for a completed **pages build and deployment** workflow and verify Pages still uses `main` / `/(root)`.
+
+EYES iPhone v1.0.0
