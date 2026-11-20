@@ -1,4 +1,4 @@
-name: Update EYES iPhone 2.0.4
+name: Update EYES iPhone 2.1.0
 
 on:
   push:
@@ -24,25 +24,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download and verify EYES iPhone 2.0.4
+      - name: Download and verify EYES iPhone 2.1.0
         shell: bash
         env:
           EYES_FILE_ID: 17MbpcfA-wwDpCkkgiLX955zXN41lwcAC
-          EYES_SHA256: 94ea5de28b50088561b74950fa79ee003f4701613f82fdd1a42944dd4ac7e795
+          EYES_SHA256: 929882f24ac70687e0f3beaefcfdc5f91e49d0cf4c702a5c24ea2c84817a0d19
         run: |
           python3 - <<'PY'
           import os,hashlib,urllib.request,zipfile,io,pathlib
           url='https://drive.google.com/uc?export=download&id='+os.environ['EYES_FILE_ID']
           with urllib.request.urlopen(url,timeout=45) as resp: b=resp.read()
           if hashlib.sha256(b).hexdigest()!=os.environ['EYES_SHA256']:
-              raise SystemExit('EYES 2.0.4 package SHA-256 mismatch')
+              raise SystemExit('EYES 2.1.0 package SHA-256 mismatch')
           dst=pathlib.Path('/tmp/eyes-iphone-site')
           dst.mkdir()
           with zipfile.ZipFile(io.BytesIO(b)) as z:
-              required={'index.html','sw.js','manifest.webmanifest','eyes-web-shim.js','eyes-web-shell.js','eyes-friends.js','eyes-push.js','eyes-dex.js','eyes-play.js','eyes-social.js','eyes-config.js','eyes-senses.js','eye-render.js','haven-dna.js','awakening.js','icons/icon-192.png','icons/icon-512.png','icons/apple-touch-icon.png','.nojekyll'}
+              required={'eyes-contact.js','eyes-contact.css','index.html','sw.js','manifest.webmanifest','eyes-web-shim.js','eyes-web-shell.js','eyes-friends.js','eyes-push.js','eyes-dex.js','eyes-play.js','eyes-social.js','eyes-config.js','eyes-senses.js','eye-render.js','haven-dna.js','awakening.js','icons/icon-192.png','icons/icon-512.png','icons/apple-touch-icon.png','.nojekyll'}
               names=set(z.namelist())
               if not required.issubset(names):
-                  raise SystemExit('EYES 2.0.4 package missing site components: '+str(required-names))
+                  raise SystemExit('EYES 2.1.0 package missing site components: '+str(required-names))
               for item in z.infolist():
                   path=pathlib.PurePosixPath(item.filename)
                   if path.is_absolute() or '..' in path.parts or item.filename.startswith('.github/'):
@@ -57,17 +57,24 @@ jobs:
                   shutil.copy2(path,target)
           for old in ('eyes-app.js','eyes-boot.js','eyes-link.js'):
               pathlib.Path(old).unlink(missing_ok=True)
-          assert b'eyes-web-2.0.4' in (dst/'sw.js').read_bytes()
+          assert b'eyes-web-2.1.0' in (dst/'sw.js').read_bytes()
           assert b'https://lilrichie96-hub.github.io/EYES_iPhone/' in (dst/'eyes-config.js').read_bytes()
           assert b'eyes.link.v1' in (dst/'eyes-friends.js').read_bytes()
+          assert b'eyes-contact.js' in (dst/'index.html').read_bytes()
+          assert b'eyes-contact.css' in (dst/'index.html').read_bytes()
           assert b'profileSending' in (dst/'eyes-friends.js').read_bytes()
-          assert b'Ask their Eye to try again' in (dst/'eyes-social.js').read_bytes()
+          assert b'Ask their Eye again' in (dst/'eyes-contact.js').read_bytes()
+          assert b'id="installCopyLink"' in (dst/'index.html').read_bytes()
+          assert b'eyes-web-2.1.0' in (dst/'sw.js').read_bytes()
+          assert b'https://lilrichie96-hub.github.io/EYES_iPhone/' in (dst/'eyes-config.js').read_bytes()
+          assert b'profileSending' in (dst/'eyes-friends.js').read_bytes()
+          assert b'EyesContact' in (dst/'eyes-social.js').read_bytes()
           assert b'installCopyLink' in (dst/'eyes-web-shell.js').read_bytes()
           assert b'id="installCopyLink"' in (dst/'index.html').read_bytes()
           assert b'value="gentle"' in (dst/'index.html').read_bytes()
           assert b'setGentle' in (dst/'presence.js').read_bytes()
           assert b'core.setGentle' in (dst/'launcher.js').read_bytes()
-          print('Imported EYES iPhone 2.0.4 Gentle Motion patch, with Eye Contact recovery and tutorial retained')
+          print('Imported EYES iPhone 2.1.0 Living Constellation with profile recovery and Home Screen tutorial preserved')
           PY
       - name: Commit new EYES app to public repository
         shell: bash
@@ -76,7 +83,7 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
           if ! git diff --cached --quiet; then
-            git commit -m 'Publish EYES iPhone 2.0.4 Gentle Motion with profile recovery and install tutorial'
+            git commit -m 'Publish EYES iPhone 2.1.0 Eye Contact 2.0 Living Constellation'
             git push
           fi
       - name: Configure existing GitHub Pages
@@ -89,7 +96,7 @@ jobs:
           import zipfile,io,os,urllib.request,pathlib,hashlib
           url='https://drive.google.com/uc?export=download&id=17MbpcfA-wwDpCkkgiLX955zXN41lwcAC'
           b=urllib.request.urlopen(url,timeout=45).read()
-          assert hashlib.sha256(b).hexdigest()=='94ea5de28b50088561b74950fa79ee003f4701613f82fdd1a42944dd4ac7e795'
+          assert hashlib.sha256(b).hexdigest()=='929882f24ac70687e0f3beaefcfdc5f91e49d0cf4c702a5c24ea2c84817a0d19'
           with zipfile.ZipFile(io.BytesIO(b)) as z:
               z.extractall('/tmp/eyes-publish')
           PY
