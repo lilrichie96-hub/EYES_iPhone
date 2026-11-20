@@ -1,0 +1,40 @@
+name: Snapshot current EYES iPhone website
+on:
+  push:
+    paths:
+      - .github/workflows/package-iphone-site.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create full EYES iPhone 2.0.3 site backup
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import pathlib,zipfile
+          out=pathlib.Path('EYES_iPhone_2.0.3_profile_recovery_site.zip')
+          with zipfile.ZipFile(out,'w',zipfile.ZIP_DEFLATED) as z:
+              for p in sorted(pathlib.Path('.').rglob('*')):
+                  if not p.is_file() or p==out: continue
+                  if any(part in ('.git','.github','cloudflare') for part in p.parts): continue
+                  z.write(p,p.as_posix())
+          with zipfile.ZipFile(out) as z:
+              files=set(z.namelist())
+              assert {'index.html','eyes-friends.js','eyes-social.js','eyes-web-shell.js','sw.js','icons/apple-touch-icon.png','.nojekyll'} <= files
+              assert b'eyes-web-2.0.3' in z.read('sw.js')
+              assert b'Ask their Eye to try again' in z.read('eyes-social.js')
+              assert b'id="installCopyLink"' in z.read('index.html')
+          print('Verified complete EYES 2.0.3 iPhone website snapshot')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: EYES-iPhone-2.0.3-complete-site
+          path: EYES_iPhone_2.0.3_profile_recovery_site.zip
+          if-no-files-found: error
+          retention-days: 30
