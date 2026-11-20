@@ -92,8 +92,10 @@
       this.active = true; const g = ++this.gen; this.setConn('connecting');
       this.listen(g);
       this.hello(true);
+      // Re-announce on reopening: a first introduction can be lost while either phone sleeps.
+      if (this.f.peer) sendProfile(this.f, false);
     }
-    stop() { this.active = false; this.gen++; if (this.abort) { try { this.abort.abort(); } catch (e) {} this.abort = null; } this.setConn('sleeping'); }
+    stop() { this.active = false; this.gen++; clearTimeout(this.profileT); if (this.abort) { try { this.abort.abort(); } catch (e) {} this.abort = null; } this.setConn('sleeping'); }
     setConn(c) { if (this.connection !== c) { this.connection = c; emit('change', this.f); } }
     hello(force) {
       const now = Date.now();
@@ -154,7 +156,7 @@
         }
         return;
       }
-      if (k === 'hello') { save(); emit('change', f); return; }
+      if (k === 'hello') { save(); emit('change', f); sendProfile(f, true); return; }
       if (age > 600000) {                               // too old to play live: "while you were away"
         if (k !== 'resonance') { f.missed.push({ k, t: Number(p.t) }); f.missed = f.missed.slice(-12); save(); emit('missed', f); }
         return;
@@ -181,14 +183,42 @@
 
   // ---------- profiles ----------
   function sendProfile(f, force) {
-    const ch = channels.get(f.code); if (!ch || !f.peer || !root.HavenDNA || !root.HavenDNA.has()) return;
-    const json = JSON.stringify(root.HavenDNA.profile());
+    const ch = channels.get(f.code); if (!ch || !ch.active || !f.peer || !root.HavenDNA || !root.HavenDNA.has()) return;
+    const own = root.HavenDNA.profile(); if (!own) return;
+    const json = JSON.stringify(own);
     if (enc.encode(json).length > 1024) return;
     const now = Date.now();
-    if (!force && f.sentProfile === json && now - (f.sentProfileAt || 0) < 6 * 3600000) return;
-    if (now - ch.lastProfile < 30000) { clearTimeout(ch.profileT); ch.profileT = setTimeout(() => sendProfile(f, force), 31000); return; }
-    ch.lastProfile = now; f.sentProfile = json; f.sentProfileAt = now; save();
-    ch.publish({ ...ch.msg('profile'), p: json }, true);
+    // A profile is not reliably delivered merely because it was POSTed once.
+    // Re-introduce on the other phone's hello, limited to once per 20 seconds.
+    if (!force && f.sentProfile === json && now - (f.sentProfileAt || 0) < 5 * 60000) return;
+    if (ch.profileSending) return;
+    const delay = 20000 - (now - ch.lastProfile);
+    if (delay > 0) {
+      clearTimeout(ch.profileT);
+      ch.profileT = setTimeout(() => sendProfile(f, force), delay + 25);
+      return;
+    }
+    clearTimeout(ch.profileT);
+    ch.lastProfile = now;
+    ch.profileSending = true;
+    ch.publish({ ...ch.msg('profile'), p: json }, true).then((delivered) => {
+      ch.profileSending = false;
+      if (delivered) {
+        f.sentProfile = json;
+        f.sentProfileAt = Date.now();
+        save();
+      } else if (ch.active) {
+        // Do not mark a failed send as delivered. Retry while the app remains open.
+        clearTimeout(ch.profileT);
+        ch.profileT = setTimeout(() => sendProfile(f, true), 20000);
+      }
+    }, () => {
+      ch.profileSending = false;
+      if (ch.active) {
+        clearTimeout(ch.profileT);
+        ch.profileT = setTimeout(() => sendProfile(f, true), 20000);
+      }
+    });
   }
 
   // ---------- the manager ----------
@@ -210,6 +240,15 @@
     list: () => st.friends.slice(),
     native: () => st.native,
     channel: (f) => channels.get(f.code),
+    refreshProfile(f) {
+      const ch = channels.get(f && f.code);
+      if (!ch || !f.peer) return false;
+      // Both phones can safely ask for a re-introduction without breaking a pairing.
+      if (!ch.active && document.visibilityState === 'visible') ch.start();
+      ch.hello(true);
+      sendProfile(f, true);
+      return true;
+    },
     connection: (f) => { const ch = channels.get(f.code); return ch ? ch.connection : 'off'; },
     async restore() { for (const f of st.friends) { try { await open(f); } catch (e) {} } emit('change'); },
     async invite() {                                   // a new code waiting for someone to open it
