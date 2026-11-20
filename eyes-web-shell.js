@@ -131,7 +131,37 @@
     $('cardCopy').onclick = async () => { try { await navigator.clipboard.writeText(card); $('cardCopy').textContent = 'Copied'; } catch (er) {} };
     $('cardClose').onclick = () => el.remove();
   }
-  addEventListener('hashchange', cardFromHash);
-  route(); trimOptic(); dock(); cardFromHash();
+  // ---------- invite links: <site>#join=HL1-… (4.1) ----------
+  // The fragment never leaves the phone (it isn't sent to GitHub). It is removed from the address bar at once.
+  // Joining only happens where the Eye lives: the Home Screen app on iPhone, the EYES app on Android.
+  function joinFromHash() {
+    const m = location.hash.match(/join=(HL1-[A-Za-z0-9_-]{43})/); if (!m) return;
+    const code = m[1];
+    history.replaceState(null, '', location.pathname);
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    const here = isIOS ? standalone || !!sessionStorage.getItem('eyes.anyway') : !isAndroid;
+    if (here && HavenDNA.has() && window.EyesContact) { setTimeout(() => EyesContact.join(code), 700); return; }
+    const el = document.createElement('section'); el.className = 'eyes-screen'; el.id = 'joinPage';
+    const how = isIOS
+      ? `<ol class="join-steps"><li>Copy the invite.</li><li>Open <b>EYES</b> from your Home Screen.</li><li>Tap <b>Friends</b>, then <b>Join</b>, then <b>Paste</b>.</li></ol><p class="fine">No EYES yet? Add it to your Home Screen and wake your Eye first. The invite keeps.</p>`
+      : isAndroid
+        ? `<p class="fine card-fine">Open it in the EYES app. Or copy the invite and paste it under <b>Friends → Join</b>.</p>`
+        : `<p class="fine card-fine">Copy the invite and paste it in EYES under <b>Friends → Join</b>.</p>`;
+    el.innerHTML = `<div class="inner"><svg class="eyemark" viewBox="0 0 120 70" aria-hidden="true"><path d="M4 35C24 6 96 6 116 35C96 64 24 64 4 35Z"/><circle cx="60" cy="35" r="16"/><circle class="p" cx="60" cy="35" r="5"/></svg>
+      <h1 class="card-name">Let our Eyes meet</h1><p class="lead">Someone you know invited your Eye to make Eye Contact.</p>${how}
+      ${isAndroid ? '<a class="primary join-open" id="joinOpenApp">Open in EYES</a>' : ''}
+      <button type="button" class="${isAndroid ? '' : 'primary'}" id="joinCopy">Copy invite</button><p class="fine" id="joinStatus" aria-live="polite"></p>
+      <button type="button" class="link" id="joinClose">Continue</button></div>`;
+    document.body.appendChild(el);
+    const open = $('joinOpenApp'); if (open) open.href = 'haven://link?code=' + code;
+    $('joinCopy').onclick = async () => {
+      const text = 'Let our Eyes meet. Eye Contact invite:\n' + code;
+      try { await navigator.clipboard.writeText(text); $('joinStatus').textContent = isIOS ? 'Copied. Now open EYES from your Home Screen.' : 'Copied.'; }
+      catch (er) { $('joinStatus').textContent = code; }
+    };
+    $('joinClose').onclick = () => el.remove();
+  }
+  addEventListener('hashchange', () => { cardFromHash(); joinFromHash(); });
+  route(); trimOptic(); dock(); cardFromHash(); joinFromHash();
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 })();

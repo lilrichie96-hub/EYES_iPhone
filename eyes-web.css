@@ -87,3 +87,9 @@ body:has(#eyesPlay) #eyesDock { opacity: 0; pointer-events: none; }
   .eyes-install .inner { gap: 5px; }
   .eyes-install .install-step { padding: 8px 10px; }
 }
+
+/* 4.1 · invite link page */
+#joinPage .join-steps { text-align: left; margin: 6px auto 14px; padding-left: 22px; max-width: 300px; color: rgba(223,239,241,.8); font-size: 15px; line-height: 1.7; }
+#joinPage .join-open { display: inline-block; text-decoration: none; margin-bottom: 10px; }
+#joinPage #joinStatus { min-height: 1.3em; -webkit-user-select: text; user-select: text; word-break: break-all; }
+#joinPage a.primary { background: #dfeff1; color: #000; border-radius: 999px; padding: 14px 28px; font-weight: 600; }

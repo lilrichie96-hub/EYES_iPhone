@@ -82,7 +82,9 @@
   }
 
   // ---------- Friends ----------
+  // 4.1: Eye Contact 2.0 (eyes-contact.js) is the Friends screen. The list below stays as a fallback.
   views.friends = function (keep) {
+    if (root.EyesContact && !keep) { closeSheet(); return EyesContact.open(); }
     openSheet('Friends', (b) => {
       const list = F().list(), nat = nativeFriend(), paired = list.filter((f) => f.peer).length + (nat && nat.paired ? 1 : 0);
       if (paired > 1) {
@@ -185,12 +187,13 @@
   }
 
   // ---------- notifications + connections ----------
-  function notifyBlock(b) {
+  function notifyBlock(b, after) {
+    const redo = after || (() => views.friends());
     const P = root.EyesPush; if (!P) return;
     const s = P.state();
     if (s.canReceive && s.server) {
       b.insertAdjacentHTML('beforeend', `<div class="es-setting"><span>Buzz me when they reach out<small>${s.on ? 'On. A signal from a friend shows up on your lock screen.' : 'A soft notification when a friend sends a signal and EYES is closed.'}</small></span><button type="button" id="esNotify">${s.on ? 'Turn off' : 'Turn on'}</button></div><p class="es-err" id="esNotifyErr"></p>`);
-      $('esNotify').onclick = async () => { try { if (s.on) await P.disable(); else await P.enable(); views.friends(); } catch (e) { $('esNotifyErr').textContent = e.message; } };
+      $('esNotify').onclick = async () => { try { if (s.on) await P.disable(); else await P.enable(); redo(); } catch (e) { $('esNotifyErr').textContent = e.message; } };
     } else if (s.canReceive && !s.server && isWeb) {
       // nothing to show until Patch sets the relay up
     } else if (isWeb && !s.standalone) {
@@ -310,23 +313,25 @@
   function visit(f, ms) { if (f && f.profile && root.HavenFriend) HavenFriend.visit(f.profile, ms || 9000); }
   function boot() {
     const Fr = F(); if (!Fr) return;
-    Fr.on('incoming', (f, kind) => { visit(f); Haven.receive({ type: 'havenLink', event: 'incoming', kind, _eyes: 1 }); if (sheet && sheet.dataset.view === 'friends') views.friends(); });
+    Fr.on('incoming', (f, kind) => { visit(f); Haven.receive({ type: 'havenLink', event: 'incoming', kind, _eyes: 1 }); if (sheet && sheet.dataset.view === 'friends') views.friends(true); });
     Fr.on('outgoing', (f, kind) => { visit(f); Haven.receive({ type: 'havenLink', event: 'outgoing', kind, _eyes: 1 }); });
-    Fr.on('paired', (f) => { caption('Eye contact made'); react('link-hello'); if (sheet) views.friends(); });
+    const contact = () => !!(root.EyesContact && EyesContact.isOpen());
+    Fr.on('paired', (f) => { if (!contact()) caption('Eye contact made'); react('link-hello'); if (sheet && sheet.dataset.view === 'friends') views.friends(true); });
     Fr.on('profile', (f, first) => {
-      if (first) { visit(f, 6000); react('link-hello'); caption(`${f.profile.name || 'Their Eye'} is looking back`); }
-      if (sheet && sheet.dataset.view === 'friends') views.friends();
+      if (first) { visit(f, 6000); react('link-hello'); if (!contact()) caption(`${f.profile.name || 'Their Eye'} is looking back`); }
+      if (sheet && sheet.dataset.view === 'friends') views.friends(true);
       else if (sheet && sheet.dataset.view === 'friend:' + (f.code || 'native')) friendDetail(f, true);
     });
-    Fr.on('here', (f) => { if (document.visibilityState === 'visible' && f.profile && !(sheet)) { visit(f, 5000); react('peek'); caption(`${nameOf(f)} is here`, 3000); } });
+    Fr.on('here', (f) => { if (document.visibilityState === 'visible' && f.profile && !(sheet) && !contact()) { visit(f, 5000); react('peek'); caption(`${nameOf(f)} is here`, 3000); } });
     Fr.on('missed', () => setTimeout(awayReport, 900));
-    Fr.on('change', () => { if (sheet && sheet.dataset.view === 'friends') { clearTimeout(boot.t); boot.t = setTimeout(() => sheet && sheet.dataset.view === 'friends' && views.friends(), 300); } });
+    Fr.on('change', () => { if (sheet && sheet.dataset.view === 'friends') { clearTimeout(boot.t); boot.t = setTimeout(() => sheet && sheet.dataset.view === 'friends' && views.friends(true), 300); } });
     Fr.restore().then(() => setTimeout(awayReport, 2600));
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') setTimeout(awayReport, 2200); });
   }
   const reported = {};
   function awayReport() {
     if (document.visibilityState !== 'visible' || !HavenDNA.has()) return;
+    if (root.EyesContact && EyesContact.isOpen()) return;          // the Meeting Space replays them itself
     const fresh = (f) => (f.missed || []).filter((m) => m.t > (reported[f.code] || 0));
     const withMissed = F().list().filter((f) => fresh(f).length);
     if (!withMissed.length) return;
@@ -344,11 +349,13 @@
       if (data && data.type === 'havenLink' && !data._eyes) {
         if (data.event === 'code' && wantCode) { wantCode = false; setNativeCode(data.code); return true; }
         if (data.event === 'incoming') F().countNative('recv', data.kind);
+        if (root.EyesContact && ['incoming', 'outgoing', 'error'].includes(data.event)) EyesContact.nativeEvent(data.event, data.kind);
+        if (data.event === 'status' || data.event === 'paired' || data.event === 'profile') setTimeout(() => { try { dispatchEvent(new CustomEvent('haven:friend')); } catch (e) {} }, 50);
         if (data.event === 'outgoing') { F().countNative('sent', data.kind); if (root.EYES_NATIVE_MAILBOX && root.EyesPush) EyesPush.nudge(root.EYES_NATIVE_MAILBOX, '0'.repeat(32), data.kind); }
         if (data.event === 'status' && data.linked && !root.EYES_NATIVE_CODE) { wantCode = true; native('linkShowCode'); }
         if (data.event === 'invite') {                     // a friend's invite link while the native link is taken: a new friend
           const d = Haven.diagnostics().link;
-          if (d && d.linked && F().findCode(data.code)) { F().join(data.code).then(() => { views.friends(); caption('Connecting with your new friend…'); }, (e) => caption(e.message)); return true; }
+          if (d && d.linked && F().findCode(data.code)) { F().join(data.code).then((nf) => { if (root.EyesContact) EyesContact.joining(nf.code); else { views.friends(); caption('Connecting with your new friend…'); } }, (e) => caption(e.message)); return true; }
         }
       }
       return orig(data);
@@ -366,5 +373,6 @@
 
   // ---------- go ----------
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => { mountOptic(); boot(); }); else { mountOptic(); boot(); }
-  root.EyesSocial = { friends: () => views.friends(), dex: () => views.dex(), play: () => views.play(), addCard, close: closeSheet, caption };
+  root.EyesSocial = { friends: () => views.friends(), dex: () => views.dex(), play: () => views.play(), addCard, close: closeSheet, caption, notifyBlock,
+    list: () => { closeSheet(); views.friends(true); } };
 })(window);

@@ -237,7 +237,9 @@
     draw(now());
     schedule();
   }
+  let homeHeld = false;   // 4.1: a full-screen scene (Eye Contact) covers him; nothing to draw
   function eyeCanAnimate() {
+    if (homeHeld) return false;
     return (
       !panel ||
       panel === 'inbox' ||
@@ -1711,6 +1713,10 @@
     receive,
     setMotion,
     goHome,
+    holdHome(on) {
+      homeHeld = !!on;
+      if (!homeHeld) { draw(now()); schedule(); }
+    },
     back() {
       if (appManager.back()) return true;
       if (iris.back()) return true;
@@ -1739,6 +1745,7 @@
         desired: core.desired,
         stage: core.stage,
         motion: core.motion,
+        gentle: !!core.gentle,
         frames,
         calmFrames,
         eyeStats,

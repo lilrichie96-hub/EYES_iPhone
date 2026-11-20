@@ -7,12 +7,22 @@
      "I'm here now", so you can see who's awake and a pulse between two open eyes becomes resonance.
    - History per friend: when you met, signals traded, first resonance.
    - Notifications: after a signal to a friend who isn't open right now, a contentless nudge goes to the
-     push relay (eyes-push.js). */
+     push relay (eyes-push.js).
+   4.1 (Eye Contact 2.0), additive only:
+   - hello carries `c`: the capabilities this phone understands (['ack'] for now). Older phones and the
+     Android native link parse with optString/JSON and ignore extra fields, so nothing changes for them.
+   - New kinds are only ever sent to a peer that advertised them. 'ack' {r: nonce, a: 'live'|'later'}
+     tells the sender their signal was actually played on the other phone (live, or later on return).
+   - Each sent signal is tracked: sending → relayed (ntfy accepted it) / failed → felt (an ack came back).
+     The UI never shows more than the protocol knows. */
 'use strict';
 (function (root) {
   const RELAY = 'https://ntfy.sh/';
   const KEY = 'eyes.friends.v1';
   const SIGNALS = ['pulse', 'spark', 'calm', 'resonance', 'hello'];
+  const CAPS = ['ack'];                 // what this phone understands beyond the original protocol
+  const EXTRA = ['ack'];                // kinds that only go to peers that advertised them
+  const capOk = (x) => typeof x === 'string' && /^[a-z0-9]{1,12}$/.test(x);
   const CODE_RE = /HL1-[A-Za-z0-9_-]{43}/;
   const enc = new TextEncoder(), dec = new TextDecoder();
   const b64u = (bytes) => { let s = ''; for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
@@ -42,7 +52,11 @@
       } catch (e) {}
     }
     if (typeof s.myId !== 'string' || s.myId.length < 15) s.myId = randomId(18);
-    s.friends.forEach((f) => { f.stats = f.stats || {}; f.firsts = f.firsts || {}; f.nonces = f.nonces || []; f.missed = f.missed || []; });
+    s.friends.forEach((f) => {
+      f.stats = f.stats || {}; f.firsts = f.firsts || {}; f.nonces = f.nonces || []; f.missed = f.missed || [];
+      // a send still in flight when EYES closed: we don't know if the relay took it
+      if (Array.isArray(f.outbox)) f.outbox.forEach((e) => { if (e.st === 'sending') e.st = 'unknown'; });
+    });
     return s;
   }
   let saveT = 0;
@@ -79,11 +93,14 @@
     }
     async publish(obj, silent) {
       if (!this.key) return false;
+      // 4.1: a relay that never answers counts as not delivered (15 s), so nothing waits forever
+      const ctl = typeof AbortController === 'function' ? new AbortController() : null, stall = ctl ? setTimeout(() => ctl.abort(), 15000) : 0;
       try {
-        const r = await fetch(RELAY + this.topic + '?priority=min&firebase=no', { method: 'POST', body: await this.encrypt(obj), headers: { 'Content-Type': 'text/plain; charset=utf-8' }, cache: 'no-store' });
+        const r = await fetch(RELAY + this.topic + '?priority=min&firebase=no', { method: 'POST', body: await this.encrypt(obj), headers: { 'Content-Type': 'text/plain; charset=utf-8' }, cache: 'no-store', signal: ctl ? ctl.signal : undefined });
         if (!r.ok) throw new Error('rejected');
         return true;
       } catch (e) { if (!silent) emit('error', 'Your signal could not reach the relay'); return false; }
+      finally { clearTimeout(stall); }
     }
     msg(kind) { return { v: 1, s: st.myId, k: kind, t: Date.now(), n: randomId(12) }; }
     since() { return this.f.cursor && Date.now() - (this.f.cursorAt || 0) < 11 * 3600000 ? this.f.cursor : '12h'; }
@@ -101,7 +118,17 @@
       const now = Date.now();
       if (!force && now - this.lastHello < 120000) return;
       this.lastHello = now;
-      this.publish(this.msg('hello'), true);
+      this.announce();
+    }
+    announce() {                                       // a hello that says what we understand
+      return this.publish({ ...this.msg('hello'), c: CAPS }, true).then((ok) => {
+        if (ok && !this.f.announcedAt) { this.f.announcedAt = Date.now(); save(); emit('change', this.f); }
+        return ok;
+      });
+    }
+    ack(n, late) {                                     // "your signal reached my Eye"
+      if (!supports(this.f, 'ack') || !/^[A-Za-z0-9_-]{16}$/.test(n)) return;
+      this.publish({ ...this.msg('ack'), r: n, a: late ? 'later' : 'live' }, true);
     }
     async listen(g) {
       while (this.active && g === this.gen) {
@@ -138,16 +165,25 @@
       const s = typeof p.s === 'string' ? p.s : '', k = typeof p.k === 'string' ? p.k : '';
       if (s.length < 15 || s.length > 90 || s === st.myId) return;
       const isProfile = k === 'profile';
-      if (!isProfile && !SIGNALS.includes(k)) return;
-      if (isProfile && !f.peer) return;
+      if (!isProfile && !SIGNALS.includes(k) && !EXTRA.includes(k)) return;
+      if ((isProfile || EXTRA.includes(k)) && !f.peer) return;
       const n = typeof p.n === 'string' ? p.n : '';
       if (!/^[A-Za-z0-9_-]{16}$/.test(n) || f.nonces.includes(n)) return;
       f.nonces.push(n); if (f.nonces.length > 140) f.nonces.shift();
       if (f.peer && f.peer !== s) return;
       if (!f.peer) {                                   // the first other eye heard: they're our friend
         f.peer = s; f.pairedAt = now; save(true);
-        emit('paired', f); this.publish(this.msg('hello'), true); this.lastHello = now;
+        emit('paired', f); this.announce(); this.lastHello = now;
         sendProfile(f, true);
+      }
+      if (Array.isArray(p.c)) {                        // what their EYES understands (newer phones only)
+        const caps = p.c.filter(capOk).slice(0, 16);
+        if (JSON.stringify(caps) !== JSON.stringify(f.caps || [])) { f.caps = caps; save(); emit('change', f); }
+      }
+      if (k === 'ack') {
+        const r = typeof p.r === 'string' ? p.r : '', e = (f.outbox || []).find((x) => x.n === r);
+        if (e && !e.felt) { e.felt = p.a === 'later' ? 'later' : 'live'; e.feltAt = now; save(); emit('delivery', f, e); }
+        return;
       }
       if (age <= 180000) { const was = online(f); f.lastSeen = Math.max(f.lastSeen || 0, Number(p.t) || now); if (!was) emit('here', f); }
       if (isProfile) {
@@ -158,7 +194,7 @@
       }
       if (k === 'hello') { save(); emit('change', f); sendProfile(f, true); return; }
       if (age > 600000) {                               // too old to play live: "while you were away"
-        if (k !== 'resonance') { f.missed.push({ k, t: Number(p.t) }); f.missed = f.missed.slice(-12); save(); emit('missed', f); }
+        if (k !== 'resonance') { f.missed.push({ k, t: Number(p.t) }); f.missed = f.missed.slice(-12); save(); emit('missed', f); this.ack(n, true); }
         return;
       }
       if (k === 'resonance') { if (now - this.lastResonance < 5500) return; this.lastResonance = now; return incoming(f, 'resonance'); }
@@ -167,10 +203,25 @@
         const window = online(f) && document.visibilityState === 'visible' ? 30000 : 9000;
         const answer = now - this.lastSentPulse <= window && now - this.lastResonance > 6000;
         this.lastIncomingPulse = now;
-        if (answer) { this.lastResonance = now; incoming(f, 'resonance'); this.publish(this.msg('resonance')); count(f, 'sent'); return; }
+        if (answer) { this.lastResonance = now; this.ack(n, false); incoming(f, 'resonance'); this.publish(this.msg('resonance')); count(f, 'sent'); return; }
       }
+      if (k !== 'resonance') this.ack(n, false);
       incoming(f, k);
     }
+  }
+  function supports(f, cap) { return !!(f && Array.isArray(f.caps) && f.caps.includes(cap)); }
+  // Where a pairing really is. Every step is something this phone has actually observed.
+  function stage(f) {
+    const ch = channels.get(f.code), listening = !!ch && ch.connection === 'online';
+    const steps = [
+      { id: 'send', label: f.joined ? 'Sending your invitation' : 'Invite ready to share', done: f.joined ? !!f.announcedAt || !!f.peer : true },
+      { id: 'listen', label: 'Listening for their Eye', done: listening || !!f.peer },
+      { id: 'notice', label: 'Your Eyes found each other', done: !!f.peer },
+      { id: 'swap', label: 'Exchanging identities', done: !!f.peer && !!f.profile && !!f.sentProfileAt },
+      { id: 'made', label: 'Eye Contact made', done: !!f.peer && !!f.profile && !!f.sentProfileAt }
+    ];
+    let at = steps.findIndex((x) => !x.done); if (at < 0) at = steps.length;
+    return { steps, at, done: at >= steps.length, trouble: !!ch && ch.connection === 'offline' };
   }
   function online(f) { return !!f.lastSeen && Date.now() - f.lastSeen < 180000; }
   function count(f, what) { f.stats[what] = (f.stats[what] || 0) + 1; const wk = weekKey(); if (f.stats.weekOf !== wk) { f.stats.weekOf = wk; f.stats.wsent = 0; f.stats.wrecv = 0; } f.stats['w' + what] = (f.stats['w' + what] || 0) + 1; save(); }
@@ -235,7 +286,8 @@
 
   const Friends = {
     on(name, f) { (listeners[name] = listeners[name] || []).push(f); },
-    findCode, online,
+    findCode, online, supports, stage, CAPS,
+    outbox: (f) => (f.outbox || []).slice(),
     myId: () => st.myId,
     list: () => st.friends.slice(),
     native: () => st.native,
@@ -250,6 +302,12 @@
       return true;
     },
     connection: (f) => { const ch = channels.get(f.code); return ch ? ch.connection : 'off'; },
+    reconnect(f) {                                     // "Reconnect now": a fresh listen + hello, same pairing
+      const ch = channels.get(f && f.code); if (!ch) return false;
+      ch.stop(); ch.retry = 0;
+      if (document.visibilityState === 'visible') ch.start();
+      return true;
+    },
     async restore() { for (const f of st.friends) { try { await open(f); } catch (e) {} } emit('change'); },
     async invite() {                                   // a new code waiting for someone to open it
       const code = 'HL1-' + b64u(randomBytes(32));
@@ -269,14 +327,17 @@
       const now = Date.now(); if (now - ch.lastSend < 1900) return false;
       ch.lastSend = now;
       if (kind === 'pulse') ch.lastSentPulse = now;
-      ch.publish(ch.msg(kind)); count(f, 'sent');
-      emit('outgoing', f, kind);
+      const m = ch.msg(kind), e = { n: m.n, k: kind, t: now, st: 'sending', awake: online(f), canFeel: supports(f, 'ack') };
+      f.outbox = (f.outbox || []).concat(e).slice(-8);
+      ch.publish(m).then((ok) => { e.st = ok ? 'relayed' : 'failed'; save(); emit('delivery', f, e); });
+      count(f, 'sent');
+      emit('outgoing', f, kind, e);
       const window = online(f) ? 30000 : 9000;
       if (kind === 'pulse' && now - ch.lastIncomingPulse < window && now - ch.lastResonance > 6000) {
         ch.lastResonance = now; ch.publish(ch.msg('resonance')); incoming(f, 'resonance');
       }
       if (!online(f) && root.EyesPush) root.EyesPush.nudge(ch.mailbox, ch.tag, kind);
-      return true;
+      return e;
     },
     sendAll(kind) { let any = false; st.friends.forEach((f) => { if (f.peer) any = Friends.send(f, kind) || any; }); return any; },
     rename(f, nick) { f.nick = String(nick || '').trim().slice(0, 24) || undefined; save(); emit('change', f); },

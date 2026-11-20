@@ -1,0 +1,194 @@
+/* EYES 4.1 · Eye Contact 2.0 — the Living Constellation and the Meeting Space.
+   Everything is scoped under #eyesContact: the launcher has global header/button rules. */
+#eyesContact {
+  --ec-top: max(env(safe-area-inset-top, 0px), var(--native-inset-top, 0px));
+  --ec-bottom: max(env(safe-area-inset-bottom, 0px), var(--native-inset-bottom, 0px));
+  --ink: #e4f1f3; --dim: rgba(228, 241, 243, 0.56); --faint: rgba(228, 241, 243, 0.34); --line: rgba(228, 241, 243, 0.14);
+  position: fixed; inset: 0; z-index: 46; overflow: hidden; background: #020405; color: var(--ink);
+  font: 15px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  animation: ec-in 0.5s ease both;
+}
+@keyframes ec-in { from { opacity: 0; } }
+#eyesContact .ec-sky { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#eyesContact .ec-stage { position: absolute; inset: 0; pointer-events: none; }
+#eyesContact button { font: inherit; color: var(--ink); }
+
+/* ---------- an Eye ---------- */
+#eyesContact .ec-node { position: absolute; left: 0; top: 0; padding: 0; margin: 0; border: 0; background: none; border-radius: 50%;
+  pointer-events: auto; transform-origin: 50% 50%; will-change: transform, opacity; cursor: pointer; aspect-ratio: 1; }
+#eyesContact .ec-node:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(145, 210, 213, 0.55); }
+#eyesContact .ec-eye { display: block; transition: opacity 1.2s ease, filter 0.8s ease; }
+#eyesContact .ec-node:not(.ec-has-eye) .ec-eye { visibility: hidden; }
+#eyesContact .ec-node[data-state=resting] .ec-eye { opacity: 0.62; }
+#eyesContact .ec-node[data-state=reconnecting] .ec-eye { opacity: 0.48; }
+#eyesContact .ec-node[data-state=linked] .ec-eye { opacity: 0.9; }
+#eyesContact .ec-node.ec-resonant .ec-eye { filter: brightness(1.32) saturate(1.12); opacity: 1; }
+#eyesContact .ec-label { position: absolute; left: 50%; top: 88%; width: 170px; margin-left: -85px; display: flex; flex-direction: column; align-items: center;
+  pointer-events: none; text-align: center; line-height: 1.25; transition: opacity 0.4s; }
+#eyesContact .ec-node { --lt: 90%; } #eyesContact .ec-label { top: var(--lt); }
+#eyesContact .ec-label b { font-weight: 500; font-size: 14px; letter-spacing: 0.02em; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#eyesContact .ec-label small { font-size: 11px; letter-spacing: 0.06em; color: var(--faint); margin-top: 1px; }
+#eyesContact .ec-node[data-state=awake] .ec-label small, #eyesContact .ec-node[data-state=made] .ec-label small { color: #a3ecc6; }
+#eyesContact .ec-node[data-state=reconnecting] .ec-label small { color: #ffd2a1; }
+#eyesContact .ec-node[data-state=waiting] .ec-label b, #eyesContact .ec-node[data-state=introducing] .ec-label b { font-weight: 400; color: var(--dim); }
+#eyesContact .ec-me .ec-label small { color: var(--faint); }
+/* the Meeting Space: names a little larger, the rest is the Eyes */
+#eyesContact[data-mode=meet] .ec-label { top: 89%; }
+#eyesContact[data-mode=meet] .ec-label b { font-size: 16px; font-weight: 400; letter-spacing: 0.05em; }
+#eyesContact[data-mode=meet] .ec-node.ec-focus .ec-label small { display: none; }
+#eyesContact[data-mode=meet] .ec-node.ec-focus, #eyesContact[data-mode=meet] .ec-me { cursor: default; }
+#eyesContact[data-mode=invite] .ec-label small, #eyesContact[data-mode=join] .ec-label small { display: none; }
+
+/* ---------- chrome ---------- */
+#eyesContact .ec-ui { position: absolute; inset: 0; display: flex; flex-direction: column; pointer-events: none; }
+#eyesContact .ec-ui > * { pointer-events: auto; }
+html #eyesContact .ec-top, html[data-skin] #eyesContact .ec-top { position: relative; left: auto; right: auto; top: auto; z-index: 2;
+  display: flex; align-items: center; gap: 6px; padding: calc(var(--ec-top) + 8px) 10px 4px; order: 0; }
+#eyesContact .ec-icon { width: 44px; height: 44px; flex: none; border-radius: 50%; display: grid; place-items: center; font-size: 26px; line-height: 1;
+  color: var(--dim); background: rgba(228, 241, 243, 0.035); border: 1px solid rgba(228, 241, 243, 0.08); }
+#eyesContact .ec-icon span { transform: translateY(-1px); }
+#eyesContact .ec-icon:active { background: rgba(228, 241, 243, 0.1); }
+#eyesContact .ec-back[hidden] + .ec-title { margin-left: 50px; }
+#eyesContact .ec-title { flex: 1; min-width: 0; text-align: center; display: flex; flex-direction: column; align-items: center; }
+#eyesContact .ec-title h2 { margin: 0; font-weight: 400; font-size: 16px; letter-spacing: 0.16em; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+#eyesContact[data-mode=meet] .ec-title h2 { text-transform: none; letter-spacing: 0.06em; font-size: 18px; }
+#eyesContact .ec-chip { margin: 4px 0 0; display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: var(--dim); padding: 3px 11px 3px 9px;
+  border-radius: 999px; background: rgba(228, 241, 243, 0.05); border: 1px solid rgba(228, 241, 243, 0.07); }
+#eyesContact .ec-chip i { width: 7px; height: 7px; border-radius: 50%; background: rgba(228, 241, 243, 0.35); }
+#eyesContact .ec-chip[data-state=awake] i, #eyesContact .ec-chip[data-state=made] i { background: #8fe3b4; box-shadow: 0 0 8px #8fe3b4; animation: ec-breathe 2.6s ease-in-out infinite; }
+#eyesContact .ec-chip[data-state=awake], #eyesContact .ec-chip[data-state=made] { color: #c6f1da; }
+#eyesContact .ec-chip[data-state=reconnecting] i { background: #ffc98f; }
+#eyesContact .ec-chip[data-state=introducing] i, #eyesContact .ec-chip[data-state=waiting] i { background: transparent; border: 1px solid rgba(228, 241, 243, 0.5); animation: ec-breathe 2s ease-in-out infinite; }
+@keyframes ec-breathe { 50% { opacity: 0.45; transform: scale(0.8); } }
+
+#eyesContact .ec-live { order: 1; margin: auto 24px 6px; min-height: 2.6em; display: flex; align-items: flex-end; justify-content: center; text-align: center;
+  font-size: 13.5px; color: var(--dim); letter-spacing: 0.01em; opacity: 0; transition: opacity 0.5s; pointer-events: none; }
+#eyesContact .ec-live.show { opacity: 1; }
+#eyesContact .ec-panel { order: 2; padding: 6px 18px calc(var(--ec-bottom) + 18px);
+  background: linear-gradient(to top, rgba(2, 4, 5, 0.92) 40%, rgba(2, 4, 5, 0)); }
+#eyesContact .ec-p-invite, #eyesContact .ec-p-join { max-height: 64vh; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-top: 14px; }
+#eyesContact .ec-hint { margin: 0 0 12px; text-align: center; font-size: 12.5px; color: var(--faint); letter-spacing: 0.03em; }
+#eyesContact .ec-lead { margin: 0 0 8px; font-size: 17px; font-weight: 300; text-align: center; letter-spacing: 0.02em; }
+#eyesContact .ec-sub { margin: 0 4px 14px; font-size: 13px; color: var(--dim); text-align: center; }
+#eyesContact .ec-fine { margin: 14px 8px 0; font-size: 11.5px; color: var(--faint); text-align: center; }
+#eyesContact .ec-err { min-height: 1.2em; margin: 4px 2px; font-size: 13px; color: #ffb1b1; text-align: center; }
+#eyesContact .ec-empty { margin-bottom: 6px; }
+
+#eyesContact .ec-actions { display: flex; gap: 10px; flex-wrap: wrap; margin: 10px 0; }
+#eyesContact .ec-actions > * { flex: 1 1 0; min-width: 120px; }
+#eyesContact .ec-btn { min-height: 48px; padding: 12px 18px; border-radius: 999px; background: rgba(228, 241, 243, 0.06); border: 1px solid var(--line);
+  font-size: 15px; letter-spacing: 0.02em; transition: background 0.2s, transform 0.15s; }
+#eyesContact .ec-btn:active { transform: scale(0.97); background: rgba(228, 241, 243, 0.12); }
+#eyesContact .ec-btn.ec-primary { background: var(--ink); color: #061014; border-color: transparent; font-weight: 600; box-shadow: 0 0 28px rgba(var(--me, 111, 193, 202), 0.25); }
+#eyesContact .ec-btn.ec-quiet { background: transparent; border-color: transparent; color: var(--faint); min-height: 40px; }
+#eyesContact .ec-btn.ec-danger { background: transparent; color: #ffb4b4; border-color: rgba(255, 160, 160, 0.28); }
+#eyesContact .ec-btn.ec-small { min-height: 38px; padding: 8px 16px; font-size: 13.5px; flex: none; }
+#eyesContact .ec-tail { margin-top: 4px; }
+#eyesContact .ec-note { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0 6px 14px; text-align: center; }
+#eyesContact .ec-note p { margin: 0; font-size: 13px; color: var(--dim); }
+
+/* ---------- the three signals ---------- */
+#eyesContact .ec-sigs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; max-width: 420px; margin: 0 auto; }
+#eyesContact .ec-sig { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 0 2px; background: none; border: 0; touch-action: none;
+  -webkit-touch-callout: none; }
+#eyesContact .ec-sig-pulse { --c: 255, 146, 168; } #eyesContact .ec-sig-spark { --c: 255, 212, 122; } #eyesContact .ec-sig-calm { --c: 128, 214, 230; }
+#eyesContact .ec-orb { width: 76px; height: 76px; border-radius: 50%; display: grid; place-items: center; margin-bottom: 6px; position: relative;
+  background: radial-gradient(circle at 36% 30%, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.025) 58%, rgba(var(--c), 0.06));
+  border: 1px solid rgba(var(--c), 0.28);
+  box-shadow: inset 0 0 18px rgba(var(--c), 0.12), 0 0 22px rgba(var(--c), 0.1);
+  transition: transform 0.18s ease, box-shadow 0.3s ease, opacity 0.3s; }
+#eyesContact .ec-sig:active .ec-orb, #eyesContact .ec-sig.dragging .ec-orb { transform: scale(0.93); box-shadow: inset 0 0 22px rgba(var(--c), 0.3), 0 0 34px rgba(var(--c), 0.35); }
+#eyesContact .ec-sig.cool .ec-orb, #eyesContact .ec-mini.cool { opacity: 0.45; }
+#eyesContact .ec-sig b { font-weight: 500; font-size: 14.5px; letter-spacing: 0.06em; }
+#eyesContact .ec-sig small { font-size: 11px; color: var(--faint); }
+#eyesContact .ec-gesture { margin: 10px 0 0; }
+/* glyphs: drawn in CSS, alive but small */
+#eyesContact .ec-g { display: block; width: 28px; height: 28px; }
+#eyesContact .ec-g-pulse { border-radius: 50%; background: radial-gradient(circle, #ffb3c4 0 22%, rgba(255, 146, 168, 0.55) 23% 34%, transparent 35% 52%, rgba(255, 146, 168, 0.35) 53% 60%, transparent 61%);
+  animation: ec-beat 1.8s ease-in-out infinite; }
+@keyframes ec-beat { 0%, 100% { transform: scale(0.92); } 12% { transform: scale(1.08); } 24% { transform: scale(0.96); } 36% { transform: scale(1.04); } }
+#eyesContact .ec-g-spark { background: radial-gradient(circle, #fffbe8 0 9%, rgba(255, 212, 122, 0.8) 10% 16%, transparent 17%),
+  conic-gradient(from 0deg, transparent 0 11%, rgba(255, 212, 122, 0.9) 12% 13%, transparent 14% 36%, rgba(255, 212, 122, 0.9) 37% 38%, transparent 39% 61%, rgba(255, 212, 122, 0.9) 62% 63%, transparent 64% 86%, rgba(255, 212, 122, 0.9) 87% 88%, transparent 89%);
+  border-radius: 50%; animation: ec-twinkle 2.4s ease-in-out infinite; }
+@keyframes ec-twinkle { 50% { transform: rotate(45deg) scale(0.82); opacity: 0.8; } }
+#eyesContact .ec-g-calm { border-radius: 50%; background: radial-gradient(circle, rgba(160, 226, 238, 0.85) 0 14%, transparent 15% 30%, rgba(128, 214, 230, 0.6) 31% 36%, transparent 37% 52%, rgba(128, 168, 255, 0.4) 53% 57%, transparent 58%);
+  animation: ec-tide 4.2s ease-in-out infinite; }
+@keyframes ec-tide { 50% { transform: scale(1.1); opacity: 0.7; } }
+
+#eyesContact .ec-all { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 0 auto 12px; padding: 6px 8px 6px 16px; width: fit-content;
+  border-radius: 999px; border: 1px solid rgba(228, 241, 243, 0.08); background: rgba(228, 241, 243, 0.03); font-size: 13px; color: var(--dim); }
+#eyesContact .ec-mini { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(228, 241, 243, 0.1); }
+#eyesContact .ec-mini .ec-g { width: 20px; height: 20px; }
+
+/* ---------- invitations ---------- */
+#eyesContact .ec-qrcard { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0 auto 4px; padding: 14px 14px 10px; max-width: 300px;
+  border-radius: 26px; background: rgba(228, 241, 243, 0.035); border: 1px solid rgba(228, 241, 243, 0.08); }
+#eyesContact .ec-qr { width: min(42vw, 168px); aspect-ratio: 1; border-radius: 16px; image-rendering: pixelated;
+  box-shadow: 0 0 0 6px #eaf5f6, 0 0 46px rgba(var(--me, 111, 193, 202), 0.45); }
+#eyesContact .ec-qrcard p { margin: 4px 0 0; font-size: 12.5px; color: var(--dim); text-align: center; }
+#eyesContact .ec-code { width: 100%; box-sizing: border-box; font: 13px/1.4 ui-monospace, Menlo, monospace; color: var(--ink); background: rgba(228, 241, 243, 0.05);
+  border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; resize: none; -webkit-user-select: text; user-select: text; }
+#eyesContact .ec-nick { display: flex; gap: 10px; margin: 10px 0; }
+#eyesContact .ec-nick input { flex: 1; min-width: 0; font-size: 15px; color: var(--ink); background: rgba(228, 241, 243, 0.05); border: 1px solid var(--line); border-radius: 999px; padding: 10px 16px; -webkit-user-select: text; user-select: text; }
+/* pairing progress: only steps the phone has really seen are lit */
+#eyesContact .ec-steps { list-style: none; margin: 14px auto 6px; padding: 0; max-width: 320px; }
+#eyesContact .ec-steps li { display: flex; align-items: center; gap: 12px; padding: 4px 4px; font-size: 14px; color: var(--faint); position: relative; }
+#eyesContact .ec-steps li + li::before { content: ""; position: absolute; left: 8.5px; top: -9px; height: 14px; width: 1px; background: rgba(228, 241, 243, 0.12); }
+#eyesContact .ec-steps i { width: 10px; height: 10px; flex: none; border-radius: 50%; border: 1px solid rgba(228, 241, 243, 0.28); margin-left: 4px; }
+#eyesContact .ec-steps li.done { color: var(--ink); }
+#eyesContact .ec-steps li.done i { background: var(--ink); border-color: var(--ink); box-shadow: 0 0 10px rgba(var(--me, 111, 193, 202), 0.8); }
+#eyesContact .ec-steps li.now { color: var(--ink); }
+#eyesContact .ec-steps li.now i { border-color: rgba(var(--me, 111, 193, 202), 0.9); animation: ec-listen 1.6s ease-in-out infinite; }
+#eyesContact .ec-steps.trouble li.now i { border-color: #ffc98f; }
+#eyesContact .ec-steps em { font-style: normal; font-size: 12px; color: #ffd2a1; }
+@keyframes ec-listen { 0%, 100% { box-shadow: 0 0 0 0 rgba(var(--me, 111, 193, 202), 0.6); } 50% { box-shadow: 0 0 0 6px rgba(var(--me, 111, 193, 202), 0); } }
+#eyesContact .ec-vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- toast + drawer ---------- */
+#eyesContact .ec-toast { position: absolute; left: 50%; top: calc(var(--ec-top) + 66px); transform: translateX(-50%); max-width: calc(100% - 48px); z-index: 3;
+  padding: 9px 18px; border-radius: 999px; background: rgba(10, 22, 27, 0.9); border: 1px solid rgba(228, 241, 243, 0.12); font-size: 13.5px; color: var(--ink);
+  cursor: pointer; animation: ec-drop 0.35s ease both; }
+@keyframes ec-drop { from { opacity: 0; transform: translate(-50%, -8px); } }
+#eyesContact .ec-drawer { position: absolute; inset: 0; z-index: 5; background: rgba(1, 3, 4, 0.55); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+#eyesContact .ec-drawer-in { position: absolute; left: 0; right: 0; bottom: 0; max-height: 82vh; overflow-y: auto; padding: 22px 20px calc(var(--ec-bottom) + 16px);
+  border-radius: 26px 26px 0 0; background: #061014; border-top: 1px solid rgba(228, 241, 243, 0.1); animation: ec-up 0.3s ease both; -webkit-user-select: text; user-select: text; }
+@keyframes ec-up { from { transform: translateY(30px); opacity: 0; } }
+#eyesContact .ec-drawer h3 { margin: 0 0 12px; font-weight: 400; font-size: 18px; letter-spacing: 0.04em; text-align: center; }
+#eyesContact .ec-facts { display: grid; grid-template-columns: auto 1fr; gap: 9px 14px; margin: 4px 2px 14px; font-size: 14px; }
+#eyesContact .ec-facts dt { color: var(--dim); } #eyesContact .ec-facts dd { margin: 0; text-align: right; }
+#eyesContact .ec-done { width: 100%; margin-top: 8px; }
+/* the old sheet's notification + connection rows, reused inside the drawer */
+#eyesContact .es-setting { display: flex; align-items: center; gap: 12px; margin-top: 10px; padding: 12px 14px; border-radius: 16px; background: rgba(255, 255, 255, 0.035); }
+#eyesContact .es-setting span { flex: 1; } #eyesContact .es-setting small { display: block; color: var(--dim); font-size: 12px; }
+#eyesContact .es-setting button, #eyesContact .es-conn button { padding: 10px 16px; border-radius: 999px; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--line); }
+#eyesContact .es-conn { margin-top: 14px; color: var(--dim); font-size: 13px; } #eyesContact .es-conn summary { padding: 6px 2px; cursor: pointer; }
+#eyesContact .es-conn label { display: block; margin: 8px 0; }
+#eyesContact .es-conn input { width: 100%; box-sizing: border-box; margin-top: 4px; font: 13px ui-monospace, Menlo, monospace; color: var(--ink); background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
+#eyesContact .es-row { display: flex; gap: 10px; margin: 10px 0; } #eyesContact .es-row button { flex: 1; }
+#eyesContact .es-err { color: #ffadad; font-size: 13px; min-height: 1em; } #eyesContact .es-note { color: var(--dim); font-size: 13px; }
+
+/* ---------- small and wide screens ---------- */
+@media (max-height: 680px) {
+  #eyesContact .ec-orb { width: 64px; height: 64px; margin-bottom: 4px; }
+  #eyesContact .ec-sig small { display: none; }
+  #eyesContact .ec-qr { width: min(44vw, 170px); }
+  #eyesContact .ec-live { min-height: 2.2em; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  #eyesContact .ec-p-sky { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; padding-bottom: calc(var(--ec-bottom) + 10px); }
+  #eyesContact .ec-p-sky .ec-hint { display: none; }
+  #eyesContact .ec-p-sky .ec-all { margin: 0; }
+  #eyesContact .ec-p-sky .ec-actions { margin: 0; flex: 0 1 320px; }
+  #eyesContact .ec-btn { min-height: 40px; padding: 8px 16px; }
+  #eyesContact .ec-orb { width: 56px; height: 56px; }
+  #eyesContact .ec-sig small, #eyesContact .ec-gesture { display: none; }
+  #eyesContact .ec-live { min-height: 1.4em; margin-bottom: 2px; }
+  #eyesContact .ec-label b { font-size: 12.5px; } #eyesContact .ec-label small { font-size: 10px; }
+}
+@media (min-width: 700px) { #eyesContact .ec-panel { padding-left: 15vw; padding-right: 15vw; } }
+
+/* ---------- motion settings: Gentle slows, Off stills ---------- */
+#eyesContact[data-motion=gentle] .ec-g { animation-duration: 4s; }
+#eyesContact[data-motion=gentle] .ec-chip i { animation-duration: 4s; }
+#eyesContact[data-motion=off], #eyesContact[data-motion=off] * { animation: none !important; transition: none !important; }
