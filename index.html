@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#000000">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src https://ntfy.sh; manifest-src 'self'; worker-src 'self'">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="EYES">
+  <meta name="description" content="EYES by FRAY, INC. Weird. Understated. Alive.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" href="icons/icon-192.png">
+  <title>EYES</title>
+  <link rel="stylesheet" href="awakening.css">
+  <link rel="stylesheet" href="eyes-web.css">
+</head>
+<body>
+  <!-- home: just the eye -->
+  <main id="home" hidden>
+    <header class="top">
+      <svg class="wordmark" viewBox="-1.2 -1.2 62.4 22.4" role="img" aria-label="EYES"><path d="M12 0H0V8.4M0 11.6V20H12"/><path d="M5 10H11.6"/><path d="M16.8 0L22 7.6L27.2 0"/><path d="M22 12.8V20"/><circle cx="22" cy="10.3" r="1.3"/><path d="M44 0H32V8.4M32 11.6V20H44"/><path d="M37 10H43.6"/><path d="M60 1.5C58 0.4 56.5 0 54.5 0C51 0 49 2 49 5C49 11 60 9 60 15C60 18 58 20 54.5 20C52.5 20 50.5 19.4 48.6 18"/></svg>
+      <button class="iconbtn" id="moreBtn" type="button" aria-label="More">···</button>
+    </header>
+    <canvas id="fx" aria-hidden="true"></canvas>
+    <canvas id="homeEye" aria-label="Your eye. Touch it, drag to have it follow your finger."></canvas>
+    <canvas id="friendEye" aria-hidden="true"></canvas>
+    <div id="eyeName"><b id="nameTxt"></b><span id="wordsTxt"></span></div>
+    <p id="toast" aria-live="polite"></p>
+    <div id="signals" hidden>
+      <button type="button" data-sig="pulse" aria-label="Send a pulse"><i class="g-pulse"></i><span>pulse</span></button>
+      <button type="button" data-sig="spark" aria-label="Send a spark"><i class="g-spark"></i><span>spark</span></button>
+      <button type="button" data-sig="calm" aria-label="Send calm"><i class="g-calm"></i><span>calm</span></button>
+    </div>
+    <nav class="dock">
+      <button type="button" id="idBtn">Eye.D.</button>
+      <button type="button" id="linkBtn"><span class="dot" id="linkDot"></span>Eye Contact</button>
+    </nav>
+  </main>
+
+  <!-- before an eye exists -->
+  <section id="welcome" class="screen" hidden>
+    <div class="inner">
+      <svg class="eyemark" viewBox="0 0 120 70" aria-hidden="true"><path d="M4 35C24 6 96 6 116 35C96 64 24 64 4 35Z"/><circle cx="60" cy="35" r="16"/><circle class="p" cx="60" cy="35" r="5"/></svg>
+      <h1>EYES</h1>
+      <p class="tag">Weird. Understated. Alive.</p>
+      <p class="lead">Something is waiting to be woken. You only get one, and it will be yours.</p>
+      <button type="button" class="primary" id="wakeBtn">Wake your eye</button>
+      <button type="button" class="link" id="restoreOpen">I have a keepsake code</button>
+      <div id="restoreBox" hidden>
+        <textarea id="restoreTxt" rows="3" placeholder="Paste your keepsake code" autocomplete="off" spellcheck="false"></textarea>
+        <button type="button" id="restoreGo">Bring it back</button>
+        <p class="err" id="restoreErr"></p>
+      </div>
+      <p class="fine">EYES by FRAY, INC.</p>
+    </div>
+  </section>
+
+  <!-- in Safari on iPhone: install first, so the eye lives in the Home Screen app -->
+  <section id="install" class="screen" hidden>
+    <div class="inner">
+      <svg class="eyemark" viewBox="0 0 120 70" aria-hidden="true"><path d="M4 35C24 6 96 6 116 35C96 64 24 64 4 35Z"/><circle cx="60" cy="35" r="16"/><circle class="p" cx="60" cy="35" r="5"/></svg>
+      <h1>EYES</h1>
+      <p class="lead">Put EYES on your Home Screen first. Your eye is born there and lives there.</p>
+      <ol class="steps">
+        <li>Tap <b>Share</b> <svg class="share" viewBox="0 0 20 24" aria-hidden="true"><path d="M10 1V15M5 6L10 1L15 6M4 10H2V23H18V10H16"/></svg> at the bottom of Safari</li>
+        <li>Choose <b>Add to Home Screen</b></li>
+        <li>Open <b>EYES</b> from your Home Screen</li>
+      </ol>
+      <p class="fine">Waking it here in Safari would keep it in Safari, apart from the Home Screen app.</p>
+      <button type="button" class="link" id="installAnyway">Wake it in the browser anyway</button>
+    </div>
+  </section>
+
+  <!-- sheets -->
+  <div id="scrim" hidden></div>
+  <section class="sheet" id="linkSheet" role="dialog" aria-label="Eye Contact" hidden>
+    <div class="grab"></div>
+    <h2>Eye Contact</h2>
+    <div id="linkBody"></div>
+  </section>
+  <section class="sheet" id="moreSheet" role="dialog" aria-label="More" hidden>
+    <div class="grab"></div>
+    <h2>Keepsake</h2>
+    <p class="sub">If this phone is ever reset or EYES is removed, this code brings your eye back exactly as it is. Keep it somewhere safe, like your Notes.</p>
+    <textarea id="keepTxt" rows="3" readonly></textarea>
+    <div class="row"><button type="button" id="keepCopy">Copy</button><button type="button" id="keepShare" class="ghost">Share…</button></div>
+    <h2 class="mt">Sound</h2>
+    <div class="row"><button type="button" id="soundBtn" class="ghost">Signal sounds: on</button></div>
+    <p class="fine">EYES for iPhone · <span id="ver"></span><br>Eye Contact is end-to-end encrypted. The relay only ever sees scrambled bytes.</p>
+  </section>
+
+  <script src="eyes-boot.js"></script>
+  <script src="haven-dna.js"></script>
+  <script src="awakening.js"></script>
+  <script src="eyes-link.js"></script>
+  <script src="eyes-app.js"></script>
+</body>
+</html>
