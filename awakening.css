@@ -1,0 +1,61 @@
+/* HAVEN Awakening: the birth screen and birth card (see awakening.js). */
+#awaken { position: fixed; inset: 0; background: #000; z-index: 2147483000; display: none; touch-action: none;
+  user-select: none; -webkit-user-select: none; overflow: hidden; color: #dfeff1;
+  font-family: inherit; transition: opacity 0.9s ease; }
+#awaken.open { display: block; }
+#awaken.leaving { opacity: 0; }
+#awaken canvas { display: block; }
+#awCanvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+#awaken button { font: inherit; font-size: 15px; color: #dfeff1; background: rgba(111,193,202,0.12);
+  border: 1px solid rgba(111,193,202,0.35); border-radius: 999px; padding: 11px 18px; margin: 0; min-height: 0;
+  box-shadow: none; text-transform: none; letter-spacing: normal; width: auto; }
+#awaken button:active { transform: scale(0.97); }
+#awaken .ghost { background: transparent; border-color: rgba(223,239,241,0.2); color: rgba(223,239,241,0.7); }
+#awMute { position: absolute; top: max(14px, env(safe-area-inset-top), var(--native-inset-top, 0px)); right: 14px; z-index: 2;
+  font-size: 12px !important; padding: 7px 12px !important; }
+#awaken.cardOnly #awMute { display: none; }
+#awaken .awText { position: absolute; left: 0; right: 0; text-align: center; pointer-events: none; transition: opacity 0.9s ease; margin: 0; }
+#awHint { bottom: calc(14% + env(safe-area-inset-bottom)); color: rgba(223,239,241,0.6); font-size: 14px;
+  letter-spacing: 0.32em; text-transform: lowercase; opacity: 0; }
+#awName { top: calc(42% + min(31vw, 30vh)); font-size: 34px; font-weight: 300; letter-spacing: 0.06em; opacity: 0; }
+#awName span { display: inline-block; opacity: 0; transform: translateY(10px); filter: blur(6px);
+  transition: opacity 0.7s ease, transform 0.7s ease, filter 0.7s ease; }
+#awName.show span { opacity: 1; transform: none; filter: none; }
+#awMeta { top: calc(42% + min(31vw, 30vh) + 50px); color: rgba(223,239,241,0.6); font-size: 14px; letter-spacing: 0.08em; opacity: 0; }
+#awActions { position: absolute; left: 0; right: 0; bottom: calc(7% + env(safe-area-inset-bottom)); display: flex;
+  flex-direction: column; align-items: center; gap: 10px; opacity: 0; pointer-events: none; transition: opacity 0.8s ease; }
+#awActions.show { opacity: 1; pointer-events: auto; }
+#awaken .row2 { display: flex; gap: 10px; }
+#awRename { display: none; gap: 8px; }
+#awRename input { font: inherit; font-size: 16px; color: #dfeff1; background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(111,193,202,0.35); border-radius: 999px; padding: 10px 16px; width: 170px; text-align: center; outline: none; }
+#birth { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; padding: 24px;
+  background: radial-gradient(circle at 50% 40%, #0d1c22, #000 70%); }
+#birth.open { display: flex; animation: awFadeIn 0.8s ease; }
+@keyframes awFadeIn { from { opacity: 0 } to { opacity: 1 } }
+#awaken .bcard { width: min(340px, 88vw); border-radius: 26px; padding: 18px 18px 20px; position: relative;
+  background: linear-gradient(160deg, rgba(255,255,255,0.07), rgba(255,255,255,0.015));
+  border: 1px solid rgba(223,239,241,0.14); box-shadow: 0 30px 80px rgba(0,0,0,0.6); }
+#awaken .bcard.mythic { border-color: rgba(255,207,122,0.55); box-shadow: 0 0 40px rgba(255,207,122,0.18), 0 30px 80px rgba(0,0,0,0.6); }
+#awaken .bcard.rare { border-color: rgba(143,184,255,0.45); }
+#awaken .btop { display: flex; justify-content: space-between; font-size: 10px; letter-spacing: 0.4em; color: rgba(223,239,241,0.5); }
+#bEye { width: 100%; aspect-ratio: 1; margin: 4px 0; }
+#awaken .bname { font-size: 30px; font-weight: 300; text-align: center; margin: 0; }
+#awaken .bwords { text-align: center; color: rgba(223,239,241,0.65); font-size: 14px; margin: 4px 0 14px; }
+#awaken .bgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; font-size: 12px; border-top: 1px solid rgba(223,239,241,0.1); padding-top: 12px; }
+#awaken .bgrid div span { display: block; color: rgba(223,239,241,0.45); font-size: 10px; letter-spacing: 0.2em; margin-bottom: 2px; }
+#awaken .btraits { margin-top: 10px; font-size: 12px; color: #ffcf7a; text-align: center; min-height: 1px; }
+#awaken .bactions { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 18px; }
+#awaken .t-common { color: rgba(223,239,241,0.55); }
+#awaken .t-uncommon { color: #8fe3b4; }
+#awaken .t-rare { color: #8fb8ff; }
+#awaken .t-mythic { color: #ffcf7a; text-shadow: 0 0 8px rgba(255,207,122,0.6); }
+#awEvo { display: none; }
+#awaken.evolving #awMute { display: none; }
+#awaken .bquirks { margin-top: 12px; font-size: 12px; color: rgba(223,239,241,0.7); text-align: center; line-height: 1.5; }
+#awaken .bnext { margin-top: 6px; font-size: 11px; color: rgba(223,239,241,0.45); text-align: center; letter-spacing: 0.04em; }
+#awMeta div { line-height: 1.4; }
+
+/* 3.1: where it came from, under its temperament */
+#awaken .borigin { text-align: center; color: rgba(223,239,241,0.5); font-size: 12px; font-style: italic; margin: -8px 0 14px; min-height: 1px; }
+#awaken .borigin:empty { display: none; }
