@@ -9,11 +9,25 @@
   // ---------- before the eye ----------
   function route() {
     const has = HavenDNA.has();
-    $('welcome').hidden = has || (isIOS && !standalone && !sessionStorage.getItem('eyes.anyway'));
-    $('install').hidden = has || !$('welcome').hidden;
+    // The install guide stays available in Safari even if an Eye was born there.
+    // Installing EYES must never silently discard or overwrite that Eye.
+    const showInstall = isIOS && !standalone && !sessionStorage.getItem('eyes.anyway');
+    $('install').hidden = !showInstall;
+    $('welcome').hidden = has || showInstall;
+    $('installExistingEye').hidden = !has;
     document.documentElement.classList.toggle('eyes-pre', !has);
   }
   $('installAnyway').onclick = () => { sessionStorage.setItem('eyes.anyway', '1'); route(); };
+  $('installCopyLink').onclick = async () => {
+    const url = location.origin + location.pathname;
+    try {
+      if (!navigator.clipboard || !navigator.clipboard.writeText) throw new Error('clipboard unavailable');
+      await navigator.clipboard.writeText(url);
+      $('installCopyStatus').textContent = 'Copied. Open Safari and paste the link there.';
+    } catch (e) {
+      $('installCopyStatus').textContent = 'Copy this address into Safari: ' + url;
+    }
+  };
   $('wakeBtn').onclick = () => {
     try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) {}
     $('welcome').hidden = true; document.documentElement.classList.remove('eyes-pre');
@@ -63,6 +77,23 @@
     const intro = st.querySelector('.intro'); if (intro) intro.textContent = 'Adjustments for you, and for the thing on your iPhone.';
     // keepsake, in Help & backup
     const tips = st.querySelector('.tips-setting');
+    // Browser-only way back to the install instructions after someone chooses
+    // to wake an Eye in Safari. Never shown in the installed Home Screen app.
+    if (isIOS && !standalone && !$('installGuideRow')) {
+      const helpHeading = [...st.querySelectorAll('h2.optic-group')].find((h) => h.textContent.includes('Help & backup'));
+      if (helpHeading) {
+        const row = document.createElement('div');
+        row.id = 'installGuideRow';
+        row.className = 'setting';
+        row.innerHTML = '<span>Put EYES on your Home Screen<small>A quick step-by-step guide for Safari</small></span><button type="button" id="installGuideOpen" class="manage-shortcuts">Show guide</button>';
+        helpHeading.insertAdjacentElement('afterend', row);
+        $('installGuideOpen').onclick = () => {
+          const close = st.querySelector('button.close');
+          if (close) close.click();
+          $('install').hidden = false;
+        };
+      }
+    }
     if (tips && !$('keepRow')) {
       const row = document.createElement('div'); row.className = 'setting backup-setting'; row.id = 'keepRow'; row.style.display = '';
       row.innerHTML = '<span>Keepsake code<small id="keepStatus">Brings your Eye back exactly as it is, if EYES is ever removed. Keep it in Notes.</small></span><span class="backup-actions"><button id="keepCopy" type="button">Copy</button><button id="keepShare" type="button">Share</button></span>';
