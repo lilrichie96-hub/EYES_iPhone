@@ -1136,3 +1136,51 @@ html[data-motion='off'] .eyes-wordmark .wm-lid {
     height: 17px;
   }
 }
+
+/* 4.2.2 Eye Passport: same vocabulary as the backup row */
+.passport-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--dim);
+  letter-spacing: 0.02em;
+}
+.passport-field[hidden] {
+  display: none;
+}
+.passport-field input,
+#restorePass {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.12));
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--bone, inherit);
+  font-size: 15px;
+}
+#restorePass[hidden] {
+  display: none;
+}
+.passport-note,
+.passport-plan p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ash, #8aa);
+}
+.passport-plan {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.12));
+  border-radius: 12px;
+}
+.passport-plan[hidden] {
+  display: none;
+}
+.backup-paste .backup-actions {
+  flex-wrap: wrap;
+}

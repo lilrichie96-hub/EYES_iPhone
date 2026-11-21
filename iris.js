@@ -1188,6 +1188,10 @@ window.createIris = function ({
     notifications,
     seenItem,
     updateVolume,
+    // 4.2.2: the shortcut ring can be opened while music plays (Shortcuts Mode); playback is never touched
+    openReach: (keyboard = false) => openReach(keyboard),
+    reachOpen: () => !reach.hidden,
+    busy: () => !!gesture,
     shading(t) {
       if (!volumeVisible || !volume) return null;
       const active = gesture?.kind === 'music' && gesture.axis === 'volume' && gesture.active;

@@ -2741,3 +2741,67 @@ footer {
     transform 400ms var(--ease),
     translate 260ms var(--ease);
 }
+
+/* 4.2.2 Music Mode ↔ Shortcuts Mode: a small light on the Eye's lower rim, the twin of the waiting glint.
+   It only appears while a media session exists, never covers the transport, and never touches playback. */
+#irisMode {
+  position: absolute;
+  z-index: 3;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  transform: translate(-50%, -50%);
+  color: #9fc4ca;
+  opacity: 0;
+  transition: opacity 320ms var(--ease, ease);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+#irisMode[hidden] {
+  display: none;
+}
+#irisMode.shown {
+  opacity: 0.62;
+}
+#irisMode:active,
+#irisMode:focus-visible {
+  opacity: 1;
+}
+#irisMode svg {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  stroke-width: 1.5;
+}
+#irisMode .im-shortcuts circle {
+  fill: currentColor;
+  stroke: none;
+}
+#irisMode[data-mode='music'] .im-music,
+#irisMode[data-mode='shortcuts'] .im-shortcuts {
+  display: none;
+}
+/* while the controls are away, the note breathes slowly with playback, so it's clear the music is still on */
+html[data-motion='on'] #irisMode[data-mode='shortcuts'][data-playing='true'].shown {
+  animation: iris-mode-breathe 3.4s ease-in-out infinite;
+}
+@keyframes iris-mode-breathe {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+#home:has(#irisReach:not([hidden])) #irisMode,
+#home.music-focus #irisMode {
+  opacity: 0;
+  pointer-events: none;
+}

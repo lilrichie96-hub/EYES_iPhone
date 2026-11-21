@@ -119,9 +119,11 @@
   }
   function statusOf(f) {
     if (f.native) return f.paired ? 'Linked (your first Eye Contact)' : 'Waiting for them…';
-    if (F().online(f)) return 'awake now';
-    const c = F().connection(f);
-    return f.lastSeen ? 'last here ' + ago(f.lastSeen) : c === 'offline' ? 'relay unreachable, retrying' : 'linked';
+    const pr = F().presence(f), c = F().connection(f);
+    if (pr.state === 'online') return 'awake now';
+    if (pr.state === 'offline') return (pr.why === 'closed' ? 'closed EYES ' + ago(pr.since) : 'not open right now') + (f.lastSeen ? ' · last here ' + ago(f.lastSeen) : '');
+    if (c === 'offline') return 'relay unreachable, retrying';
+    return f.lastSeen ? 'can\'t tell right now · last here ' + ago(f.lastSeen) : 'linked';
   }
   function friendRow(f) {
     const row = document.createElement('div'); row.className = 'es-friend' + (!f.native && F().online(f) ? ' online' : '');
@@ -353,6 +355,9 @@
         if (data.event === 'status' || data.event === 'paired' || data.event === 'profile') setTimeout(() => { try { dispatchEvent(new CustomEvent('haven:friend')); } catch (e) {} }, 50);
         if (data.event === 'outgoing') { F().countNative('sent', data.kind); if (root.EYES_NATIVE_MAILBOX && root.EyesPush) EyesPush.nudge(root.EYES_NATIVE_MAILBOX, '0'.repeat(32), data.kind); }
         if (data.event === 'status' && data.linked && !root.EYES_NATIVE_CODE) { wantCode = true; native('linkShowCode'); }
+        if (data.event === 'paired' && root.EYES_NATIVE_CODE) setTimeout(() => F().upgradeNative(root.EYES_NATIVE_CODE), 100);
+        // 4.2.2: the native link ended: its upgraded companion rests too (the friendship history stays)
+        if (data.event === 'status' && !data.linked && root.EYES_NATIVE_CODE) { root.EYES_NATIVE_CODE = null; root.EYES_NATIVE_MAILBOX = null; F().upgradeNative(null); }
         if (data.event === 'invite') {                     // a friend's invite link while the native link is taken: a new friend
           const d = Haven.diagnostics().link;
           if (d && d.linked && F().findCode(data.code)) { F().join(data.code).then((nf) => { if (root.EyesContact) EyesContact.joining(nf.code); else { views.friends(); caption('Connecting with your new friend…'); } }, (e) => caption(e.message)); return true; }
@@ -367,6 +372,9 @@
       const pre = new TextEncoder().encode('EYES-PUSH-1'), buf = new Uint8Array(pre.length + raw.length); buf.set(pre); buf.set(raw, pre.length);
       const h = new Uint8Array(await crypto.subtle.digest('SHA-256', buf));
       root.EYES_NATIVE_MAILBOX = Array.from(h.slice(0, 16), (b) => b.toString(16).padStart(2, '0')).join('');
+      // 4.2.2: a secure upgrade path for the original link, derived from the secret both phones already share
+      const d = Haven.diagnostics().link;
+      if (d && d.paired) F().upgradeNative(code);
     }
     setTimeout(() => { const d = Haven.diagnostics().link; if (d && d.linked && !root.EYES_NATIVE_CODE) { wantCode = true; native('linkShowCode'); } }, 2500);
   }

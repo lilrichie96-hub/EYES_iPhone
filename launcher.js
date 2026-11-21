@@ -583,6 +583,7 @@
       diving: dived.diving
     });
     iris.paint(ctx, (intensity, alpha) => color(v, intensity, alpha));
+    syncIrisMode(screen(-size * 0.9, size * 0.9));
     if (v.music > 0.001 || !$('music').hidden) {
       const positions = [
         screen(gx - size * 0.66 * ease(m), gy),
@@ -949,11 +950,21 @@
         lastState = data;
         systemMotion = data.systemMotion !== false;
         syncMotion();
+        // 4.2.2: a phone that can't read its battery (iPhone web) says so with battery: null. The Eye then
+        // lives at an ordinary, unremarkable level instead of reacting to a number nobody measured.
+        const batteryKnown = Number.isFinite(data.battery);
         core.update(
-          { battery: data.battery, charging: data.charging, saver: data.saver, hour: data.hour },
+          {
+            battery: batteryKnown ? data.battery : 60,
+            charging: batteryKnown && data.charging === true,
+            saver: data.saver === true,
+            batteryKnown,
+            hour: data.hour
+          },
           t
         );
-        $('battery').textContent = `${data.charging ? '↳ ' : ''}${data.battery}%`;
+        $('battery').hidden = !batteryKnown;
+        $('battery').textContent = batteryKnown ? `${data.charging ? '↳ ' : ''}${data.battery}%` : '';
         $('nextAlarm').hidden = !data.alarm;
         $('nextAlarm').textContent = data.alarm ? `Alarm · ${escTime(data.alarm)}` : '';
         $('homeStatus').textContent = data.isHome
@@ -982,8 +993,13 @@
         const sameTrack =
           (prev.title || '') === (data.title || '') && (prev.artist || '') === (data.artist || '');
         // Put-away controls stay away until a new song or a fresh press of play.
+        // 4.2.2: Shortcuts Mode (chosen with the iris switch) also survives a new song, so the next track
+        // never pulls the music controls back over a folder or shortcut someone is reaching for.
         const hidden = Boolean(
-          prev.hidden && data.available && sameTrack && !(data.playing && !prev.playing)
+          prev.hidden &&
+            data.available &&
+            (sameTrack || prev.shortcuts) &&
+            !(data.playing && !prev.playing)
         );
         const holdUntil =
           hidden || data.playing || !data.available
@@ -991,7 +1007,7 @@
             : prev.playing
               ? Date.now() + PAUSE_LINGER_MS
               : prev.holdUntil || 0;
-        const media = { ...data, holdUntil, hidden };
+        const media = { ...data, holdUntil, hidden, shortcuts: hidden && !!prev.shortcuts };
         clearTimeout(mediaHold);
         if (holdUntil)
           mediaHold = setTimeout(
@@ -1017,6 +1033,13 @@
               'above'
             );
           }, 1600);
+        // 4.2.2: once the music tip has been seen, point out the switch to shortcuts (once)
+        else if (data.playing && !tips.seen('irisMode') && appManager.irisItems().length)
+          setTimeout(() => {
+            if (panel || !visibility || core.mode !== 'music' || $('irisMode').hidden) return;
+            const r = $('irisMode').getBoundingClientRect();
+            tips.offer('irisMode', 'Tap here for your shortcuts. The music keeps playing', { x: r.left + r.width / 2, y: r.bottom + 4 }, 'below');
+          }, 2400);
         if (old === data.playing && core.mode === 'music') updateTrack();
         break;
       }
@@ -1164,11 +1187,13 @@
   function restoreMusic() {
     const media = core.state.media;
     if (!media?.hidden || !media.available) return false;
+    clearTimeout(shortcutsIdle);
     core.update(
       {
         media: {
           ...media,
           hidden: false,
+          shortcuts: false,
           holdUntil: media.playing ? 0 : Date.now() + PAUSE_LINGER_MS
         }
       },
@@ -1186,6 +1211,97 @@
     schedule();
     return true;
   }
+  // ---------- 4.2.2 Music Mode ↔ Shortcuts Mode ----------
+  // Music controls are a temporary iris mode, not a takeover. The switch on the Eye's lower rim folds the
+  // controls away (the same fold as Back) and opens the shortcut ring; folders and apps then work exactly
+  // as without music. Playback is never paused, skipped or changed by switching. Tapping the Eye, the
+  // switch again, Back, Home, or a quiet minute brings the controls back with the live session.
+  const SHORTCUTS_IDLE_MS = 60000;
+  let shortcutsIdle = 0;
+  const folderOpen = () => !$('livingConstellation').hidden || appManager.overlayOpen();
+  function showShortcuts(openRing = true) {
+    if (core.mode !== 'music' || panel) return false;
+    clearTimeout(mediaHold);
+    iris.closeFocus(now());
+    core.update({ media: { ...core.state.media, hidden: true, holdUntil: 0, shortcuts: true } }, now());
+    core.react('fold', now());
+    tips.used('irisMode');
+    armShortcutsIdle();
+    if (openRing && appManager.irisItems().length) {
+      // after the controls have folded (immediately when Motion is Off)
+      setTimeout(() => {
+        if (core.state.media?.shortcuts && !panel && !iris.reachOpen()) iris.openReach(false);
+        syncIrisMode();
+      }, core.motion ? 430 : 0);
+    }
+    if (!core.motion) draw(now());
+    schedule();
+    syncIrisMode();
+    return true;
+  }
+  function armShortcutsIdle() {
+    clearTimeout(shortcutsIdle);
+    if (!core.state.media?.shortcuts) return;
+    shortcutsIdle = setTimeout(function check() {
+      const m = core.state.media;
+      if (!m?.shortcuts) return;
+      // someone is still busy with a folder, the ring, a panel or a drag: look again later
+      if (!visibility || panel || folderOpen() || iris.reachOpen() || iris.busy() || appManager.dragActive() || pointerActive) {
+        shortcutsIdle = setTimeout(check, 15000);
+        return;
+      }
+      if (m.playing) restoreMusic();
+    }, SHORTCUTS_IDLE_MS);
+  }
+  const irisModeBox = { x: -1, y: -1, mode: '', shown: null, playing: null };
+  function syncIrisMode(geo) {
+    const btn = $('irisMode');
+    if (!btn || window.EYES_WEB) return;
+    const m = core.state.media || {};
+    const musicShown = core.mode === 'music' && !$('music').hidden;
+    const away = !!(m.hidden && m.available && (m.playing || m.shortcuts));
+    const mode = musicShown ? 'music' : 'shortcuts';
+    const show =
+      (musicShown && appManager.irisItems().length > 0) ||
+      (!musicShown && away && core.mode !== 'music');
+    const blocked = !!panel || folderOpen() || iris.reachOpen() || eyeDive.active(now());
+    if (geo) {
+      if (Math.abs(geo.x - irisModeBox.x) > 0.5 || Math.abs(geo.y - irisModeBox.y) > 0.5) {
+        btn.style.left = geo.x + 'px';
+        btn.style.top = geo.y + 'px';
+        irisModeBox.x = geo.x;
+        irisModeBox.y = geo.y;
+      }
+    }
+    const visible = show && !blocked && irisModeBox.x >= 0;
+    if (btn.hidden === visible) btn.hidden = !visible;
+    btn.classList.toggle('shown', visible);
+    if (irisModeBox.mode !== mode) {
+      irisModeBox.mode = mode;
+      btn.dataset.mode = mode;
+      btn.setAttribute(
+        'aria-label',
+        mode === 'music' ? 'Show shortcuts. Music keeps playing' : 'Back to music controls'
+      );
+    }
+    const playing = String(!!m.playing);
+    if (irisModeBox.playing !== playing) btn.dataset.playing = irisModeBox.playing = playing;
+  }
+  $('irisMode').addEventListener('click', (event) => {
+    event.stopPropagation();
+    if (personality.eyeTapSuppressed && personality.eyeTapSuppressed()) return;
+    if (core.mode === 'music') showShortcuts(true);
+    else if (restoreMusic()) iris.cancel();
+    syncIrisMode();
+  });
+  addEventListener('pointerdown', () => armShortcutsIdle(), true);
+  // Folders, sheets and the ring open and close on their own schedules (and with Motion Off nothing
+  // redraws by itself), so the switch follows them directly.
+  try {
+    const watch = new MutationObserver(() => syncIrisMode());
+    for (const id of ['livingConstellation', 'folderSheet', 'organizeSheet', 'pinSheet', 'folderPicker', 'irisReach', 'music'])
+      if ($(id)) watch.observe($(id), { attributes: true, attributeFilter: ['hidden'] });
+  } catch (e) {}
   function diveInto(point) {
     tips.count('launches');
     if (!core.motion || panel || !visibility || !point) return false;
@@ -1207,10 +1323,25 @@
       );
     }, 1400);
   }
+  // 4.2.2: the notification gesture starts at the top edge: the strip from the screen's edge to just
+  // under EYES's own header (wordmark and The Optic), below any status bar or camera cutout.
+  function inboxEdge() {
+    const header = document.querySelector('#home > header');
+    const inset = header ? Math.max(0, header.getBoundingClientRect().top - 13) : 0;
+    return inset + Math.max(56, Math.min(88, h * 0.085));
+  }
+  // Someone swiped down mid-screen the old way: say once where notifications live now.
+  function offerInboxEdgeTip() {
+    if (window.EYES_WEB || tips.seen('inboxEdge')) return;
+    tips.offer('inboxEdge', 'Swipe down from the top edge for notifications', { x: w * 0.5, y: inboxEdge() + 6 }, 'below');
+  }
   function goHome() {
     eyeDive.emerge(now());
     touchStart = null;
+    iris.cancel();
     appManager.closeAll();
+    // 4.2.2: Home puts the Eye back at rest, which with music playing means the music controls
+    if (core.state.media?.shortcuts) restoreMusic();
     closePanel();
     $('search').value = '';
     hideNotice(now());
@@ -1280,6 +1411,7 @@
     panel = id;
     if (id === 'settings') showEyeStats();
     $(id).hidden = false;
+    syncIrisMode();
     stopLoop();
     raf = 0;
     if (id === 'drawer') {
@@ -1623,7 +1755,7 @@
         touchStart = null;
         return;
       }
-      touchStart = { x: e.clientX, y: e.clientY };
+      touchStart = { x: e.clientX, y: e.clientY, edge: e.clientY <= inboxEdge() };
       const x = (e.clientX - w * 0.5) / (w * 0.4),
         y = (e.clientY - h * 0.49) / (h * 0.4);
       const target = e.target?.closest?.('.home-app,.dock-app,#irisGlint,#notice');
@@ -1667,9 +1799,16 @@
       if (!touchStart || panel || appManager.overlayOpen() || appManager.dragActive()) return;
       const dy = e.clientY - touchStart.y,
         dx = e.clientX - touchStart.x;
+      const fromEdge = touchStart.edge;
       touchStart = null;
-      if (Math.abs(dx) < 90 && dy < -65) openPanel('drawer');
-      else if (Math.abs(dx) < 90 && dy > 80) openPanel('inbox');
+      // 4.2.2: deliberate, mostly vertical swipes only. Notifications open from the top edge (where every
+      // phone keeps them), never from an ordinary downward swipe across the Eye or the home screen.
+      const vertical = Math.abs(dx) < 90 && Math.abs(dy) > Math.abs(dx) * 1.4;
+      if (vertical && dy < -65) openPanel('drawer');
+      else if (vertical && dy > 80 && fromEdge) {
+        tips.used('inboxEdge');
+        openPanel('inbox');
+      } else if (vertical && dy > 120) offerInboxEdgeTip();
     },
     { passive: true }
   );
@@ -1721,6 +1860,8 @@
       if (appManager.back()) return true;
       if (iris.back()) return true;
       if (dismissMusic()) return true;
+      // 4.2.2: Back from Shortcuts Mode returns to the music controls (playback was never touched)
+      if (!panel && core.state.media?.shortcuts && restoreMusic()) return true;
       if (panel === 'linkSheet') {
         openPanel('settings');
         return true;

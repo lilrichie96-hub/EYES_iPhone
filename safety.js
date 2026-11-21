@@ -39,6 +39,8 @@
   }
   function parseBackup(text) {
     let parsed;
+    if (/EYESP1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/.test(String(text || '')))
+      return { ok: false, reason: 'That is an Eye Passport. Use Eye Passport → Restore, just below.' };
     try {
       parsed = JSON.parse(String(text || '').trim());
     } catch (e) {
@@ -56,16 +58,24 @@
   function restore(text) {
     const result = parseBackup(text);
     if (!result.ok) return result;
+    // 4.2.2: all or nothing. If any write fails, the phone goes back exactly to how it was.
+    const before = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(PREFIX)) before.push([k, localStorage.getItem(k)]);
+    }
     try {
-      const old = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (k && k.startsWith(PREFIX)) old.push(k);
-      }
-      old.forEach((k) => localStorage.removeItem(k));
+      before.forEach(([k]) => localStorage.removeItem(k));
       result.entries.forEach(([k, v]) => localStorage.setItem(k, v));
     } catch (e) {
-      return { ok: false, reason: "Couldn't write the backup on this phone." };
+      try {
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith(PREFIX)) localStorage.removeItem(k);
+        }
+        before.forEach(([k, v]) => localStorage.setItem(k, v));
+      } catch (e2) {}
+      return { ok: false, reason: "Couldn't write the backup on this phone, so nothing was changed." };
     }
     return result;
   }

@@ -34,8 +34,22 @@
     HavenAwakening.start();
   };
   $('restoreOpen').onclick = () => { $('restoreBox').hidden = false; $('restoreTxt').focus(); };
-  $('restoreGo').onclick = () => {
-    try { restore($('restoreTxt').value); location.reload(); }
+  // 2.2.2: the welcome screen also takes an Eye Passport (asks for its passphrase), checked in full first
+  const passIn = document.createElement('input');
+  passIn.type = 'password'; passIn.id = 'restorePass'; passIn.placeholder = 'Passport passphrase'; passIn.autocomplete = 'current-password'; passIn.hidden = true;
+  $('restoreTxt').insertAdjacentElement('afterend', passIn);
+  $('restoreTxt').addEventListener('input', () => { passIn.hidden = !(window.EyesPassport && EyesPassport.detect($('restoreTxt').value) === 'passport'); });
+  $('restoreGo').onclick = async () => {
+    const text = $('restoreTxt').value, P = window.EyesPassport;
+    if (P && P.detect(text) === 'passport') {
+      $('restoreErr').textContent = 'Opening your passport…';
+      const r = await P.open(text, passIn.value);
+      if (!r.ok) { $('restoreErr').textContent = r.reason; return; }
+      const done = P.apply(r);
+      if (!done.ok) { $('restoreErr').textContent = done.reason; return; }
+      location.reload(); return;
+    }
+    try { restore(text); location.reload(); }
     catch (e) { $('restoreErr').textContent = "That code doesn't look right. Check you copied all of it."; }
   };
   addEventListener('haven:dna', route);
@@ -52,12 +66,19 @@
     return 'EYES1.' + b64u(JSON.stringify(o));
   }
   function restore(text) {
+    // 2.2.2: checked in full first, then written all at once (EyesPassport rolls back if a write fails)
     const m = String(text || '').match(/EYES1\.[A-Za-z0-9_-]+/); if (!m) throw new Error('bad');
     const o = JSON.parse(unb64u(m[0].slice(6)));
     if (!o || !o.d || typeof o.d.seed !== 'number') throw new Error('bad');
-    localStorage.setItem('haven.dna.v1', JSON.stringify(o.d));
-    if (o.g) localStorage.setItem('haven.growth.v1', JSON.stringify(o.g));
-    if (o.x) for (const k in o.x) if (keep(k) && typeof o.x[k] === 'string') localStorage.setItem(k, o.x[k]);
+    const data = { 'haven.dna.v1': JSON.stringify(o.d) };
+    if (o.g) data['haven.growth.v1'] = JSON.stringify(o.g);
+    if (o.x) for (const k in o.x) if (keep(k) && typeof o.x[k] === 'string') data[k] = o.x[k];
+    if (window.EyesPassport) {
+      const done = EyesPassport.apply({ ok: true, kind: 'keepsake', data, merge: true, sum: {} });
+      if (!done.ok) throw new Error('bad');
+      return;
+    }
+    for (const k in data) localStorage.setItem(k, data[k]);
   }
 
   // ---------- The Optic, for an iPhone ----------
@@ -96,7 +117,7 @@
     }
     if (tips && !$('keepRow')) {
       const row = document.createElement('div'); row.className = 'setting backup-setting'; row.id = 'keepRow'; row.style.display = '';
-      row.innerHTML = '<span>Keepsake code<small id="keepStatus">Brings your Eye back exactly as it is, if EYES is ever removed. Keep it in Notes.</small></span><span class="backup-actions"><button id="keepCopy" type="button">Copy</button><button id="keepShare" type="button">Share</button></span>';
+      row.innerHTML = '<span>Keepsake code<small id="keepStatus">Brings back your Eye, its growth and settings, if EYES is ever removed. For friends, Eye Dex and Play too, use Eye Passport below.</small></span><span class="backup-actions"><button id="keepCopy" type="button">Copy</button><button id="keepShare" type="button">Share</button></span>';
       tips.insertAdjacentElement('afterend', row);
       $('keepCopy').onclick = async () => { try { await navigator.clipboard.writeText(keepsake()); $('keepStatus').textContent = 'Copied. Paste it somewhere safe.'; } catch (e) { $('keepStatus').textContent = keepsake(); } };
       $('keepShare').onclick = () => { const k = keepsake(); if (navigator.share) navigator.share({ text: k }).catch(() => {}); else $('keepCopy').onclick(); };

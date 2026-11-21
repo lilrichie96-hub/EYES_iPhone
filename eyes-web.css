@@ -2,7 +2,7 @@
 :root { --st: env(safe-area-inset-top, 0px); --sb: env(safe-area-inset-bottom, 0px); }
 html, body { overscroll-behavior: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 /* no apps, dock, notifications or battery on an iPhone home */
-#homeApps, #dock, #home > footer, #drawerOpen, #notice, #irisGlint, #battery, #nextAlarm { display: none !important; }
+#homeApps, #dock, #home > footer, #drawerOpen, #notice, #irisGlint, #irisMode, #battery, #nextAlarm { display: none !important; }
 .dayline span + span { display: none !important; }
 /* haven.css already handles the iPhone notch; do not add a second header offset. */
 html.eyes-pre #home, html.eyes-pre #eyesDock { visibility: hidden; }

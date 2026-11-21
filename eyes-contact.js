@@ -82,11 +82,22 @@
     const f = b.f; return f.nick || (f.profile && f.profile.name) || (f.peer ? 'Their Eye' : 'Someone new');
   }
   // Status in plain words. Each one is something this phone knows.
+  // 4.2.2: three honest availability states: Awake now (heard from them), Not open (they said so, or
+  // didn't answer while we were listening) and Can't tell (anything else). Nothing is guessed.
+  function presenceState(pr, lastSeen) {
+    const last = lastSeen ? 'last here ' + ago(lastSeen) : '';
+    if (pr.state === 'online') return { id: 'awake', label: 'Awake now', sub: '' };
+    if (pr.state === 'offline') return { id: 'resting', label: pr.why === 'closed' ? 'Closed EYES' : 'Not open right now', sub: pr.why === 'closed' ? ago(pr.since) : last };
+    if (pr.why === 'asking') return { id: 'unsure', label: 'Checking…', sub: last };
+    return { id: 'unsure', label: "Can't tell right now", sub: last };
+  }
   function stateOf(b) {
     if (b.native) {
       if (!b.paired) return { id: 'waiting', label: 'Waiting for their Eye', sub: 'your first Eye Contact' };
       if (b.connection === 'offline') return { id: 'reconnecting', label: 'Trying to reconnect', sub: '' };
       if (!b.profile) return { id: 'introducing', label: 'Introducing itself', sub: '' };
+      const up = F().nativeUpgrade && F().nativeUpgrade();
+      if (up && up.peer) { const pr = F().presence(up); if (pr.state !== 'unknown') return presenceState(pr, up.lastSeen); }
       return { id: 'linked', label: 'Linked', sub: 'your first Eye Contact' };
     }
     const f = b.f, conn = F().connection(f);
@@ -94,8 +105,7 @@
     if (conn === 'offline') return { id: 'reconnecting', label: 'Trying to reconnect', sub: f.lastSeen ? 'last here ' + ago(f.lastSeen) : '' };
     if (!f.profile) return { id: 'introducing', label: 'Introducing itself', sub: '' };
     if (madeAt.has(f.code) && Date.now() - madeAt.get(f.code) < 90000) return { id: 'made', label: 'Eye Contact made', sub: '' };
-    if (F().online(f)) return { id: 'awake', label: 'Awake now', sub: '' };
-    return { id: 'resting', label: 'Resting', sub: f.lastSeen ? 'last here ' + ago(f.lastSeen) : '' };
+    return presenceState(F().presence(f), f.lastSeen);
   }
   const awake = (b) => !!b && !b.native && !!b.f && F().online(b.f);
 
@@ -442,6 +452,8 @@
     const n = nodes.get(key); if (!n || n.key === 'me') return;
     if (n.b.pending) return;
     focusKey = key;
+    // 4.2.2: opening a friend asks once whether their Eye is open (answered only by an open 4.2.2 Eye)
+    try { const pf = n.b.native ? F().nativeUpgrade && F().nativeUpgrade() : n.b.f; if (pf) F().probe(pf); } catch (e) {}
     setMode('meet', instant);
     setTitle(nameOf(n.b));
     setChip(n.state);
@@ -503,7 +515,8 @@
     let note = '';
     if (st.id === 'introducing') note = `<div class="ec-note"><p>Their Eye is still introducing itself. Keep EYES open on both phones for a moment.</p><button type="button" class="ec-btn ec-small" data-a="retry">Ask their Eye again</button></div>`;
     else if (st.id === 'reconnecting') note = `<div class="ec-note"><p>The relay can't be reached right now. EYES keeps trying on its own.</p><button type="button" class="ec-btn ec-small" data-a="reconnect">Reconnect now</button></div>`;
-    else if (st.id === 'resting') note = `<p class="ec-hint">${esc(nameOf(n.b))} is resting. Signals wait for them and arrive when they open EYES.</p>`;
+    else if (st.id === 'resting') note = `<p class="ec-hint">${esc(nameOf(n.b))}'s Eye isn't open right now. Signals wait for them and arrive when they open EYES.</p>`;
+    else if (st.id === 'unsure') note = `<p class="ec-hint">Can't tell if ${esc(nameOf(n.b))}'s Eye is open. Signals still wait for them if it isn't.</p>`;
     else if (st.id === 'linked') note = `<p class="ec-hint">Signals travel through your first Eye Contact.</p>`;
     p.innerHTML = `${note}<div class="ec-sigs" role="group" aria-label="Signals">${sigs.map(([k, d]) => `<button type="button" class="ec-sig ec-sig-${k}" data-sig="${k}" aria-label="Send a ${esc(d.label)}: ${esc(d.hint)}"><span class="ec-orb" aria-hidden="true"><i class="ec-g ec-g-${k}"></i></span><b>${esc(d.label)}</b><small>${esc(d.hint)}</small></button>`).join('')}</div>
       <p class="ec-hint ec-gesture">${motion === 'off' ? 'Tap to send' : 'Tap to send, or drag one to their Eye'}</p><div class="ec-duel-slot"></div>`;
@@ -544,7 +557,8 @@
       ['First resonance', firsts.resonance ? day(firsts.resonance) : 'not yet'],
       ['Their Eye', d ? `${d.tier[0].toUpperCase() + d.tier.slice(1)} · ${d.pal.id} · ${d.pupil.name.toLowerCase()} pupil` : ''],
       ['Temperament', d ? d.words.join(' · ') : ''],
-      ['Can confirm signals', b.native ? '' : F().supports(b.f, 'ack') ? 'yes' : 'not yet (older EYES)']
+      ['Can confirm signals', b.native ? '' : F().supports(b.f, 'ack') ? 'yes' : 'not yet (older EYES)'],
+      ['Battles', upgradeText(b)]
     ].filter((x) => x[1]);
     box.insertAdjacentHTML('beforeend', `<h3>${esc(nameOf(b))}</h3><dl class="ec-facts">${facts.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>`);
     if (b.native) {
@@ -564,6 +578,15 @@
       if (rm.dataset.sure) { F().remove(f); toggleDrawer(false); setMode('sky'); return; }
       rm.dataset.sure = 1; rm.textContent = 'Tap again to remove'; later(() => { rm.dataset.sure = ''; rm.textContent = 'Remove friend'; }, 3000);
     };
+  }
+  // 4.2.2 upgraded friendship, in plain words. Nothing about the original link changes.
+  function upgradeText(b) {
+    if (!F().upgradeState) return '';
+    const u = F().upgradeState(b.native ? 'native' : b.f);
+    if (u.id === 'direct') return 'ready';
+    if (u.id === 'ready') return 'ready (friendship upgraded)';
+    if (u.id === 'waiting' || u.id === 'partial') return 'upgrading: ready once their EYES is 4.2.2 (iPhone 2.2.2) and open';
+    return b.native ? 'upgrading…' : '';
   }
   function manageNative() { close(); const o = document.getElementById('linkOpen'); if (o) { o.dataset.eyesPass = '1'; o.click(); } }
 

@@ -13,10 +13,23 @@ window.EYES_HOLD_BIRTH = true;   // awakening.js: wait for the welcome screen
     else queue.push(data);
   }
   addEventListener('DOMContentLoaded', () => setTimeout(() => { if (window.Haven && queue.length) send(queue.shift()); }, 0));
+  // 2.2.2: only real readings. Safari on iPhone has no Battery Status API, so the battery is reported as
+  // unknown (null) and the Eye behaves as on an ordinary day: no fake "full", "charging" or "low" moods.
+  // A browser that does offer navigator.getBattery() (not Safari) gives its real level and charging state.
+  // Alarms, other apps' music and battery saver can't be seen from a web app at all, so they never appear.
+  let battery = null;
   function system() {
-    send({ type: 'system', battery: 100, charging: false, saver: false, hour: new Date().getHours(), isHome: true, access: false, alarm: 0,
+    const known = !!battery && Number.isFinite(battery.level);
+    send({ type: 'system', battery: known ? Math.round(battery.level * 100) : null, charging: known ? !!battery.charging : null, saver: null,
+      hour: new Date().getHours(), isHome: true, access: false, alarm: 0, sensed: { battery: known, charging: known, alarm: false, media: false, saver: false },
       systemMotion: !matchMedia('(prefers-reduced-motion: reduce)').matches });
   }
+  try {
+    if (typeof navigator.getBattery === 'function') navigator.getBattery().then((b) => {
+      battery = b; ['levelchange', 'chargingchange'].forEach((e) => b.addEventListener(e, system)); system();
+    }, () => {});
+  } catch (e) {}
+  try { matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', system); } catch (e) {}
   const link = (event, extra) => send({ type: 'havenLink', event, _eyes: 1, ...(extra || {}) });
   const F = () => window.EyesFriends;
   const primary = () => F() && F().list().find((f) => f.peer);

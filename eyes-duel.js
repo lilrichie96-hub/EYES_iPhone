@@ -50,11 +50,13 @@
       if (m === 'special' && st.c < COST) return 'blink';
       return m;
     }
-    const hash = (s) => s.r + ':' + [s.a, s.b].map((x) => x.hp + '.' + x.c + '.' + x.dream).join('|');
+    // v2 adds its version to the hash, so two phones that somehow disagree on the rules stop with no winner
+    const hash = (s, rv) => s.r + ':' + [s.a, s.b].map((x) => x.hp + '.' + x.c + '.' + x.dream).join('|') + (rv >= 2 ? '|v' + rv : '');
     const clone = (s) => ({ r: s.r, a: { ...s.a }, b: { ...s.b }, over: s.over, why: s.why });
     function act(m, w) { return m === 'special' ? ARCH[word(w)] : m; }
     function guard(a) { return a === 'blink' ? 0.3 : a === 'charge' ? 1.25 : a === 'dream' ? 0.5 : a === 'peek' ? 0 : 1; }
-    function hit(X, Y, rnd, mult) {
+    // rv: the rules version both phones agreed on (1 = 4.2.0/4.2.1, 2 = 4.2.2). Both phones always use the same one.
+    function hit(X, Y, rnd, mult, rv) {
       const ev = { act: X.act, m: X.m, dmg: 0, hits: [], heal: 0, counter: false, poke: false, blocked: Y.act === 'blink', dodged: false };
       const gY = guard(Y.act), dmg = (base, f) => Math.round(base * f * mult);
       switch (X.act) {
@@ -65,6 +67,8 @@
         case 'beam': ev.dmg = dmg(36, Y.act === 'blink' ? 0.5 : gY); break;
         case 'peek':
           if (ATTACKS.includes(Y.act)) { ev.dmg = dmg(22, 1); ev.counter = true; }
+          // 4.2.2 (rules v2): a poke peeks past a Blink and is a little sharper; v1 is unchanged
+          else if (rv >= 2) { ev.dmg = dmg(10, Y.act === 'blink' ? 1 : gY); ev.poke = true; ev.pierce = Y.act === 'blink'; }
           else { ev.dmg = dmg(8, gY); ev.poke = true; }
           break;
         case 'dream': ev.heal = 6; break;
@@ -74,15 +78,17 @@
       return ev;
     }
     // One round. Both moves are applied at the same moment, so nobody needs to go first.
-    function resolve(s0, ma, mb, seed, wa, wb) {
+    function resolve(s0, ma, mb, seed, wa, wb, rv = 1) {
       const s = clone(s0), rnd = mulberry((seed ^ Math.imul(s.r, 2654435761)) >>> 0), mult = s.r >= SUDDEN ? 1.5 : 1;
       const A = { st: s.a, w: word(wa) }, B = { st: s.b, w: word(wb) };
       A.m = legal(s.a, ma); B.m = legal(s.b, mb);
       A.act = A.m === 'beam' ? 'beam' : act(A.m, A.w); B.act = B.m === 'beam' ? 'beam' : act(B.m, B.w);
-      const ea = hit(A, B, rnd, mult), eb = hit(B, A, rnd, mult);
+      const ea = hit(A, B, rnd, mult, rv), eb = hit(B, A, rnd, mult, rv);
       [[A, ea, eb], [B, eb, ea]].forEach(([X, mine, theirs]) => {
         const st = X.st;
         if (X.m === 'special' && X.act !== 'beam') st.c -= COST;
+        // 4.2.2 (rules v2): a Peekaboo that found nothing to strike back at keeps most of its Charge
+        if (rv >= 2 && X.act === 'peek' && mine.poke) { st.c += 2; mine.refund = 2; }
         if (X.act === 'charge') st.c += 2;
         if (X.act === 'blink') st.c += 1;
         st.c = Math.max(0, Math.min(MAXC, st.c));
@@ -100,7 +106,8 @@
       if (!s.over) s.r++;
       return { state: s, round: r, sudden: mult > 1, ev: { a: ea, b: eb } };
     }
-    return { HP, MAXC, COST, START_C, SUDDEN, CAP, ARCH, SPECIAL, HINT, MOVES, word, start, legal, hash, resolve, seedOf, mulberry, act };
+    const VERSION = 2;                       // the newest rules this phone can play
+    return { HP, MAXC, COST, START_C, SUDDEN, CAP, ARCH, SPECIAL, HINT, MOVES, VERSION, word, start, legal, hash, resolve, seedOf, mulberry, act };
   })();
 
   // ======================================================================================
@@ -119,7 +126,9 @@
   const ID_RE = /^[A-Za-z0-9_-]{6,16}$/;
   const SD_RE = /^[A-Za-z0-9_-]{6,16}$/;
   const rid = (n) => { const a = crypto.getRandomValues(new Uint8Array(n)); let s = ''; for (const x of a) s += 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'[x & 63]; return s; };
-  const ASK_MS = 40000, PICK_S = 12, QUIET_MS = 35000, RESEND_MS = 5000;
+  // 4.2.2: a challenge to an Eye that understands 'duel2' stays open 90 s (the live window of the protocol)
+  // and is re-sent every 20 s, so an Eye that opens EYES partway through still sees it. Older Eyes keep 40 s.
+  const ASK_MS = 40000, ASK2_MS = 90000, ASK_RESEND_MS = 20000, PICK_S = 12, QUIET_MS = 35000, RESEND_MS = 5000;
   const listeners = {};
   const emit = (n, ...a) => (listeners[n] || []).forEach((fn) => { try { fn(...a); } catch (e) { console.error(e); } });
   const HOOKS = { rematch: null, history: null };          // Phase 2: deliberately empty
@@ -136,7 +145,10 @@
   const friendName = (f) => (f && (f.nick || (f.profile && f.profile.name))) || 'Their Eye';
   function friendDna(f) { if (!f || !f.profile || !D()) return null; try { return D().friendDNA(f.profile); } catch (e) { return null; } }
   function colorOf(dna) { try { return D().mapColor(111, 193, 202, dna); } catch (e) { return [111, 193, 202]; } }
-  const findFriend = (code) => (F() ? F().list().find((x) => x.code === code) : null);
+  const findFriend = (code) => (F() ? (F().byCode ? F().byCode(code) : F().list().find((x) => x.code === code)) : null);
+  const askWindow = (f) => (F() && F().duelSupports && F().duelSupports(f, 'duel2') ? ASK2_MS : ASK_MS);
+  // where to go back to after a duel: the Meeting Space node (the native link's companion lives at 'native')
+  const homeKey = (f) => (f && f.companion && f.parent === 'native' ? 'native' : f && f.companion ? f.parent : f && f.code);
   const canDuel = (f) => !!(f && f.peer && F() && F().supports(f, 'duel') && F().CAPS.includes('duel'));
 
   // ======================================================================================
@@ -151,7 +163,7 @@
 
   function newSession(f, role, id) {
     return { f, code: f.code, role, id, phase: 'asking', sdMine: rid(10), sdTheirs: null, wMine: myWord(), wTheirs: 'calm', nmTheirs: friendName(f),
-      state: RULES.start(), seed: 0, mine: {}, theirs: {}, their: {}, lockedAt: 0, lastHeard: Date.now(), result: null, returnTo: null, startedAt: 0 };
+      state: RULES.start(), seed: 0, mine: {}, theirs: {}, their: {}, lockedAt: 0, lastHeard: Date.now(), result: null, returnTo: null, startedAt: 0, rv: 1 };
   }
   const roleKey = (mine) => (mine ? S.role : S.role === 'a' ? 'b' : 'a');
   const meSt = () => S.state[roleKey(true)], themSt = () => S.state[roleKey(false)];
@@ -163,19 +175,29 @@
     Sfx.unlock();
     const fromContact = !!(root.EyesContact && EyesContact.isOpen());
     S = newSession(f, 'a', rid(10));
-    S.returnTo = fromContact ? f.code : null;
+    S.returnTo = fromContact ? homeKey(f) : null;
+    S.window = askWindow(f);
     if (fromContact) EyesContact.close();
     Scene.open();
     Scene.asking();
-    send(f, { o: 'ask', id: S.id, sd: S.sdMine, ar: S.wMine, nm: myName().slice(0, 16) }).then((ok) => {
-      if (!S || S.phase !== 'asking') return;
+    if (F().probe) F().probe(f);
+    const ask = { o: 'ask', id: S.id, sd: S.sdMine, ar: S.wMine, nm: myName().slice(0, 16) };
+    if (S.window === ASK2_MS) { ask.w = 90; ask.rv = RULES.VERSION; }     // older Eyes ignore both and play v1
+    const s = S;
+    send(f, ask).then((ok) => {
+      if (S !== s || S.phase !== 'asking') return;
       if (!ok) { Scene.askFailed(); return; }
+      S.askedAt = Date.now();
       Scene.askSent(); Sfx.play('look');
+      if (S.window === ASK2_MS) {
+        const again = () => later(() => { if (S === s && S.phase === 'asking') { send(S.f, ask); again(); } }, ASK_RESEND_MS);
+        again();
+      }
       S.askT = later(() => {
-        if (!S || S.phase !== 'asking') return;
+        if (S !== s || S.phase !== 'asking') return;
         send(S.f, { o: 'cancel', id: S.id });
         Scene.askTimeout();
-      }, ASK_MS);
+      }, S.window);
     });
     return true;
   }
@@ -189,13 +211,17 @@
   function onDuel(f, d, t) {
     if (!d || typeof d.o !== 'string' || !ID_RE.test(String(d.id || ''))) return;
     const o = d.o, id = d.id;
+    if (f && f.companion && f.parent === 'native' && !f.profile && root.HavenFriend && HavenFriend.profile) { try { f.profile = HavenFriend.profile() || null; } catch (e) {} }
     if (S && S.code === f.code) S.lastHeard = Date.now();
     if (o === 'ask') {
       if (!SD_RE.test(String(d.sd || ''))) return;
-      if (Date.now() - t > ASK_MS) return;
+      if (Date.now() - t > (d.w === 90 ? ASK2_MS : ASK_MS)) return;
+      if (call && call.id === id && call.code === f.code) return;          // 4.2.2: the same challenge, re-sent
+      if (answered.has(id)) return;                                        // already declined or faded here
+      if (S && S.id === id) return;
       if (S && S.code === f.code && S.phase === 'asking') {
         // both reached at once: the smaller id is the one duel; the other side quietly drops its own
-        if (id < S.id) { clearTimeout(S.askT); S = newSession(f, 'b', id); S.returnTo = S.returnTo || f.code; Scene.toast('You both reached for a duel at once.'); return accept(d, true); }
+        if (id < S.id) { clearTimeout(S.askT); const back = S.returnTo; S = newSession(f, 'b', id); S.returnTo = back || homeKey(f); Scene.toast('You both reached for a duel at once.'); return accept(d, true); }
         return;
       }
       if (S || (call && call.code !== f.code)) { send(f, { o: 'no', id, why: 'busy' }); return; }
@@ -205,6 +231,8 @@
     if (o === 'cancel') {
       if (call && call.id === id) hideCall(`${friendName(f)} withdrew the challenge.`);
       if (S && S.id === id && S.phase === 'asking') finish(null);
+      // 4.2.2: their challenge had already faded on their side as we said yes: no duel, said plainly
+      else if (S && S.id === id && S.role === 'b' && ['intro', 'pick', 'wait'].includes(S.phase) && S.state.r === 1 && !S.their[1]) end(null, 'faded');
       return;
     }
     if (!S || S.id !== id || S.code !== f.code) return;
@@ -213,6 +241,8 @@
       clearTimeout(S.askT);
       S.sdTheirs = d.sd; S.wTheirs = RULES.word(d.ar);
       S.seed = RULES.seedOf(S.sdMine, S.sdTheirs);
+      // the answer says which rules it will play: the lower of the two phones' versions
+      S.rv = d.rv === 2 && S.window === ASK2_MS ? 2 : 1;
       begin();
       return;
     }
@@ -230,12 +260,15 @@
   }
   function showCall(f, d, t) {
     hideCall();
-    call = { code: f.code, id: d.id, d, f, t, until: t + ASK_MS };
+    // measured on this phone's clock, so a phone whose clock runs fast or slow can't make it vanish early
+    const left = Math.max(5000, (d.w === 90 ? ASK2_MS : ASK_MS) - Math.max(0, Date.now() - t));
+    call = { code: f.code, id: d.id, d, f, t, until: Date.now() + left };
     Call.show(call);
     Sfx.play('look');
     call.timer = setTimeout(() => { if (call && call.id === d.id) hideCall(); }, Math.max(1000, call.until - Date.now()));
   }
-  function hideCall(note) { if (!call) return; clearTimeout(call.timer); Call.hide(note); call = null; }
+  const answered = new Set();             // 4.2.2: challenge ids this phone already turned down (re-sends stay quiet)
+  function hideCall(note) { if (!call) return; clearTimeout(call.timer); answered.add(call.id); if (answered.size > 40) answered.delete(answered.values().next().value); Call.hide(note); call = null; }
   function decline() {
     if (!call) return;
     send(call.f, { o: 'no', id: call.id, why: 'no' });
@@ -248,17 +281,20 @@
     if (Date.now() > c.until) { flash('That challenge already faded.'); return; }
     const fromContact = !!(root.EyesContact && EyesContact.isOpen());
     S = newSession(c.f, 'b', c.id);
-    S.returnTo = c.f.code;
+    S.returnTo = homeKey(c.f);
     if (fromContact) EyesContact.close();
     accept(c.d, false);
   }
   function accept(d, crossed) {
     S.sdTheirs = d.sd; S.wTheirs = RULES.word(d.ar);
+    S.rv = d.rv === 2 ? Math.min(2, RULES.VERSION) : 1;
     S.seed = RULES.seedOf(S.sdTheirs, S.sdMine);                 // challenger's half first, on both phones
     if (!Scene.isOpen()) Scene.open();
     Scene.answering(crossed);
     const s = S;
-    send(S.f, { o: 'yes', id: S.id, sd: S.sdMine, ar: S.wMine, nm: myName().slice(0, 16) }).then((ok) => {
+    const yes = { o: 'yes', id: S.id, sd: S.sdMine, ar: S.wMine, nm: myName().slice(0, 16) };
+    if (S.rv >= 2) yes.rv = S.rv;
+    send(S.f, yes).then((ok) => {
       if (S !== s) return;
       if (!ok) { Scene.answerFailed(); return; }
       begin();
@@ -284,7 +320,7 @@
     clearTimeout(S.pickT);
     const r = S.state.r, mv = RULES.legal(meSt(), m);
     S.mine[r] = mv; S.lockedAt = Date.now();
-    const msg = { o: 'mv', id: S.id, r, m: mv, h: RULES.hash(S.state) };
+    const msg = { o: 'mv', id: S.id, r, m: mv, h: RULES.hash(S.state, S.rv) };
     const push = () => send(S.f, msg);
     push();
     S.phase = 'wait';
@@ -303,10 +339,10 @@
     if (!S || S.phase !== 'wait') return;
     const r = S.state.r, theirs = S.their[r];
     if (!theirs || !S.mine[r]) return;
-    if (theirs.h !== RULES.hash(S.state)) { end(null, 'desync'); return; }
+    if (theirs.h !== RULES.hash(S.state, S.rv)) { end(null, 'desync'); return; }
     const ma = S.role === 'a' ? S.mine[r] : theirs.m, mb = S.role === 'a' ? theirs.m : S.mine[r];
     const wa = S.role === 'a' ? S.wMine : S.wTheirs, wb = S.role === 'a' ? S.wTheirs : S.wMine;
-    const out = RULES.resolve(S.state, ma, mb, S.seed, wa, wb);
+    const out = RULES.resolve(S.state, ma, mb, S.seed, wa, wb, S.rv);
     S.phase = 'play';
     const before = S.state; S.state = out.state;
     Scene.play(out, before, () => {
@@ -315,10 +351,12 @@
       else round();
     });
   }
+  // 4.2.2: silence is never a win. The other phone can't see the same silence, so claiming victory here
+  // could show two winners. It is reported as silence, with no winner.
   function quiet() {
     if (!S) return;
     const online = F() && F().connection(S.f) === 'online';
-    end(online ? S.role : null, online ? 'quiet' : 'lost');
+    end(null, online ? 'quiet' : 'lost');
   }
   function surrender() {
     if (!S) return;
@@ -342,7 +380,7 @@
     const back = returnTo !== undefined ? returnTo : S && S.returnTo;
     S = null;
     Scene.close();
-    if (back && root.EyesContact && findFriend(back)) EyesContact.meet(back);
+    if (back && root.EyesContact && (back === 'native' || findFriend(back))) EyesContact.meet(back);
     else { try { root.Haven && Haven.holdHome && Haven.holdHome(false); } catch (e) {} }
   }
   function flash(text) { if (root.EyesSocial && EyesSocial.caption) EyesSocial.caption(text); }
@@ -673,11 +711,22 @@
     function askSent() {
       if (!el) return;
       const sub = panel().querySelector('.ed-ask-sub'); if (!sub) return;
-      const awake = F().online(S.f);
-      sub.textContent = awake ? `Waiting for ${S.nmTheirs} to stare back` : `${S.nmTheirs} is resting. They'll only see this if they open EYES in the next 40 seconds.`;
-      const bar = panel().querySelector('.ed-wait'); const t0 = Date.now();
+      // 4.2.2: say only what is known about their Eye, and keep it current while waiting
+      const secs = Math.round((S.window || ASK_MS) / 1000);
+      const text = () => {
+        const pr = F().presence ? F().presence(S.f) : { state: F().online(S.f) ? 'online' : 'unknown' };
+        return pr.state === 'online' ? `Waiting for ${S.nmTheirs} to stare back`
+          : pr.state === 'offline' ? `${S.nmTheirs}'s Eye isn't open. They'll only see this if they open EYES in the next ${secs} seconds.`
+          : `Can't tell if ${S.nmTheirs}'s Eye is open. The challenge waits ${secs} seconds.`;
+      };
+      sub.textContent = text();
+      const bar = panel().querySelector('.ed-wait'); const t0 = Date.now(), win = S.window || ASK_MS;
       clearInterval(pickTick);
-      pickTick = setInterval(() => { if (!el || !S || S.phase !== 'asking') return clearInterval(pickTick); bar.style.transform = `scaleX(${clamp(1 - (Date.now() - t0) / ASK_MS).toFixed(3)})`; }, 250);
+      pickTick = setInterval(() => {
+        if (!el || !S || S.phase !== 'asking') return clearInterval(pickTick);
+        bar.style.transform = `scaleX(${clamp(1 - (Date.now() - t0) / win).toFixed(3)})`;
+        const nt = text(); if (sub.textContent !== nt) sub.textContent = nt;
+      }, 250);
     }
     function outcome(lead, sub) {
       clearInterval(pickTick);
@@ -892,7 +941,7 @@
           case 'blink': return other.act === 'blink' || other.act === 'glare' ? '' : other.act === 'charge' ? `${X} blinks and waits.` : '';
           case 'charge': return other.act === 'charge' ? '' : `${X} gathers light.`;
           case 'glower': return `${X}: ${sp(w)}!${n(e)}`;
-          case 'peek': return e.counter ? `${X} hides… and strikes back${n(e)}!` : `${X} hides, then pokes${n(e)}.`;
+          case 'peek': return e.counter ? `${X} hides… and strikes back${n(e)}!` : e.refund ? `${X} hides, then pokes${n(e)}, saving its Charge.` : `${X} hides, then pokes${n(e)}.`;
           case 'clear': return `${X}: ${sp(w)}${e.pierce ? ', straight through the blink' : ''}${n(e)}.`;
           case 'flurry': return `${X}: ${sp(w)}${n(e)}!`;
           case 'dream': return `${X} dozes off… something is building.`;
@@ -916,7 +965,7 @@
       if (res === 'win') { lead = `${A} wins!`; sub = why === 'bye' ? `${B} bowed out.` : why === 'quiet' ? `${B}'s Eye stopped answering, so the duel is yours by default.` : why === 'time' ? 'Still standing taller when time ran out.' : `${B} is seeing stars.`; }
       else if (res === 'loss') { lead = `${B} wins.`; sub = why === 'bow' ? 'You bowed out. No harm done.' : why === 'time' ? `${B} was standing taller when time ran out.` : `${A} is seeing stars. It'll pass in a second.`; }
       else if (res === 'draw') { lead = 'A draw.'; sub = 'Both Eyes saw stars at the same time.'; }
-      else { lead = 'No winner this time.'; sub = why === 'desync' ? 'Your Eyes lost the thread between phones.' : why === 'lost' ? 'The connection dropped, so the duel ends here.' : why === 'away' ? 'EYES was closed for a while, so the duel ended.' : 'The duel faded.'; }
+      else { lead = 'No winner this time.'; sub = why === 'desync' ? 'Your Eyes lost the thread between phones.' : why === 'lost' ? 'The connection dropped, so the duel ends here.' : why === 'away' ? 'EYES was closed for a while, so the duel ended.' : why === 'quiet' ? `${B}'s Eye stopped answering, so the duel ends without a winner.` : why === 'faded' ? 'Their challenge had already faded on their side.' : 'The duel faded.'; }
       setRound('');
       const finale = () => {
         if (!el) return;
@@ -1189,12 +1238,15 @@
     const btn = document.createElement('button');
     btn.type = 'button'; btn.className = 'ec-duel';
     btn.innerHTML = '<i class="ec-duel-g" aria-hidden="true"></i><span>Battle</span>';
-    const f = b.f;
+    // 4.2.2: the original native link battles through its upgraded companion, once both Eyes have it
+    const up = b.native && F().nativeUpgrade ? F().nativeUpgrade() : null;
+    const f = b.native ? up : b.f;
     let why = '';
-    if (b.native) why = "This is your first Eye Contact, built into the launcher, and it can't carry battles. Send them a new invitation from Eye Contact to battle.";
+    if (b.native && !(up && up.peer && F().supportsDirect(up, 'duel'))) why = "Your first Eye Contact is upgrading so it can battle. It's ready once their EYES is updated (Android 4.2.2 or iPhone 2.2.2) and both Eyes have been open at the same time. Your link and its history stay exactly as they are.";
     else if (!f || !f.peer) why = 'Their Eye has to arrive first.';
-    else if (!F().supports(f, 'duel')) why = `${friendName(f)}'s EYES needs the Battle Lite update to duel.`;
-    else if (!f.profile) why = 'Their Eye is still introducing itself.';
+    else if (!F().supports(f, 'duel')) why = F().upgradeFor && F().upgradeFor(f) ? `Upgrading this friendship for battles. It's ready once ${friendName(f)}'s EYES is updated and both Eyes have been open at the same time.` : `${friendName(f)}'s EYES needs the Battle Lite update to duel.`;
+    else if (!f.profile && !(b.native && b.profile)) why = 'Their Eye is still introducing itself.';
+    if (f && b.native && !f.profile && b.profile) f.profile = b.profile;   // same Eye: the native link already knows it
     btn.classList.toggle('ec-duel-off', !!why);
     btn.setAttribute('aria-label', why ? `Battle (not available): ${why}` : `Battle: challenge ${friendName(f)}'s Eye to a duel`);
     btn.onclick = () => {
