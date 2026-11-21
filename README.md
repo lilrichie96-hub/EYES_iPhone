@@ -1,4 +1,8 @@
-# EYES for iPhone · 2.3.0 · A Mind of Its Own
+# EYES for iPhone · 2.4.0 · Distant Connections
+
+New in 2.4.0: Distant Visits (a friend's Eye comes by when you return) and Mirror (in the Meeting Space). New files: `eyes-visits.js`, `eyes-mirror.js`, `eyes-mirror.css`; cache is `eyes-web-2.4.0`. Storage keys unchanged; `eyes.visits.v1` is added. Keep the live `eyes-config.js` when uploading.
+
+## 2.3.0 · A Mind of Its Own
 
 New in 2.3.0:
 - **A Mind of Its Own**: gentle, local, opt-out learning across days; favorite idle gestures, a more familiar greeting, an anticipatory lean toward a pet, playful curiosity and occasional wary wake-ups.

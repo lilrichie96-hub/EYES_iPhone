@@ -19,7 +19,11 @@
    Future interactions (Peek, Mirror, Orbit): EyesContact.register(name, { cap, label, … }). A registered
    interaction is only offered to a friend whose phone advertised `cap` in its hello (EyesFriends.supports).
    Nothing is registered for Phase 3 yet, so nothing pretends to work.
-   4.2: the Meeting Space panel has one slot for Battle Lite (eyes-duel.js fills it). */
+   4.2: the Meeting Space panel has one slot for Battle Lite (eyes-duel.js fills it).
+   4.4: one slot for Mirror (eyes-mirror.js). While a Mirror is live it attaches a controller (attach(ctrl)):
+   it drives both Eyes in behave(), adds a small body transform per node in place() (n.mx, n.my, n.rot, n.ms),
+   paints in the sky after the threads, owns the panel, and asks for the side-by-side layout. Without a
+   controller nothing here behaves any differently. */
 'use strict';
 (function (root) {
   const TAU = Math.PI * 2;
@@ -86,7 +90,9 @@
   // didn't answer while we were listening) and Can't tell (anything else). Nothing is guessed.
   function presenceState(pr, lastSeen) {
     const last = lastSeen ? 'last here ' + ago(lastSeen) : '';
-    if (pr.state === 'online') return { id: 'awake', label: 'Awake now', sub: '' };
+    // 4.4: four tiers. "Awake now" only when heard in the last 90 s; a little older is "Here … ago", never awake
+    if (pr.tier ? pr.tier === 'online' : pr.state === 'online') return { id: 'awake', label: 'Awake now', sub: '' };
+    if (pr.tier === 'recent' && pr.state !== 'offline') return { id: 'recent', label: 'Here ' + ago(pr.lastSeen || lastSeen), sub: '' };
     if (pr.state === 'offline') return { id: 'resting', label: pr.why === 'closed' ? 'Closed EYES' : 'Not open right now', sub: pr.why === 'closed' ? ago(pr.since) : last };
     if (pr.why === 'asking') return { id: 'unsure', label: 'Checking…', sub: last };
     return { id: 'unsure', label: "Can't tell right now", sub: last };
@@ -123,6 +129,8 @@
   let raf = 0, lastT = 0, lastDraw = 0, tween = null, staticSky = null, resK = 0, dragOrb = null;
   let timers = [], fx = [], parts = [], motes = [], twinkles = [], nodes = new Map(), myColor = [111, 193, 202];
   let pendingInvite = null, joinCode = '', joinedKey = null, liveText = '', toastT = 0, missedPlayed = new Set();
+  let ctrl = null;                     // 4.4: an interaction that drives the Meeting Space for a while (Mirror)
+  const detach = (why) => { const c = ctrl; ctrl = null; nodes.forEach((n) => { n.mx = n.my = n.rot = 0; n.ms = 1; }); if (c && c.onClose) { try { c.onClose(why); } catch (e) { console.error(e); } } };
   const later = (fn, ms) => { const id = setTimeout(() => { timers = timers.filter((x) => x !== id); if (el) fn(); }, ms); timers.push(id); return id; };
 
   function eyeColor(dna) { try { return D().mapColor(111, 193, 202, dna); } catch (e) { return [111, 193, 202]; } }
@@ -144,6 +152,7 @@
   }
   function close() {
     if (!el) return;
+    if (ctrl) detach('close');
     stop();
     timers.forEach(clearTimeout); timers = [];
     removeEventListener('resize', onResize); document.removeEventListener('visibilitychange', onVis);
@@ -369,7 +378,7 @@
     if (!el) return;
     let L;
     if (mode === 'sky') L = layoutSky();
-    else if (mode === 'meet') L = layoutPair(focusKey);
+    else if (mode === 'meet') L = layoutPair(focusKey, !!(ctrl && ctrl.layout));
     else L = layoutPair(focusKey || '__ghost', true);
     nodes.forEach((n, k) => {
       const p = L.get(k);
@@ -413,16 +422,20 @@
       n.dx = (Math.sin(t * 0.23 + n.ph[0]) + Math.sin(t * 0.11 + n.ph[2]) * 0.6) * drift * amp;
       n.dy = (Math.cos(t * 0.19 + n.ph[1]) + Math.sin(t * 0.13 + n.ph[0]) * 0.5) * drift * 0.8 * amp;
       const bt = t - n.beat, beat = bt >= 0 && bt < 0.7 && motion === 'on' ? Math.sin((bt / 0.35) * Math.PI) * Math.exp(-bt * 3) * 0.07 : 0;
-      const s = (n.size / n.base) * (1 + beat);
-      n.el.style.transform = `translate3d(${(n.x + n.dx - n.base / 2).toFixed(1)}px,${(n.y + n.dy - n.base / 2).toFixed(1)}px,0) scale(${s.toFixed(4)})`;
+      const s = (n.size / n.base) * (1 + beat) * (n.ms || 1), mx = n.mx || 0, my = n.my || 0;
+      n.el.style.transform = `translate3d(${(n.x + n.dx + mx - n.base / 2).toFixed(1)}px,${(n.y + n.dy + my - n.base / 2).toFixed(1)}px,0) scale(${s.toFixed(4)})`;
+      // 4.4: a lean of the head turns the Eye itself, never its name label
+      const rv = n.rot && Math.abs(n.rot) > 0.0005 ? `rotate(${n.rot.toFixed(4)}rad)` : '';
+      if (n.cv.style.transform !== rv) n.cv.style.transform = rv;
       n.el.style.opacity = n.op.toFixed(3);
     });
   }
-  const cx = (n) => n.x + (n.dx || 0), cy = (n) => n.y + (n.dy || 0);
+  const cx = (n) => n.x + (n.dx || 0) + (n.mx || 0), cy = (n) => n.y + (n.dy || 0) + (n.my || 0);
 
   // ---------- modes ----------
   function setMode(m, instant) {
     if (!el) return;
+    if (ctrl && m !== 'meet') detach('mode');
     const was = mode;
     mode = m;
     if (m === 'sky') focusKey = null;
@@ -451,6 +464,7 @@
   function meet(key, instant) {
     const n = nodes.get(key); if (!n || n.key === 'me') return;
     if (n.b.pending) return;
+    if (ctrl && focusKey !== key) detach('mode');
     focusKey = key;
     // 4.2.2: opening a friend asks once whether their Eye is open (answered only by an open 4.2.2 Eye)
     try { const pf = n.b.native ? F().nativeUpgrade && F().nativeUpgrade() : n.b.f; if (pf) F().probe(pf); } catch (e) {}
@@ -462,6 +476,7 @@
     // both Eyes acknowledge each other on arrival
     later(() => { lookAt(me, cx(n), cy(n), 1.2); lookAt(n, cx(me), cy(me), 1.0); }, motion === 'off' ? 0 : 700);
     if (!n.b.native && n.b.f.missed && n.b.f.missed.length && !missedPlayed.has(key)) later(() => replayMissed(n), 1300);
+    else if (!n.b.native && root.EyesVisits) EyesVisits.seen(n.b.f);
     if (!n.b.native && !n.b.f.profile) F().refreshProfile(n.b.f);
   }
 
@@ -511,6 +526,7 @@
   }
   function panelMeet(p) {
     const n = nodes.get(focusKey); if (!n) return;
+    if (ctrl && ctrl.panel) { try { if (ctrl.panel(p, n)) return; } catch (e) { console.error(e); } }
     const st = n.state, sigs = available(n.b);
     let note = '';
     if (st.id === 'introducing') note = `<div class="ec-note"><p>Their Eye is still introducing itself. Keep EYES open on both phones for a moment.</p><button type="button" class="ec-btn ec-small" data-a="retry">Ask their Eye again</button></div>`;
@@ -519,10 +535,12 @@
     else if (st.id === 'unsure') note = `<p class="ec-hint">Can't tell if ${esc(nameOf(n.b))}'s Eye is open. Signals still wait for them if it isn't.</p>`;
     else if (st.id === 'linked') note = `<p class="ec-hint">Signals travel through your first Eye Contact.</p>`;
     p.innerHTML = `${note}<div class="ec-sigs" role="group" aria-label="Signals">${sigs.map(([k, d]) => `<button type="button" class="ec-sig ec-sig-${k}" data-sig="${k}" aria-label="Send a ${esc(d.label)}: ${esc(d.hint)}"><span class="ec-orb" aria-hidden="true"><i class="ec-g ec-g-${k}"></i></span><b>${esc(d.label)}</b><small>${esc(d.hint)}</small></button>`).join('')}</div>
-      <p class="ec-hint ec-gesture">${motion === 'off' ? 'Tap to send' : 'Tap to send, or drag one to their Eye'}</p><div class="ec-duel-slot"></div>`;
+      <p class="ec-hint ec-gesture">${motion === 'off' ? 'Tap to send' : 'Tap to send, or drag one to their Eye'}</p><div class="ec-together"><div class="ec-mirror-slot"></div><div class="ec-duel-slot"></div></div>`;
     p.querySelectorAll('[data-sig]').forEach((b) => bindSig(b, b.dataset.sig));
     // 4.2 Battle Lite (eyes-duel.js): a small Battle button, only live for friends whose EYES understands duels
     if (root.EyesDuel && EyesDuel.slot) { try { EyesDuel.slot(p.querySelector('.ec-duel-slot'), n.b, { say }); } catch (e) { console.error(e); } }
+    // 4.4 Mirror (eyes-mirror.js): only offered to an Eye that advertised it (or a muted button that says why)
+    if (root.EyesMirror && EyesMirror.slot) { try { EyesMirror.slot(p.querySelector('.ec-mirror-slot'), n.b, { say }); } catch (e) { console.error(e); } }
     const a = p.querySelector('[data-a]');
     if (a) a.onclick = () => {
       if (a.dataset.a === 'retry') { F().refreshProfile(n.b.f); say('Asking their Eye to introduce itself…'); a.disabled = true; later(() => { a.disabled = false; }, 20000); later(() => { if (!n.b.f.profile) say('Still nothing. Ask them to open EYES too. It arrives as soon as both phones are open.'); }, 26000); }
@@ -736,6 +754,7 @@
       return;
     }
     const them = nodes.get(focusKey); if (!them || !me.eye) return;
+    if (ctrl && ctrl.behave) { try { if (ctrl.behave(t, me, them, gentle)) return; } catch (e) { console.error(e); detach('error'); } }
     if (dragOrb) { lookAt(me, dragOrb.x, dragOrb.y, 0.4); lookAt(them, dragOrb.x, dragOrb.y, 0.4); if (them.eye && them.ctl.dragSeen !== dragOrb.t0) { them.ctl.dragSeen = dragOrb.t0; them.eye.pupilV += 1.3; } return; }
     meetBehave(me, them, t, gentle);
     if (them.eye) meetBehave(them, me, t, gentle);
@@ -895,6 +914,7 @@
   function replayMissed(n) {
     const f = n.b.f; if (!f || !f.missed || !f.missed.length) return;
     missedPlayed.add(n.key);
+    if (root.EyesVisits) EyesVisits.seen(f);                    // 4.4: seen here: no visit later, and the sender learns it was felt
     const list = f.missed.slice(-5), counts = {};
     f.missed.forEach((m) => { counts[m.k] = (counts[m.k] || 0) + 1; });
     const words = Object.entries(counts).map(([k, c]) => `${c} ${k}${c > 1 ? 's' : ''}`).join(', ');
@@ -955,7 +975,7 @@
     raf = 0;
     if (!el || document.visibilityState !== 'visible') return;
     const t = ms / 1000;
-    const busy = !!tween || fx.length > 0 || !!dragOrb || resK > 0.01 || [...nodes.values()].some((n) => n.forming);
+    const busy = !!tween || fx.length > 0 || !!dragOrb || resK > 0.01 || [...nodes.values()].some((n) => n.forming) || !!(ctrl && ctrl.busy && ctrl.busy());
     const step = motion === 'gentle' || !busy ? 1 / 30 : 1 / 60;
     if (t - lastDraw < step * 0.92) { raf = requestAnimationFrame(frame); return; }
     const dt = Math.min(0.05, lastDraw ? t - lastDraw : step);
@@ -996,6 +1016,7 @@
       g.fillStyle = rgba(myColor, m.a * (0.6 + 0.4 * Math.sin(t * 0.7 + m.ph)) * (1 + resK)); g.beginPath(); g.arc(m.x, m.y, m.r, 0, TAU); g.fill();
     }
     drawThreads(g, t);
+    if (ctrl && ctrl.sky) { try { ctrl.sky(g, t, { glow, rgba, cx, cy, myColor }); } catch (e) { console.error(e); } }
     drawPlaceholders(g, t);
     drawWaiting(g, t);
     drawFx(g, t, dt);
@@ -1249,6 +1270,17 @@
     join: (code) => open({ join: code || '' }),
     joining: (key) => { open(); sync(); showJoinProgress(key); },
     nativeEvent,
+    // 4.4: for interactions that happen inside the Meeting Space (Mirror)
+    attach(c) { if (!el || mode !== 'meet' || !c) return false; if (ctrl && ctrl !== c) detach('replaced'); ctrl = c; relayout(); renderPanel(); kick(); return true; },
+    detach(c) { if (c && ctrl !== c) return; if (!ctrl) return; ctrl = null; nodes.forEach((n) => { n.mx = n.my = n.rot = 0; n.ms = 1; }); if (el) { relayout(); renderPanel(); resetControllers(); kick(); } },
+    focus: () => (el && mode === 'meet' ? focusKey : null),
+    node: (key) => nodes.get(key) || null,
+    panelRefresh: () => { if (el) renderPanel(); },
+    say: (text, hold) => say(text, hold),
+    lookAt: (n, x, y, hold) => lookAt(n, x, y, hold),
+    pos: (n) => ({ x: cx(n), y: cy(n) }),
+    motion: () => motion,
+    keyOf: (f) => (f && f.companion && f.parent === 'native' ? 'native' : f && f.companion ? f.parent : f && f.code),
     _debug: { nodes, fx: () => fx, mode: () => mode, motion: () => motion, interactions: INTERACTIONS }
   };
 })(window);

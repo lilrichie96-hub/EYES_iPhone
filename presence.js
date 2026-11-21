@@ -22,10 +22,28 @@
     charge: 56, full: 56, low: 56, music: 55, morning: 52,
     'greet-big': 52, 'greet-familiar': 52, stir: 62,
     'anticipate-pet': 54, 'wake-wary': 82,
+    // 4.4 Distant Visit: above idle habits and greetings, below music, power states, gestures and alerts,
+    // so anything real that happens takes the body back (eyes-visits.js then lets the visitor go)
+    visit: 54,
     idle: 25, night: 25,
     'look-around': 12, firefly: 12, stretch: 12, yawn: 12, sigh: 12, dream: 8
   });
   const priorityOf = (name) => PRIORITY[name] || 35;
+  // 4.4: a scripted reaction carries keyframes per channel ([[u, {ch: value}], …], u = 0..1). Between two keys the
+  // value eases (smootherstep); a channel a key doesn't mention is 0 there. Used by Distant Visits.
+  function sampleKeys(keys, u) {
+    if (!keys || !keys.length) return null;
+    if (u <= keys[0][0]) return keys[0][1];
+    for (let i = 0; i < keys.length - 1; i++) {
+      const [a0, av] = keys[i], [b0, bv] = keys[i + 1];
+      if (u <= b0) {
+        const k = ease((u - a0) / Math.max(0.0001, b0 - a0)), out = {};
+        for (const c of new Set([...Object.keys(av), ...Object.keys(bv)])) out[c] = mix(av[c] || 0, bv[c] || 0, k);
+        return out;
+      }
+    }
+    return keys[keys.length - 1][1];
+  }
   // Too big or too quick for someone who asked their phone for less motion.
   const GENTLE_SKIP = new Set(['look-around', 'firefly', 'startle']);
   const colors = {
@@ -112,6 +130,13 @@
       this.mood = { energy: 0.6, curiosity: 0.5, sleepiness: 0.2, missing: 0, content: 0.5 };
       this.asleep = false;
       this.sleepK = 0;
+      // 4.4 (review item 5): no mechanical rhythms. Home glances come every 4–7 looks (mood-shaped), and
+      // pet responses are chosen, never cycled.
+      this.sinceHome = 0;
+      this.homeEvery = 5;
+      this.lastPetVariant = -1;
+      // 4.4 (review item 3): blinks while music plays, on a phrase boundary of the beat (launcher → musicBeat)
+      this.music = { next: 0, touch: false, lastBeat: 0 };
     }
     setMood(mood) {
       this.mood = { ...this.mood, ...mood };
@@ -360,7 +385,7 @@
         this.gazeFrom = { ...this.gaze };
         const slow = this.state.battery <= 20 || this.state.hour >= 21 || this.state.hour < 6;
         // Mostly glance between nearby points, sometimes look far away, sometimes come back to you.
-        const home = this.gazes % 5 === 0,
+        const home = ++this.sinceHome >= this.homeEvery,
           far = !home && !this.gentle && this.random() < 0.15 + 0.3 * this.mood.curiosity;
         const reach = this.gentle ? 0.4 : far ? 1 : 0.55;
         this.gazeTarget = home
@@ -369,6 +394,11 @@
               x: clamp(this.gaze.x * 0.35 + (this.random() - 0.5) * 1.5 * reach, -0.8, 0.8),
               y: clamp(this.gaze.y * 0.35 + (this.random() - 0.5) * 1.1 * reach, -0.6, 0.6)
             };
+        if (home) {
+          // missing you brings it back sooner; a curious Eye wanders longer before it checks in
+          this.sinceHome = 0;
+          this.homeEvery = Math.round(clamp(4 + this.random() * 3 - 1.5 * (this.mood.missing || 0) + 1.2 * (this.mood.curiosity - 0.5), 3, 8));
+        }
         this.gazeAt = t;
         const jump = Math.hypot(this.gazeTarget.x - this.gaze.x, this.gazeTarget.y - this.gaze.y);
         if (this.gentle) {
@@ -383,7 +413,7 @@
           this.gazeDuration = (95 + jump * 70) * (typeof HavenDNA !== 'undefined' ? HavenDNA.motion().snap : 1);
         }
         // Big eye movements often carry a blink with them.
-        if (!this.gentle && jump > 0.6 && this.random() < 0.3 && t - this.blink.at > 1400) this.startBlink(t + 20);
+        if (this.mode !== 'music' && !this.gentle && jump > 0.6 && this.random() < 0.3 && t - this.blink.at > 1400) this.startBlink(t + 20);
         // Curious: glances more often. Sleepy: lingers.
         const dnaMotion = typeof HavenDNA !== 'undefined' ? HavenDNA.motion() : null;
         const pace =
@@ -454,6 +484,19 @@
               : { x: mix(away, 0, ease((u - 0.7) / 0.2)), y: mix(-0.1, 0, ease((u - 0.7) / 0.2)) };
       } else if (r.name === 'startle' || r.name === 'greet-big') {
         g = { x: mix(this.gaze.x, 0, 0.3), y: mix(this.gaze.y, 0, 0.3) };
+      } else if (r.script) {
+        // 4.4 scripted: keyed blinks fire once each; the gaze channel (if any) leads from where he was looking
+        const sc = r.script;
+        if (sc.blinks) for (let i = 0; i < sc.blinks.length; i++) {
+          const b = sc.blinks[i];
+          if (!r.fired[i] && u >= b[0]) { r.fired[i] = true; this.startBlink(t, !!b[1]); }
+        }
+        const s = sc.gaze && sampleKeys(sc.gaze, u);
+        if (s) {
+          const lead = sc.gaze[0][0] > 0 ? ease(u / sc.gaze[0][0]) : 1;
+          g = { x: clamp(mix(r.gazeFrom.x, s.x || 0, lead), -1, 1), y: clamp(mix(r.gazeFrom.y, s.y || 0, lead), -1, 1) };
+          if (this.gentle) g = { x: mix(r.gazeFrom.x, g.x, 0.8), y: mix(r.gazeFrom.y, g.y, 0.8) };
+        }
       }
       if (!g) return;
       this.gaze = g;
@@ -538,21 +581,30 @@
           stir: 1300,
           dream: 800
         }[name] || 1100;
-      const duration = this.gentle ? Math.round(baseDuration * 1.35) : baseDuration;
+      const scripted = options.script && typeof options.script === 'object' ? options.script : null;
+      const base = scripted && options.duration > 0 ? clamp(options.duration, 400, 15000) : baseDuration;
+      const duration = this.gentle ? Math.round(base * 1.35) : base;
       let variant = 0;
       if (name === 'pet') {
         this.petCount = t - this.lastPetAt < 18000 ? this.petCount + 1 : 0;
         this.lastPetAt = t;
-        variant = this.petCount % 3;
+        // a choice with reasons: the lean is its default, contentment brings the wiggle, curiosity follows the
+        // finger; in a run of pets it never repeats the response it just gave
+        const w = [1, 0.55 + 0.9 * (this.mood.content || 0), 0.45 + 0.9 * (this.mood.curiosity || 0)];
+        if (this.petCount > 0 && this.lastPetVariant >= 0) w[this.lastPetVariant] = 0;
+        let x = this.random() * (w[0] + w[1] + w[2]);
+        variant = 0; while (variant < 2 && (x -= w[variant]) > 0) variant++;
       } else if (name === 'greet-big') {
         variant = this.mood.sleepiness > 0.56 ? 1 : important ? 2 : 0;
       }
       if (name === 'pet' && options.variant === 0) variant = 0;
+      if (name === 'pet') this.lastPetVariant = variant;
       const delay = clamp(options.delay || 0, 0, 400);
       this.blendFrom = previousPose;
       this.reaction = {
         name, at: t + delay, duration, important, priority, variant,
-        vector: vector || { x: 0, y: 0 }
+        vector: vector || { x: 0, y: 0 },
+        script: scripted, fired: [], gazeFrom: { ...this.gaze }
       };
       if (name === 'welcome') this.startBlink(t + 150, true);
       else if (name === 'launch') this.startBlink(t + 90);
@@ -608,8 +660,39 @@
       if (t - m.at < 70 || (m.next >= t && m.next - t < soon)) return true;
       return Boolean(this.settling);
     }
+    // 4.4: the launcher calls this on a phrase boundary of the music (every 4th beat). A blink lands on the
+    // beat when one is due; never while a control is touched or a reaction (a skip, a press) is playing.
+    musicBeat(t) {
+      const m = this.music;
+      m.lastBeat = t;
+      if (!this.motion || this.mode !== 'music' || m.touch || this.attention.active || this.activeReaction(t) || t < m.next) return false;
+      this.startBlink(t);
+      // Music blinks belong to phrase boundaries; don't add an unscheduled second blink.
+      this.blink.again = false;
+      this.scheduleMusicBlink(t);
+      return true;
+    }
+    scheduleMusicBlink(t) {
+      const pace = typeof HavenDNA !== 'undefined' ? HavenDNA.motion().blinkPace : 1;
+      this.music.next = t + (4200 + this.random() * 5200) * pace * (1 + 0.6 * this.mood.sleepiness);
+    }
     tickBlink(t) {
       const b = this.blink;
+      if (this.mode === 'music' && this.stage === 'rest' && !this.attention.active) {
+        // listening, not staring: blinks come on the beat (musicBeat). With no beat to follow (paused, or
+        // a silent capture) it still blinks now and then on its own.
+        const m = this.music, end = b.at + b.close + b.hold + b.open;
+        if (!m.next) this.scheduleMusicBlink(t);
+        if (t >= end && b.again) {
+          // Only phrase-timed music blinks are allowed when the beat is available.
+          b.again = false;
+          return;
+        }
+        const noBeat = t - (m.lastBeat || 0) > 3000;
+        if (noBeat && t >= m.next + 1800 && t > end && !m.touch && !this.activeReaction(t)) { this.startBlink(t); this.blink.again = false; this.scheduleMusicBlink(t); }
+        if (t >= b.next) b.next = t + 1200;
+        return;
+      }
       if (
         this.mode === 'music' ||
         this.mode === 'alert' ||
@@ -808,6 +891,10 @@
           case 'low':
             up += 0.12 * swell;
             break;
+        }
+        if (r.script && r.script.lids) {
+          const s = sampleKeys(r.script.lids, u);
+          if (s) { up += s.up || 0; low += s.low || 0; pupil *= 1 + (s.pupil || 0); }
         }
       }
       if (this.attention.active) {
@@ -1230,6 +1317,10 @@
             p.glow += 0.11 * swell;
             break;
         }
+        if (r.script && r.script.body) {
+          const s = sampleKeys(r.script.body, u);
+          if (s) for (const k of ['x', 'y', 'tilt', 'sx', 'sy', 'focus', 'glow']) p[k] += s[k] || 0;
+        }
       }
       // Sustained attention while dragging; organic follow, never a looping animation.
       if (this.attention.active) {
@@ -1285,7 +1376,7 @@
         charge: 0.88, full: 0.55, 'greet-big': 0.78,
         pet: 0.66, 'link-receive': 0.95, 'link-spark-in': 0.95,
         'link-resonance': 1, 'link-send': 0.75,
-        inspect: 0.36, peek: 0.45, call: 0.8, alarm: 0.83
+        inspect: 0.36, peek: 0.45, call: 0.8, alarm: 0.83, visit: 0.42
       }[r.name] ?? 0.18) : 0;
       const base = this.mode === 'charge' ? 0.16 : this.attention.active ? 0.12 : 0.025;
       const activity = clamp(base + life * strength, 0, 1);
@@ -1322,6 +1413,6 @@
       };
     }
   }
-  root.HavenPresence = { Presence, mode, profile, ease, mix, fireflyAt };
+  root.HavenPresence = { Presence, mode, profile, ease, mix, fireflyAt, sampleKeys };
   if (typeof module !== 'undefined') module.exports = root.HavenPresence;
 })(typeof window === 'undefined' ? globalThis : window);

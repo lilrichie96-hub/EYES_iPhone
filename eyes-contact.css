@@ -195,3 +195,6 @@ html #eyesContact .ec-top, html[data-skin] #eyesContact .ec-top { position: rela
 /* 4.2.2: "Can't tell right now" sits between awake and resting, never pretending to be either */
 #eyesContact .ec-node[data-state=unsure] .ec-eye { opacity: 0.74; }
 #eyesContact .ec-chip[data-state=unsure] i { background: transparent; box-shadow: inset 0 0 0 1px rgba(228, 241, 243, 0.45); }
+/* 4.4: "Here 12 min ago": seen lately, never shown as awake */
+#eyesContact .ec-node[data-state=recent] .ec-eye { opacity: 0.84; }
+#eyesContact .ec-chip[data-state=recent] i { background: rgba(163, 236, 198, 0.35); }

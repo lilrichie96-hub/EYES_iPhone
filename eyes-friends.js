@@ -30,16 +30,30 @@
      secret). Only the two phones that already share the original secret can derive it, nothing new is
      exchanged, and the original link is never touched. The companion carries only hello/profile/ack/
      presence/duel, never signals, and is never listed as a separate friend.
-   - Reconnection: the browser's 'online' event wakes any channel that is waiting out a retry. */
+   - Reconnection: the browser's 'online' event wakes any channel that is waiting out a retry.
+   4.4 (Distant Connections), additive only:
+   - Waiting signals. A signal that is older than 90 s when it arrives was sent while this Eye wasn't
+     listening (ntfy keeps it for 12 h). It is no longer played as if it were live: it is listed under
+     "while you were away" (now with its nonce) and announced as 'waiting', so eyes-visits.js can turn it
+     into a Distant Visit when the owner is actually free. Its 'later' ack is sent only once the visit (or
+     the Meeting Space replay) has actually shown it: Friends.felt(f, nonces). Without eyes-visits.js the
+     4.3 behaviour (ack on arrival) is kept.
+   - presence(f).tier: 'online' (heard in the last 90 s: confirmed available) | 'recent' (heard in the last
+     30 min, nothing newer) | 'offline' | 'unknown'. presence(f).state is unchanged for older callers.
+     'here' is only announced for a message that is itself fresh (≤ 60 s), never for a replayed hello.
+   - Mirror ('mirror' cap): kind 'mirror' {m: {o, id, …}} is live only (≤ 90 s), never a signal (no stats,
+     no ack, no push, no "while you were away") and only sent to a peer that advertised it, directly or
+     through the upgraded companion. eyes-mirror.js owns everything inside `m`. */
 'use strict';
 (function (root) {
   const RELAY = 'https://ntfy.sh/';
   const KEY = 'eyes.friends.v1';
   const SIGNALS = ['pulse', 'spark', 'calm', 'resonance', 'hello'];
-  const CAPS = ['ack', 'duel', 'presence', 'duel2'];   // what this phone understands beyond the original protocol
-  const EXTRA = ['ack', 'duel', 'away'];               // kinds that only go to peers that advertised them
+  const CAPS = ['ack', 'duel', 'presence', 'duel2', 'mirror'];   // what this phone understands beyond the original protocol
+  const EXTRA = ['ack', 'duel', 'away', 'mirror'];               // kinds that only go to peers that advertised them
   const PRESENCE_MS = 180000, PROBE_WAIT_MS = 12000, ENGAGED_MS = 600000, MAX_COMPANIONS = 6;
-  const COMPANION_KINDS = ['hello', 'profile', 'ack', 'duel', 'away'];
+  const COMPANION_KINDS = ['hello', 'profile', 'ack', 'duel', 'away', 'mirror'];
+  const LIVE_MS = 90000, CONFIRMED_MS = 90000, RECENT_MS = 30 * 60000, HERE_MS = 60000;
   const capOk = (x) => typeof x === 'string' && /^[a-z0-9]{1,12}$/.test(x);
   const CODE_RE = /HL1-[A-Za-z0-9_-]{43}/;
   const enc = new TextEncoder(), dec = new TextDecoder();
@@ -244,11 +258,16 @@
         f.lastSeen = Math.max(f.lastSeen || 0, heard);
         if (f.awayAt && f.awayAt <= f.lastSeen) f.awayAt = 0;
         if (age <= 60000) this.lastHeardAt = now;
-        if (!was && !f.companion) emit('here', f);
-        if (!was && f.companion) emitFor(f, 'change');
+        // 4.4: a replayed hello from minutes ago is not "here"
+        if (!was && !f.companion && age <= HERE_MS) emit('here', f);
+        else if (!was) emitFor(f, 'change');
       }
       if (k === 'duel') {                              // 4.2 Battle Lite: live only, never a signal
         if (age <= 90000 && p.d && typeof p.d === 'object' && !Array.isArray(p.d)) { this.engage(); emitFor(f, 'duel', p.d, Number(p.t) || now); }
+        return;
+      }
+      if (k === 'mirror') {                            // 4.4 Mirror: live only, never a signal
+        if (age <= 90000 && p.m && typeof p.m === 'object' && !Array.isArray(p.m)) { this.engage(); emitFor(f, 'mirror', p.m, Number(p.t) || now); }
         return;
       }
       if (isProfile) {
@@ -267,8 +286,16 @@
         }
         save(); emitFor(f, 'change'); sendProfile(f, true); return;
       }
-      if (age > 600000) {                               // too old to play live: "while you were away"
-        if (k !== 'resonance') { f.missed.push({ k, t: Number(p.t) }); f.missed = f.missed.slice(-12); save(); emit('missed', f); this.ack(n, true); }
+      // 4.4: anything sent while this Eye wasn't listening waits for its owner (a Distant Visit, eyes-visits.js).
+      // Without the visits module the 4.3 rule stands: up to 10 min old still plays live.
+      if (age > (root.EyesVisits ? LIVE_MS : 600000)) {   // too old to play live: "while you were away"
+        if (k !== 'resonance') {
+          const w = { k, t: Math.min(now, Number(p.t) || now), n };
+          f.missed.push(w); f.missed = f.missed.slice(-12);
+          if (root.EyesVisits) count(f, 'recv');          // it did reach this Eye; it just hasn't been seen yet
+          save(); emit('missed', f);
+          if (root.EyesVisits) emit('waiting', f, w); else this.ack(n, true);
+        }
         return;
       }
       this.engage();
@@ -343,6 +370,14 @@
   //  offline : they told us they closed EYES, or they understand probes and didn't answer one while we listened
   //  unknown : everything else (we're not connected, they're on older EYES, or nothing was asked yet)
   function presence(f) {
+    const p = presence0(f), now = Date.now();
+    // 4.4: how sure we are, in four honest tiers (state stays exactly as it was for older callers)
+    p.tier = p.state === 'online' ? (now - p.lastSeen <= CONFIRMED_MS ? 'online' : 'recent')
+      : p.state === 'offline' ? 'offline'
+        : p.lastSeen && now - p.lastSeen < RECENT_MS && p.why !== 'not-paired' ? 'recent' : 'unknown';
+    return p;
+  }
+  function presence0(f) {
     if (!f || !f.peer) {
       const c0 = f && !f.companion ? companionFor(f.code) : null;
       if (!c0 || !c0.peer) return { state: 'unknown', why: 'not-paired', lastSeen: 0 };
@@ -446,6 +481,8 @@
   function wakeAll() { channels.forEach((ch) => { if (!ch.active) ch.start(); else ch.hello(false); }); st.friends.forEach((f) => sendProfile(f, false)); }
   function sleepAll() { channels.forEach((ch) => { ch.away(); ch.stop(); }); }
   document.addEventListener('visibilitychange', () => (document.visibilityState === 'visible' ? wakeAll() : sleepAll()));
+  // 4.4: an iPhone Home Screen app restored from the back-forward cache may not report a visibility change
+  addEventListener('pageshow', (e) => { if (e && e.persisted && document.visibilityState === 'visible') wakeAll(); });
   // 4.2.2: the network came back: stop waiting out the retry and listen again right away
   addEventListener('online', () => channels.forEach((ch) => { if (ch.active && ch.connection !== 'online') { ch.retry = 0; ch.wakeNow(); } }));
   addEventListener('offline', () => channels.forEach((ch) => { if (ch.active) ch.setConn('offline'); }));
@@ -541,6 +578,24 @@
       ch.engage();
       return ch.publish({ ...ch.msg('duel'), d }, true);
     },
+    // 4.4 Mirror: same routing as duels (direct, or through the upgraded companion). Resolves true when the relay took it.
+    mirror(f, m) {
+      if (!f || !m || typeof m !== 'object' || JSON.stringify(m).length > 600) return Promise.resolve(false);
+      const via = supportsDirect(f, 'mirror') ? f : !f.companion ? companionFor(f.code) : null;
+      const ch = via && channels.get(via.code);
+      if (!ch || !via.peer || !supportsDirect(via, 'mirror')) return Promise.resolve(false);
+      if (!ch.active && document.visibilityState === 'visible') ch.start();
+      ch.engage();
+      return ch.publish({ ...ch.msg('mirror'), m }, true, m.o === 'bye');
+    },
+    mirrorVia: (f) => (supportsDirect(f, 'mirror') ? f : f && !f.companion && supportsDirect(companionFor(f.code), 'mirror') ? companionFor(f.code) : null),
+    // 4.4: the owner has now actually seen these waiting signals: tell the sender ('later' ack, newer phones only)
+    felt(f, nonces) {
+      const ch = f && channels.get(f.code); if (!ch || !Array.isArray(nonces)) return 0;
+      const list = [...new Set(nonces.filter((n) => typeof n === 'string'))].slice(-8);
+      list.forEach((n) => ch.ack(n, true));
+      return list.length;
+    },
     duelSupports: (f, cap) => { const via = supportsDirect(f, 'duel') ? f : f && !f.companion ? companionFor(f.code) : null; return supportsDirect(via, cap); },
     sendAll(kind) { let any = false; st.friends.forEach((f) => { if (f.peer) any = Friends.send(f, kind) || any; }); return any; },
     rename(f, nick) { f.nick = String(nick || '').trim().slice(0, 24) || undefined; save(); emit('change', f); },
@@ -551,6 +606,7 @@
       save(true); emit('change'); emit('removed', f);
     },
     clearMissed(f) { f.missed = []; save(); },
+    touch() { save(); emit('change'); },   // 4.4: history changed elsewhere (visits, mirror): keep it
     // the Android native link's history (its signals are counted from the launcher)
     countNative(what, kind) {
       const n = st.native; n.stats = n.stats || {}; n.firsts = n.firsts || {};

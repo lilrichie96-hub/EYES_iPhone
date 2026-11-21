@@ -274,6 +274,7 @@
         !(core.mode === 'music' && core.state.media?.playing) &&
         !core.busy(t) &&
         !(window.HavenLife && HavenLife.busy(t)) &&
+        !(window.EyesVisits && EyesVisits.active(t)) &&
         !(play && play.busy()),
       fps = eyeDive.active(t)
         ? 60
@@ -314,11 +315,19 @@
     raf = 0;
     wake = 0;
   }
+  const musicBeat = { on: false, n: 0 };
   function draw(t) {
     model = core.sample(t);
     if (!ctx || !w) return;
     // The body grooves: a bob on the beat and a sway every two beats, shaped by Music energy.
     const groove = model.music > 0.001 ? iris.groove(t) : null;
+    // 4.4: it blinks while you listen, on a phrase boundary (every 4th beat), never during a press or drag
+    core.music.touch = pointerActive || iris.busy() || iris.flinging();
+    if (groove && groove.playing) {
+      const up = groove.beat > 0.8 && !musicBeat.on;
+      if (groove.beat > 0.8) musicBeat.on = true; else if (groove.beat < 0.4) musicBeat.on = false;
+      if (up && ++musicBeat.n % 4 === 0) core.musicBeat(t);
+    }
     model.groove = groove;
     if (groove) {
       const mm = HavenPresence.ease(model.music),
@@ -399,9 +408,10 @@
           ].map((x) => x * (1 - focusAmount));
         })()
       : [0, 0];
+    const mblink = (v.eye?.blink || 0) * m;          // 4.4: a blink still closes the lids while music lives in the eye
     const lids = {
-        upper: mix(Math.min(1, (v.eye?.upper || 0) + (DNA ? DNA.lid() : 0)), vibe[0], m),
-        lower: mix(v.eye?.lower || 0, vibe[1], m)
+        upper: Math.max(mix(Math.min(1, (v.eye?.upper || 0) + (DNA ? DNA.lid() : 0)), vibe[0], m), mblink),
+        lower: Math.max(mix(v.eye?.lower || 0, vibe[1], m), mblink * 0.92)
       },
       pupilScale = mix(v.eye?.pupil || 1, 1, m) * (DNA ? DNA.looks().pupil : 1);
     model.lids = lids;
@@ -519,7 +529,10 @@
     model.linkEffect = signal
       ? { name: signal.name, amount: clamp((t - signal.at) / signal.duration) }
       : null;
-    if (senses) senses.paint(ctx, { t, cx, cy, size, linkActive: !!signal });
+    // 4.4 Distant Visits (eyes-visits.js): a friend's Eye that came by while you were away
+    const visiting = !!(window.EyesVisits && EyesVisits.active(t));
+    if (senses) senses.paint(ctx, { t, cx, cy, size, linkActive: !!signal || visiting });
+    if (visiting) EyesVisits.paint(ctx, { t, cx, cy, size });
     if (play) { play.tick(t); play.paint(ctx, t); }
     if (signal) paintLinkEnergy(t, cx, cy, size, signal, v);
     paintPersonality(t, cx, cy, size, v);
@@ -1880,6 +1893,32 @@
     receive,
     setMotion,
     goHome,
+    // 4.4: what Distant Visits need from the home screen. quiet() is true only while nobody is busy with
+    // anything: no panel, folder, ring, drag, finger down, notification card, call/alarm, music controls,
+    // full-screen scene, game, eye dive, or a reaction that matters more than an idle habit.
+    livingHost() {
+      return {
+        core, now, schedule, draw: () => draw(now()), eyeCentre,
+        name: () => (window.HavenDNA && HavenDNA.dna() ? HavenDNA.dna().name : 'Your Eye'),
+        quiet() {
+          const t = now();
+          if (!visibility || document.hidden) return 'hidden';
+          if (homeHeld) return 'scene';
+          if (panel) return 'panel';
+          if (!$('notice').hidden) return 'notification';
+          if (core.mode === 'alert') return 'alert';
+          if (core.mode === 'music' || (core.state.media && core.state.media.playing && !core.state.media.hidden)) return 'music';
+          if (folderOpen() || iris.reachOpen() || iris.busy() || iris.flinging()) return 'iris';
+          if (appManager.dragActive() || pointerActive || core.attention.active) return 'touch';
+          if (eyeDive.active(t)) return 'dive';
+          if (play && play.busy()) return 'play';
+          if (core.asleep) return 'asleep';
+          if (core.stage !== 'rest') return 'moving';
+          if (core.activeReaction(t) && core.reaction.priority >= 50 && core.reaction.name !== 'visit') return 'reacting';
+          return '';
+        }
+      };
+    },
     holdHome(on) {
       homeHeld = !!on;
       if (!homeHeld) { draw(now()); schedule(); }
@@ -1931,7 +1970,8 @@
         skin: skins.diagnostics(),
         senses: senses ? senses.diagnostics() : null,
         attentionEvents: [...core.attentionEvents],
-        following: core.attention.active
+        following: core.attention.active,
+        power: { battery: core.state.battery, charging: !!core.state.charging, saver: !!core.state.saver }
       };
     }
   };

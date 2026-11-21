@@ -3,6 +3,12 @@
    There are no points, streaks, rewards, obligations, notifications or server calls.
    Memory changes gesture anticipation, greetings and the mix of existing idle poses.
    Owned by this Eye's DNA seed, included in encrypted Eye Passport automatically.
+   4.4 (review item 1, "fade and adapt"): familiarity now comes from a recency-weighted day count
+   (`recent`, ×0.96 per day ≈ 17-day half-life) instead of the lifetime `days` count that never faded.
+   A habit grows over about three to four weeks of regular use, and one that stops fades over weeks:
+   quickly for a habit of a few days, slowly for one of months. No cliff, and new favourites can rise.
+   Visit windows work the same way (`slotRecent`). Existing memories are carried over in place
+   (seeded from the already-decaying score); nothing is deleted.
 */
 (function (root) {
   'use strict';
@@ -16,8 +22,10 @@
     days: Object.fromEntries(TYPES.map((k) => [k, 0])),
     daily: Object.fromEntries(TYPES.map((k) => [k, 0])),
     slots: [0, 0, 0, 0], slotDays: [0, 0, 0, 0], slotToday: [0, 0, 0, 0],
-    visitAt: 0, greetingAt: 0
+    visitAt: 0, greetingAt: 0,
+    recent: Object.fromEntries(TYPES.map((k) => [k, 0])), slotRecent: [0, 0, 0, 0]
   });
+  const RECENT_DECAY = 0.96, RECENT_MAX = 40, GROW = 7;
   function slot(hour) {
     const h = (Number(hour) + 24) % 24;
     return h >= 5 && h < 11 ? 0 : h >= 11 && h < 17 ? 1 : h >= 17 && h < 23 ? 2 : 3;
@@ -29,6 +37,9 @@
     };
     let state = read(KEY, null), enabled = read(ENABLED, true) !== false;
     if (!state || state.v !== 1 || !state.score || !state.daily || !Array.isArray(state.slots)) state = blank(identity());
+    // 4.4: carry 4.3 memories over in place. The score already faded with time, so it stands in for recency.
+    if (!state.recent || typeof state.recent !== 'object') state.recent = Object.fromEntries(TYPES.map((k) => [k, clamp(Number(state.score[k]) || 0, 0, 25)]));
+    if (!Array.isArray(state.slotRecent) || state.slotRecent.length !== 4) state.slotRecent = [0, 1, 2, 3].map((i) => clamp(Number(state.slots[i]) || 0, 0, 25));
     const persist = () => save(KEY, state);
     function ensure() {
       const seed = identity();
@@ -42,6 +53,10 @@
         const fading = Math.pow(0.985, elapsed);
         for (const k of TYPES) state.score[k] = clamp((Number(state.score[k]) || 0) * fading, 0, 24);
         for (let i = 0; i < 4; i++) state.slots[i] = clamp((Number(state.slots[i]) || 0) * fading, 0, 32);
+        // 4.4: recency fades faster than the totals, so the Eye keeps up with how its owner lives now
+        const recency = Math.pow(RECENT_DECAY, elapsed);
+        for (const k of TYPES) state.recent[k] = clamp((Number(state.recent[k]) || 0) * recency, 0, RECENT_MAX);
+        for (let i = 0; i < 4; i++) state.slotRecent[i] = clamp((Number(state.slotRecent[i]) || 0) * recency, 0, RECENT_MAX);
         state.day = today; state.daily = blank(seed).daily; state.slotToday = [0, 0, 0, 0];
         persist();
       }
@@ -59,12 +74,15 @@
           state.slotToday[i] = 1;
           state.slots[i] = clamp((state.slots[i] || 0) + 1, 0, 32);
           state.slotDays[i] = clamp((state.slotDays[i] || 0) + 1, 0, 32);
+          state.slotRecent[i] = clamp((state.slotRecent[i] || 0) + 1, 0, RECENT_MAX);
         }
         persist(); return true;
       }
       if (!Object.prototype.hasOwnProperty.call(LIMIT, kind)) return false;
       if ((state.daily[kind] || 0) >= LIMIT[kind]) return false;
-      if (!(state.daily[kind] > 0)) state.days[kind] = clamp((state.days[kind] || 0) + 1, 0, 32);
+      if (!(state.daily[kind] > 0)) { state.days[kind] = clamp((state.days[kind] || 0) + 1, 0, 32); state.recent[kind] = clamp((state.recent[kind] || 0) + 1, 0, RECENT_MAX); }
+      // a fuller day counts a little more than a single touch (the daily cap still stops bursts)
+      else if (state.daily[kind] + 1 === LIMIT[kind] && LIMIT[kind] > 1) state.recent[kind] = clamp((state.recent[kind] || 0) + 0.5, 0, RECENT_MAX);
       state.daily[kind] = (state.daily[kind] || 0) + 1;
       state.score[kind] = clamp((state.score[kind] || 0) + 1, 0, 24);
       persist(); return true;
@@ -74,15 +92,18 @@
       ensure();
       if (!TYPES.includes(kind)) return 0;
       const days = Number(state.days[kind]) || 0;
-      const score = Number(state.score[kind]) || 0;
+      const recent = Number(state.recent[kind]) || 0;
       // Requires multiple real days; a hundred taps tonight cannot train a new quirk.
-      return days < 3 || score < 3 ? 0 : clamp((days - 2) / 8 + (score - 2) / 24);
+      if (days < 3) return 0;
+      // 4.4: grows with recent days (≈ 0.68 after a week of daily use, ≈ 0.87 after two, ≈ 0.96 after four)
+      // and fades smoothly when the habit stops. Rounded so tiny residues read as nothing.
+      return Math.round(clamp(1 - Math.exp(-(recent - 2) / GROW)) * 1000) / 1000;
     }
     function expects(hour) {
       if (!enabled) return false;
       ensure();
       const i = slot(hour);
-      return (state.slotDays[i] || 0) >= 3 && (state.slots[i] || 0) >= 3.2;
+      return (state.slotDays[i] || 0) >= 3 && (state.slotRecent[i] || 0) >= 2.6;
     }
     function greeting(hour, awayMs) {
       if (!enabled || awayMs < 20 * 60000 || !expects(hour)) return false;

@@ -120,7 +120,9 @@
   function statusOf(f) {
     if (f.native) return f.paired ? 'Linked (your first Eye Contact)' : 'Waiting for them…';
     const pr = F().presence(f), c = F().connection(f);
-    if (pr.state === 'online') return 'awake now';
+    // 4.4: "awake now" only when it's confirmed (heard in the last 90 s); otherwise when it was last seen
+    if (pr.tier === 'online') return 'awake now';
+    if (pr.tier === 'recent' && pr.state !== 'offline') return 'here ' + ago(pr.lastSeen);
     if (pr.state === 'offline') return (pr.why === 'closed' ? 'closed EYES ' + ago(pr.since) : 'not open right now') + (f.lastSeen ? ' · last here ' + ago(f.lastSeen) : '');
     if (c === 'offline') return 'relay unreachable, retrying';
     return f.lastSeen ? 'can\'t tell right now · last here ' + ago(f.lastSeen) : 'linked';
@@ -324,7 +326,7 @@
       if (sheet && sheet.dataset.view === 'friends') views.friends(true);
       else if (sheet && sheet.dataset.view === 'friend:' + (f.code || 'native')) friendDetail(f, true);
     });
-    Fr.on('here', (f) => { if (document.visibilityState === 'visible' && f.profile && !(sheet) && !contact()) { visit(f, 5000); react('peek'); caption(`${nameOf(f)} is here`, 3000); } });
+    Fr.on('here', (f) => { if (document.visibilityState === 'visible' && f.profile && !(sheet) && !contact() && !(root.EyesVisits && EyesVisits.active())) { visit(f, 5000); react('peek'); caption(`${nameOf(f)} is here`, 3000); } });
     Fr.on('missed', () => setTimeout(awayReport, 900));
     Fr.on('change', () => { if (sheet && sheet.dataset.view === 'friends') { clearTimeout(boot.t); boot.t = setTimeout(() => sheet && sheet.dataset.view === 'friends' && views.friends(true), 300); } });
     Fr.restore().then(() => setTimeout(awayReport, 2600));
@@ -334,6 +336,7 @@
   function awayReport() {
     if (document.visibilityState !== 'visible' || !HavenDNA.has()) return;
     if (root.EyesContact && EyesContact.isOpen()) return;          // the Meeting Space replays them itself
+    if (root.EyesVisits) return;                                   // 4.4: their Eye comes by instead (eyes-visits.js)
     const fresh = (f) => (f.missed || []).filter((m) => m.t > (reported[f.code] || 0));
     const withMissed = F().list().filter((f) => fresh(f).length);
     if (!withMissed.length) return;

@@ -1,6 +1,6 @@
 /* EYES for iPhone: offline after the first visit, and notifications from the EYES push relay.
    Eye Contact itself (ntfy.sh) and the relay are never cached. */
-const CACHE = 'eyes-web-2.3.0', NAMES = 'eyes-push-names';
+const CACHE = 'eyes-web-2.4.0', NAMES = 'eyes-push-names';
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(['./', 'index.html'])).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE && k !== NAMES).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {
