@@ -1,4 +1,10 @@
-# EYES for iPhone · 2.2.2 · The Foundation Patch
+# EYES for iPhone · 2.3.0 · A Mind of Its Own
+
+New in 2.3.0:
+- **A Mind of Its Own**: gentle, local, opt-out learning across days; favorite idle gestures, a more familiar greeting, an anticipatory lean toward a pet, playful curiosity and occasional wary wake-ups.
+- **Choreography**: new memory-aware poses use existing priority arbitration, gaze-first attention and smooth blends without overriding notifications or music.
+- **Privacy**: no accounts, logs, chores, daily streaks, or tracking; The Optic can pause or erase the habits; encrypted Eye Passport includes them.
+- **No change** to Eye Contact, Duel, DNA, installs, or skins.
 
 New in 2.2.2:
 - **Eye Passport** (The Optic → Help & backup, and on the welcome screen): an encrypted backup of the whole Eye,
@@ -10,8 +16,7 @@ New in 2.2.2:
 - **Fairer Peekaboo** for shy Eyes (only between updated Eyes; older Eyes keep the original rules).
 
 ## Updating the site (Patch)
-Upload all files over the repo (keep `.nojekyll`, `icons/`, and the live `eyes-config.js`). The new file is
-`eyes-passport.js`. The cache name is `eyes-web-2.2.2`. Storage keys are unchanged, so every Eye and pairing survives.
+Upload all files over the repo (keep `.nojekyll`, `icons/`, and the live `eyes-config.js`). New in 2.3.0: `eyes-mind.js`; cache is `eyes-web-2.3.0`. Storage keys are unchanged, so every Eye and pairing survives.
 
 ---
 

@@ -20,7 +20,8 @@
     notification: 81, peek: 76,
     inspect: 60, anticipate: 60, reach: 63, folder: 68, unfold: 68, fold: 68, merge: 68,
     charge: 56, full: 56, low: 56, music: 55, morning: 52,
-    'greet-big': 52, stir: 62,
+    'greet-big': 52, 'greet-familiar': 52, stir: 62,
+    'anticipate-pet': 54, 'wake-wary': 82,
     idle: 25, night: 25,
     'look-around': 12, firefly: 12, stretch: 12, yawn: 12, sigh: 12, dream: 8
   });
@@ -440,6 +441,9 @@
       } else if (r.name === 'firefly') {
         const f = fireflyAt(u);
         g = { x: clamp(f.x * 0.75, -0.85, 0.85), y: clamp(f.y * 0.75, -0.7, 0.7) };
+      } else if (r.name === 'wake-wary') {
+        const away = r.vector.x < 0 ? 0.58 : -0.58;
+        g = { x: away * Math.sin(Math.PI * u), y: -0.12 };
       } else if (r.name === 'annoyed') {
         const away = r.vector.x > 0 ? -0.8 : 0.8;
         g =
@@ -525,6 +529,9 @@
           yawn: 2500,
           sigh: 2100,
           'greet-big': 1600,
+          'greet-familiar': 1280,
+          'anticipate-pet': 920,
+          'wake-wary': 1200,
           pet: 1500,
           annoyed: 1400,
           startle: 950,
@@ -540,6 +547,7 @@
       } else if (name === 'greet-big') {
         variant = this.mood.sleepiness > 0.56 ? 1 : important ? 2 : 0;
       }
+      if (name === 'pet' && options.variant === 0) variant = 0;
       const delay = clamp(options.delay || 0, 0, 400);
       this.blendFrom = previousPose;
       this.reaction = {
@@ -552,6 +560,7 @@
         this.startBlink(t + 380);
         this.blink.again = true;
       } else if (name === 'link-calm-in') this.startBlink(t + 1150, true);
+      else if (name === 'greet-familiar') this.startBlink(t + 700);
       else if (name === 'greet-big') {
         this.startBlink(t + 520);
         this.blink.again = true;
@@ -559,7 +568,7 @@
       else if (name === 'yawn') this.startBlink(t + 2050, true);
       else if (name === 'annoyed') this.startBlink(t + 1150, true);
       else if (name === 'firefly') this.startBlink(t + 3500);
-      else if (name === 'stir' || name === 'startle') this.startBlink(t + 600);
+      else if (name === 'stir' || name === 'startle' || name === 'wake-wary') this.startBlink(t + 600);
       else if (name === 'touch' && this.random() < 0.35) this.startBlink(t + 60);
       return true;
     }
@@ -1109,6 +1118,26 @@
             p.sy -= 0.05 * fall;
             break;
           }
+          case 'greet-familiar':
+            p.x += 2.6 * Math.sin(Math.PI * u) * swell;
+            p.tilt += 0.065 * swell;
+            p.sy += 0.032 * swell;
+            p.focus += 0.11 * swell;
+            p.glow += 0.08 * swell;
+            break;
+          case 'anticipate-pet':
+            p.x += r.vector.x * 5.4 * swell;
+            p.y += r.vector.y * 4.2 * swell;
+            p.tilt += r.vector.x * 0.055 * swell;
+            p.sx += 0.02 * swell;
+            p.focus += 0.045 * swell;
+            break;
+          case 'wake-wary':
+            p.x += 2.5 * Math.sin(u * Math.PI * 1.3) * swell;
+            p.tilt -= 0.065 * swell;
+            p.sy -= 0.028 * swell;
+            p.focus -= 0.045 * swell;
+            break;
           case 'greet-big': {
             const k = r.variant === 1 ? 0.35 : r.important ? 1 : 0.65,
               count = r.variant === 2 ? 3 : 2,

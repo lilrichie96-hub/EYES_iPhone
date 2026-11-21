@@ -190,6 +190,7 @@
     const y = Number.isFinite(sy)
       ? Math.max(-1, Math.min(1, (sy - innerHeight * 0.49) / Math.max(1, innerHeight * 0.34)))
       : 0;
+    if (kind === 'inspect' && personality.observe) personality.observe('explore');
     if (kind === 'follow') core.follow(x, y, t);
     else if (kind === 'place' || kind === 'release') core.releaseFollow(t, kind === 'place');
     else if (kind === 'inspect') core.watch(point?.id || 'target', x, y, t);
@@ -1687,6 +1688,33 @@
     $('fullscreenRow').hidden = false;
     $('fullscreen').checked = fullscreen;
     applyFullscreen();
+  }
+  // Quiet, local learning is optional and can be erased without changing the Eye's DNA.
+  if ($('mindEnabled')) {
+    $('mindEnabled').checked = personality.learning();
+    $('mindEnabled').onchange = (e) => { personality.setLearning(e.target.checked);
+      $('mindStatus').textContent = e.target.checked ? 'Its habits grow through time, only on this device.' : 'Learning paused. Existing habits stay saved.';
+    };
+    let forgetReadyUntil = 0;
+    $('mindForget').onclick = () => {
+      if (Date.now() > forgetReadyUntil) {
+        forgetReadyUntil = Date.now() + 6000;
+        $('mindForget').textContent = 'Confirm forget';
+        $('mindStatus').textContent = 'Tap again to erase learned habits, not the Eye itself.';
+        setTimeout(() => {
+          if (Date.now() >= forgetReadyUntil && forgetReadyUntil) {
+            forgetReadyUntil = 0;
+            $('mindForget').textContent = 'Forget habits';
+            $('mindStatus').textContent = personality.learning() ? 'Its habits grow through time, only on this device.' : 'Learning paused.';
+          }
+        }, 6200);
+        return;
+      }
+      forgetReadyUntil = 0;
+      personality.forgetLearning();
+      $('mindForget').textContent = 'Forget habits';
+      $('mindStatus').textContent = 'Learned habits cleared. Its original temperament is unchanged.';
+    };
   }
   $('tipsReset').onclick = () => {
     tips.reset();

@@ -1184,3 +1184,11 @@ html[data-motion='off'] .eyes-wordmark .wm-lid {
 .backup-paste .backup-actions {
   flex-wrap: wrap;
 }
+
+/* 4.3 — growing habits: a quiet setting, not another care dashboard. */
+.mind-setting { flex-wrap: wrap; row-gap: 10px; }
+.mind-setting > span:first-child { flex: 1 1 155px; min-width: 0; }
+.mind-setting .backup-actions { align-items: center; flex-wrap: wrap; gap: 9px; }
+.mind-setting .mind-toggle { color: var(--ash); font-size: 12px; }
+.mind-setting #mindEnabled { width: 18px; height: 18px; accent-color: var(--eye); }
+.mind-setting #mindForget { white-space: nowrap; }

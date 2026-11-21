@@ -35,6 +35,7 @@
     return 0.3;
   }
   function createPersonality({ core, read, save, now, eye, schedule, random = Math.random }) {
+    const mind = root.createEyesMind ? root.createEyesMind({ read, save }) : null;
     const saved = read(KEY, null) || {};
     const mood = {
       energy: 0.6,
@@ -101,6 +102,7 @@
     // ---------- Idle habits ----------
     function pickHabit() {
       const night = mood.sleepiness > 0.5;
+      const learned = mind ? mind.weights() : {};
       const options = [
         ['look-around', 0.4 + mood.curiosity],
         ['firefly', 0.25 + mood.curiosity * mood.energy],
@@ -108,6 +110,7 @@
         ['yawn', night ? 0.4 + mood.sleepiness : 0.05],
         ['sigh', 0.15 + 0.6 * Math.max(0, mood.content - 0.4)]
       ];
+      for (const option of options) option[1] *= learned[option[0]] || 1;
       let total = options.reduce((s, o) => s + o[1], 0),
         r = random() * total;
       for (const [name, w] of options) if ((r -= w) <= 0) return name;
@@ -153,6 +156,7 @@
       lastSeen = Date.now();
       lastPoke = t;
       persist();
+      if (mind && awayMs >= 20 * 60000) mind.observe('visit', hour);
       if (root.HavenDNA) root.HavenDNA.note('visit');
       try { root.dispatchEvent(new CustomEvent('haven:greet')); } catch (e) {}
       if (core.asleep) wake('stir');
@@ -173,9 +177,13 @@
           setTimeout(() => core.react('yawn', now()), 1750);
           nudge({ missing: 0.4 });
         } else if (awayMs > 60 * 60000) {
-          // More than an hour away: a real welcome, bigger the longer you were gone.
-          core.react('greet-big', at, awayMs > 6 * 3600000);
+          // A familiar ritual is less exuberant and more recognizably *this* Eye.
+          const familiar = mind && mind.greeting(hour, awayMs);
+          core.react(familiar ? 'greet-familiar' : 'greet-big', at, !familiar && awayMs > 6 * 3600000);
           nudge({ missing: clamp(awayMs / (6 * 3600000)), energy: 0.1, content: 0.08 });
+        } else if (mind && mind.greeting(hour, awayMs)) {
+          // A remembered return window doesn't need an hour-long absence.
+          core.react('greet-familiar', at);
         }
         schedule();
       }, delay);
@@ -193,11 +201,22 @@
       lastPoke = t;
       if (type === 'down') {
         if (core.asleep) {
-          wake('startle');
+          if (mind) mind.observe('wake');
+          const familiar = mind && mind.familiarity('wake') > 0.3;
+          wake(familiar ? 'wake-wary' : 'startle');
           suppressEyeTapUntil = t + 500;
           return;
         }
         const d = Math.hypot(e.clientX - c.x, e.clientY - c.y);
+        // Touchscreens can't sense an approaching hand; we lean only *after* a real finger
+        // lands near the Eye, before a familiar circular pet is completed.
+        const nearRim = d > c.size * 0.65 && d < c.size * 1.75;
+        const onUI = e.target?.closest?.('button, a, input, select, textarea, #irisReach, #music, .sheet');
+        if (nearRim && !onUI && touchable() && mind && mind.familiarity('pet') >= 0.28 && random() < 0.68) {
+          const vec = { x: clamp((e.clientX - c.x) / (c.size * 1.8), -1, 1),
+            y: clamp((e.clientY - c.y) / (c.size * 1.8), -1, 1) };
+          if (core.react('anticipate-pet', t, false, vec)) { core.aim(vec.x * 0.6, vec.y * 0.6, t, 320); schedule(); }
+        }
         circle =
           d < c.size * 2.2
             ? {
@@ -219,6 +238,7 @@
             taps = [];
             core.react('annoyed', t, false, { x: e.clientX > c.x ? 1 : -1, y: 0 });
             if (root.HavenDNA) root.HavenDNA.note('poke');
+            if (mind) mind.observe('wake');
             holdTouchUntil = t + 1300;
             nudge({ content: -0.15 });
             schedule();
@@ -240,7 +260,10 @@
           circle.done = true;
           suppressEyeTapUntil = t + 600;
           if (touchable()) {
-            core.react('pet', t);
+            const familiar = mind && mind.familiarity('pet') >= 0.5;
+            // Frequent petting makes its usual lean happen a little more readily.
+            core.react('pet', t, false, { x: 0, y: 0 }, familiar && random() < 0.6 ? { variant: 0 } : {});
+            if (mind) mind.observe('pet');
             if (root.HavenDNA) root.HavenDNA.note('pet');
             holdTouchUntil = t + 1300;
             nudge({ content: 0.25, missing: -0.2, energy: 0.04 });
@@ -307,6 +330,11 @@
       wake,
       habit,
       nudge,
+      observe: (kind) => mind && mind.observe(kind),
+      memory: () => mind ? mind.snapshot() : null,
+      learning: () => mind ? mind.enabled() : false,
+      setLearning: (v) => mind && mind.setEnabled(v),
+      forgetLearning: () => mind && mind.forget(),
       poke: () => (lastPoke = now()),
       eyeTapSuppressed: () => now() < suppressEyeTapUntil,
       sleepNow: () => fallAsleep(),
@@ -318,7 +346,8 @@
         asleep: core.asleep,
         habitsDone,
         quietFor: Math.round((now() - lastPoke) / 1000),
-        nextHabitIn: Math.round((nextHabit - now()) / 1000)
+        nextHabitIn: Math.round((nextHabit - now()) / 1000),
+        mind: mind ? mind.snapshot() : null
       })
     };
   }

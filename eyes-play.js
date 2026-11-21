@@ -34,6 +34,7 @@ window.createEyesPlay = function ({ core, personality, now, schedule, eyeCentre 
   let light = null;
   function startLight() {
     wakeIt();
+    if (personality.observe) personality.observe('playLight');
     const el = overlay('<p class="play-hint">Drag the light. Flick it.</p><button data-done type="button" class="play-done">Done</button>');
     mode = 'light';
     const c = eyeCentre();
@@ -85,6 +86,7 @@ window.createEyesPlay = function ({ core, personality, now, schedule, eyeCentre 
   let stare = null;
   function startStare() {
     wakeIt();
+    if (personality.observe) personality.observe('playStare');
     const el = overlay(`<p class="play-hint" id="stareMsg">Hold your finger on its eye.<br>Don't let go.</p>
       <p class="play-score" id="stareScore"></p><button data-done type="button" class="play-done">Done</button>`);
     mode = 'stare';
