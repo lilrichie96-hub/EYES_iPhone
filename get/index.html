@@ -8,7 +8,7 @@
   <meta property="og:type" content="website">
   <meta property="og:title" content="EYES — Something that looks back.">
   <meta property="og:description" content="A living Eye for your phone. Weird. Understated. Alive.">
-  <meta property="og:image" content="https://lilrichie96-hub.github.io/EYES_iPhone/get/media/social-preview.jpg">
+  <meta property="og:image" content="https://lilrichie96-hub.github.io/EYES_iPhone/get/media/v442/social-preview.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
@@ -58,7 +58,7 @@
     .feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
     .feature{border:1px solid var(--line);border-radius:18px;background:linear-gradient(160deg,#13191f,#0c0f13);padding:18px;overflow:hidden}
     .feature-media{border-radius:12px;background:#070c12;overflow:hidden;height:360px;display:grid;place-items:center;position:relative}
-    .feature-media img{width:100%;height:100%;object-fit:contain;object-position:center}
+    .feature-media img{width:100%;height:100%;object-fit:contain;object-position:center}.feature-media .feature-video{width:100%;height:100%;object-fit:contain;object-position:center}.feature-media .feature-poster{display:none}
     .feature-media .tag{position:absolute;left:13px;top:13px;border:1px solid rgba(220,231,238,.15);background:rgba(9,13,18,.78);padding:6px 9px;border-radius:100px;color:#cad9df;font-size:10px;letter-spacing:.05em}
     .feature-text{padding:22px 6px 8px}.feature-text h3{font-size:19px;font-weight:650;letter-spacing:-.03em;margin-bottom:8px}.feature-text p{font-size:13px;line-height:1.8;color:#98a6b0;margin:0}
     .lineup{margin:55px 0 22px;min-height:125px;display:grid;align-items:center;justify-items:center;background:radial-gradient(ellipse at 50% 50%,rgba(90,115,125,.08),transparent 73%)}
@@ -93,13 +93,13 @@
     @media(max-width:950px){.hero{grid-template-columns:1fr;text-align:center;min-height:0;gap:10px;padding-top:75px}.eyebrow,.actions{justify-content:center}.lead{margin-left:auto;margin-right:auto}.hero-stage{height:520px}.hero-specimen{left:18%}.real-badge{right:16%}.trailer-grid,.social-grid,.duel-grid{gap:32px}.section-head{display:block}.section-head p{max-width:700px;margin-top:20px}.feature-media{height:300px}.download-wrap{padding:35px}}
     @media(max-width:680px){.container{width:calc(100% - 34px)}.header{height:72px}.head-meta,nav a:first-child{display:none}nav{gap:0}h1{font-size:clamp(50px,11.8vw,75px)}.hero{padding:58px 0 48px}.lead{font-size:15px}.hero-stage{height:370px}.hero-video,.hero-still{width:min(100%,400px)}.hero-specimen{left:3%;bottom:1px}.real-badge{right:0;top:0}.section{padding:70px 0}.section-head{margin-bottom:26px}.trailer-grid,.social-grid,.duel-grid,.platforms,.qa{grid-template-columns:1fr}.trailer-grid{gap:29px}.film-container{min-height:390px;padding:17px}.trailer-player{max-height:480px;width:auto}.film-caption{font-size:10px;left:13px;bottom:13px}.feature-grid{grid-template-columns:1fr}.feature{display:grid;grid-template-columns:130px 1fr;gap:14px;padding:14px;align-items:center}.feature-media{height:225px}.feature-text{padding:0 6px}.feature-text h3{font-size:17px}.feature-text p{font-size:12px}.lineup{margin:42px 0 8px;min-height:65px}.lineup-caption{font-size:11px}.social-grid{gap:30px}.social-visual{max-width:530px}.duel-grid{gap:25px}.duel-stack{min-height:340px;padding:10px}.duel-stack img{max-height:330px}.download-wrap{padding:27px 18px}.platform{padding:22px}.platform p{min-height:0}.qa{padding-top:52px;gap:16px}.qa h2{font-size:34px}footer{flex-wrap:wrap}}
     @media(max-width:400px){.feature{grid-template-columns:104px 1fr}.feature-media{height:183px}.feature-text h3{font-size:16px}.feature-text p{font-size:11px}.feature-text{padding:0}.platform h3{font-size:23px}}
-    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}.hero-video{display:none}.hero-still{display:block}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}.hero-video,.feature-video{display:none!important}.hero-still,.feature-media .feature-poster{display:block!important}}
   </style>
 </head>
 <body>
   <div class="container">
     <header class="header">
-      <a href="#top" class="brand" aria-label="EYES home"><img class="wordmark" src="./media/eyes-wordmark.svg" alt="EYES" width="92" height="35"><span class="head-meta">a little life inside your phone</span></a>
+      <a href="#top" class="brand" aria-label="EYES home"><img class="wordmark" src="./media/v442/eyes-wordmark.svg" alt="EYES" width="92" height="35"><span class="head-meta">a little life inside your phone</span></a>
       <nav aria-label="Main navigation"><a href="#features">Explore</a><a href="#trailer">Watch the trailer</a><a class="nav-cta" href="#download">Get EYES ↗</a></nav>
     </header>
     <main id="top">
@@ -113,34 +113,34 @@
         </div>
         <div class="hero-stage" aria-label="Miry, an actual EYES creature from the app renderer">
           <span class="real-badge">Actual EYES renderer</span>
-          <video class="hero-video" autoplay muted playsinline loop preload="metadata" poster="./media/hero-miry.webp" aria-label="Miry's subtle idle breathing and gaze animation"><source src="./media/miry-idle.webm" type="video/webm"><source src="./media/miry-idle.mp4" type="video/mp4"></video>
-          <img class="hero-still" src="./media/hero-miry.webp" alt="Miry, a teal and violet living Eye with a glowing center" width="900" height="900">
+          <video class="hero-video" autoplay muted playsinline loop preload="metadata" poster="./media/v442/hero-miry.webp" aria-label="Miry's subtle idle breathing and gaze animation"><source src="./media/v442/miry-idle.webm" type="video/webm"><source src="./media/v442/miry-idle.mp4" type="video/mp4"></video>
+          <img class="hero-still" src="./media/v442/hero-miry.webp" alt="Miry, a teal and violet living Eye with a glowing center" width="900" height="900">
           <div class="hero-specimen"><i class="status-light" aria-hidden="true"></i><div><span>Miry</span><small>Tide · swirl iris · Mythic</small></div></div>
         </div>
       </section>
       <div class="line"></div>
       <section id="trailer" class="section trailer-grid" aria-labelledby="trailer-title">
-        <div class="trailer-copy"><p class="kicker">Meet EYES</p><h2 id="trailer-title">It starts with a little light.</h2><p class="intro">Choose one of three drifting lights. Hold it until it wakes. Whatever looks back is uniquely yours, and it won't look quite like anybody else's.</p><p class="intro">An unusual little creature experience that happens to live on your phone.</p><div class="details">71-second official preview · genuine EYES gameplay footage · silent video</div></div>
-        <div class="film-container"><video class="trailer-player" controls playsinline preload="none" poster="./media/trailer-poster.webp" aria-label="Official EYES introduction trailer, 71 seconds"><source src="./media/eyes-trailer.mp4" type="video/mp4">Your browser does not support video. <a href="./media/eyes-trailer.mp4">Open the trailer file</a>.</video><span class="film-caption">EYES / Official preview</span></div>
+        <div class="trailer-copy"><p class="kicker">Meet EYES</p><h2 id="trailer-title">It starts with a little light.</h2><p class="intro">Choose one of three drifting lights. Hold it until it wakes. Whatever looks back is uniquely yours, and it won't look quite like anybody else's.</p><p class="intro">An unusual little creature experience that happens to live on your phone.</p><div class="details">74-second official preview · genuine EYES gameplay footage · silent video</div></div>
+        <div class="film-container"><video class="trailer-player" controls playsinline preload="none" poster="./media/v442/trailer-poster.webp" aria-label="Official EYES introduction trailer, 74 seconds"><source src="./media/v442/eyes-trailer.mp4" type="video/mp4">Your browser does not support video. <a href="./media/v442/eyes-trailer.mp4">Open the trailer file</a>.</video><span class="film-caption">EYES / Official preview</span></div>
       </section>
       <div class="line"></div>
       <section id="features" class="section" aria-labelledby="features-title">
         <div class="section-head"><div><p class="kicker">Not just a home screen</p><h2 id="features-title">A creature in the little moments.</h2></div><p>It's your Eye, with its own look and temperament. The moments are small. That’s the point.</p></div>
         <div class="feature-grid">
-          <article class="feature"><div class="feature-media"><img loading="lazy" src="./media/shot-home.webp" alt="Actual EYES Android renderer view showing the Eye centered above the app dock"><span class="tag">Android · home</span></div><div class="feature-text"><h3>It feels alive.</h3><p>It follows your finger, takes a breath, glances around, and recognizes the quiet moments between everything else.</p></div></article>
-          <article class="feature"><div class="feature-media"><img loading="lazy" src="./media/shot-music.webp" alt="Android EYES renderer view with music controls appearing inside the iris"><span class="tag">Android · music</span></div><div class="feature-text"><h3>It reacts to your world.</h3><p>On Android, music reshapes the iris into controls. Charging and notifications get their own little reactions.</p></div></article>
-          <article class="feature"><div class="feature-media"><img loading="lazy" src="./media/shot-visit.webp" alt="A friend's blue Eye visiting another EYES Android home screen"><span class="tag">Connected Eyes · visits</span></div><div class="feature-text"><h3>Your friends can visit.</h3><p>Send a little signal while a friend is away, and your Eye might appear on their home screen when they return.</p></div></article>
+          <article class="feature"><div class="feature-media"><img loading="lazy" src="./media/v442/shot-home.webp" alt="Actual EYES Android renderer view showing the Eye centered above the app dock"><span class="tag">Android · home</span></div><div class="feature-text"><h3>It feels alive.</h3><p>It follows your finger, takes a breath, glances around, and recognizes the quiet moments between everything else.</p></div></article>
+          <article class="feature"><div class="feature-media"><video class="feature-video" muted playsinline loop preload="none" poster="./media/v442/shot-music.webp" aria-label="EYES Cymatics music mode — the iris draws new patterns to the music"><source src="./media/v442/music-cymatics.webm" type="video/webm"><source src="./media/v442/music-cymatics.mp4" type="video/mp4"></video><img class="feature-poster" loading="lazy" src="./media/v442/shot-music.webp" alt="Android EYES 4.4.2 music controller with the glowing Cymatics iris"><span class="tag">Android · Cymatics</span></div><div class="feature-text"><h3>Music changes its iris.</h3><p>On Android, every track draws its own Cymatics figure inside the Eye. Playback controls are right there, while charging and notifications have their own reactions.</p></div></article>
+          <article class="feature"><div class="feature-media"><img loading="lazy" src="./media/v442/shot-visit.webp" alt="A friend's blue Eye visiting another EYES Android home screen"><span class="tag">Connected Eyes · visits</span></div><div class="feature-text"><h3>Your friends can visit.</h3><p>Send a little signal while a friend is away, and your Eye might appear on their home screen when they return.</p></div></article>
         </div>
-        <div class="lineup"><img loading="lazy" src="./media/eyes-lineup.webp" alt="A lineup of seven differently colored real EYES creatures"></div>
+        <div class="lineup"><img loading="lazy" src="./media/v442/eyes-lineup.webp" alt="A lineup of seven differently colored real EYES creatures"></div>
         <p class="lineup-caption">Different colours. Different temperaments. No two Eyes quite alike.</p>
       </section>
       <div class="line"></div>
       <section class="section social-grid" aria-labelledby="social-title">
         <div class="social-visual">
-          <img class="social-screen" loading="lazy" src="./media/shot-meeting.webp" alt="EYES Meeting Space with Miry and Fen, with Pulse, Spark, Calm, Mirror and Battle controls">
-          <div class="social-aside"><img loading="lazy" src="./media/shot-mirror.webp" alt="Two real Eyes mirroring one another during Eye Contact"><div class="social-label">Two Eyes, one quiet moment. <strong>Mirror</strong> lets them try to copy each other.</div></div>
+          <img class="social-screen" loading="lazy" src="./media/v442/shot-meeting.webp" alt="EYES Meeting Space with Miry and Fen, with Pulse, Spark, Calm, Mirror and Battle controls">
+          <div class="social-aside"><img loading="lazy" src="./media/v442/shot-mirror.webp" alt="Two real Eyes mirroring one another during Eye Contact"><div class="social-label">Two Eyes, one quiet moment. <strong>Mirror</strong> lets them try to copy each other.</div></div>
         </div>
-        <div class="social-copy"><p class="kicker">Eye Contact</p><h2 id="social-title">An entirely different kind of hello.</h2><p class="intro">No chat feed. No streak to protect. Just two Eyes, meeting somewhere between your phones.</p>
+        <div class="social-copy"><p class="kicker">Eye Contact</p><h2 id="social-title">An entirely different kind of hello.</h2><p class="intro">No chat, no feed. No streak to protect. Just two Eyes, meeting somewhere between your phones.</p>
           <ul class="compact-list">
             <li><span class="number">01</span><div><strong>Pulse</strong>A warm pink beat, sent across the distance.</div></li>
             <li><span class="number">02</span><div><strong>Spark</strong>A bright little star, quick and playful.</div></li>
@@ -152,7 +152,7 @@
       <div class="line"></div>
       <section class="section duel-grid" aria-labelledby="play-title">
         <div class="duel-copy"><p class="kicker">A little mischief</p><h2 id="play-title">Every Eye fights like itself.</h2><p class="intro">Challenge a friend's Eye to a quick turn-based duel. Pick your move, keep your cool, and find out what your creature's personality does under pressure.</p><p class="intro">No grinding, no lost creature. Just a ridiculous little showdown between friends.</p><a href="#download" class="quiet-link">Find your opponent ↗</a></div>
-        <div class="duel-stack"><img loading="lazy" src="./media/shot-duel.webp" alt="Two EYES creatures trading a special attack in a turn-based battle"><img loading="lazy" src="./media/shot-victory.webp" alt="Victory screen at the end of an EYES creature duel"></div>
+        <div class="duel-stack"><img loading="lazy" src="./media/v442/shot-duel.webp" alt="Two EYES creatures trading a special attack in a turn-based battle"><img loading="lazy" src="./media/v442/shot-victory.webp" alt="Victory screen at the end of an EYES creature duel"></div>
       </section>
       <div class="line"></div>
       <section class="section" id="download" aria-labelledby="download-title">
@@ -176,14 +176,18 @@
         </div></div>
       </section>
     </main>
-    <footer><img class="wordmark" src="./media/eyes-wordmark.svg" alt="EYES" width="62" height="25"><span>Weird. Understated. Alive.</span><span>Built to be a little company.</span></footer>
+    <footer><img class="wordmark" src="./media/v442/eyes-wordmark.svg" alt="EYES" width="62" height="25"><span>Weird. Understated. Alive.</span><span>Built to be a little company.</span></footer>
   </div>
   <script>
     (function () {
       var hero=document.querySelector('.hero-video');
+      var music=document.querySelector('.feature-video');
+      var musicVisible=false;
+      function musicMotion(){if(!music)return;if(reduced.matches||!musicVisible){music.pause();return;}music.play().catch(function(){})}
+      if(music){if('IntersectionObserver' in window){new IntersectionObserver(function(entries){musicVisible=entries[0].isIntersecting;musicMotion()},{threshold:.3}).observe(music)}else{musicVisible=true;}}
       var reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
       function setMotion(){if (!hero)return;if(reduced.matches){hero.pause()}else{hero.play().catch(function(){})}}
-      setMotion();if(reduced.addEventListener)reduced.addEventListener('change',setMotion);
+      setMotion();musicMotion();if(reduced.addEventListener)reduced.addEventListener('change',function(){setMotion();musicMotion()});
     })();
   </script>
 </body>
