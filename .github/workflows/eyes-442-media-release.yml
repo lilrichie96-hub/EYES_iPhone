@@ -1,0 +1,43 @@
+name: Install EYES 4.4.2 official website media (one time)
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/eyes-442-media-release.yml
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unpack approved 4.4.2 media kit and commit refreshed assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .eyes-442-media/chunks/part-* > /tmp/eyes-442-media.zip
+          echo 'c38eca67146f35c4a89086c43d18c3de58f183ae5780c6665c3daadf5f3da86b  /tmp/eyes-442-media.zip' | sha256sum -c -
+          python3 - <<'PY'
+          import zipfile,pathlib
+          p='/tmp/eyes-442-media.zip'
+          with zipfile.ZipFile(p) as z:
+              names=z.namelist()
+              assert len(names)==17 and len(set(names))==17, 'Unexpected media package size'
+              expected={'eyes-wordmark.svg','hero-miry.webp','miry-idle.webm','miry-idle.mp4','eyes-lineup.webp','eyes-trailer.mp4','trailer-poster.webp','shot-home.webp','shot-music.webp','shot-visit.webp','shot-meeting.webp','shot-mirror.webp','shot-duel.webp','shot-victory.webp','social-preview.jpg','music-cymatics.webm','music-cymatics.mp4'}
+              assert {pathlib.PurePosixPath(x).name for x in names}==expected, 'Media filenames unexpected'
+              assert all(x.startswith('get/media/v442/') and '..' not in pathlib.PurePosixPath(x).parts for x in names)
+              assert z.testzip() is None, 'Corrupt media archive'
+              for item in z.infolist():
+                  assert item.file_size<=6000000, 'Unexpected large file'
+                  dest=pathlib.Path(item.filename)
+                  dest.parent.mkdir(parents=True,exist_ok=True)
+                  dest.write_bytes(z.read(item.filename))
+          print('Verified and installed',len(names),'website assets')
+          PY
+          git rm -r .eyes-442-media
+          git add get/media/v442
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Install official EYES 4.4.2 media: Cymatics, trailer, screenshots and social previews'
+          git push origin HEAD:main
