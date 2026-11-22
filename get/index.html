@@ -4,211 +4,186 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#080a0d">
-  <meta name="description" content="EYES. A little life inside your phone. Meet your Eye, watch it react, and connect with friends on Android and iPhone.">
-  <meta property="og:title" content="EYES — Weird. Understated. Alive.">
-  <meta property="og:description" content="Not a wallpaper. Something that looks back. Download EYES for Android or meet your Eye on iPhone.">
+  <meta name="description" content="EYES is a small, strange life inside your phone. Wake your own Eye, watch it react, and connect with friends on Android and iPhone.">
   <meta property="og:type" content="website">
+  <meta property="og:title" content="EYES — Something that looks back.">
+  <meta property="og:description" content="A living Eye for your phone. Weird. Understated. Alive.">
+  <meta property="og:image" content="https://lilrichie96-hub.github.io/EYES_iPhone/get/media/social-preview.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="canonical" href="https://lilrichie96-hub.github.io/EYES_iPhone/get/">
   <link rel="icon" href="../icons/icon-192.png">
   <title>EYES — Weird. Understated. Alive.</title>
   <style>
-    :root{color-scheme:dark;--bg:#080a0d;--ink:#f3f4f4;--muted:#9da5a8;--line:rgba(205,221,232,.14);--gold:#d8bf84;--blue:#a6cfff;--pink:#e3a4be;--cyan:#8acdd6}
-    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.55;overflow-x:hidden;-webkit-font-smoothing:antialiased}
-    body:before{content:"";pointer-events:none;position:fixed;inset:0;z-index:-1;background:radial-gradient(ellipse 65% 35% at 82% 14%,rgba(54,85,131,.12),transparent 85%),radial-gradient(ellipse 50% 35% at 8% 50%,rgba(159,125,71,.08),transparent 85%)}
-    a{color:inherit}button{font:inherit}a:focus-visible,button:focus-visible{outline:2px solid var(--cyan);outline-offset:4px}::selection{background:rgba(163,204,236,.27)}
-    .container{width:min(1160px,calc(100% - 48px));margin:auto}
-    .site-head{height:88px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.055)}
-    .brand{display:flex;align-items:center;gap:12px;text-decoration:none;font-size:21px;font-weight:700;letter-spacing:.19em}
-    .mark{display:grid;place-items:center;border:1px solid rgba(170,211,243,.38);width:33px;height:33px;border-radius:50%;background:radial-gradient(circle at 50% 50%,#e6faff 0 8%,#6b9ad7 13%,#233651 27%,#0b111e 54%,#10131a 75%);box-shadow:0 0 19px rgba(79,132,205,.17)}
-    .mark:after{content:"";width:8px;height:8px;border-radius:50%;box-shadow:0 0 10px #bdeafd;background:#c4e9ff}
-    .head-links{display:flex;align-items:center;gap:30px}.head-links a{text-decoration:none;font-size:13px;color:#b2bbc0}.head-links a:hover{color:white}
-    .nav-get{padding:11px 17px;border:1px solid rgba(213,226,237,.23);border-radius:999px}
-    .hero{display:grid;grid-template-columns:1.02fr .98fr;align-items:center;min-height:680px;gap:30px;padding:55px 0 85px}
-    .eyebrow{display:flex;align-items:center;gap:12px;color:#b8c1bf;font-size:11px;font-weight:700;letter-spacing:.23em;text-transform:uppercase}
-    .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:#85b0a5;box-shadow:0 0 14px rgba(125,193,176,.7)}
-    h1,h2,h3,p{margin-top:0}h1{font-size:clamp(51px,6.8vw,94px);line-height:1.03;letter-spacing:-.07em;margin:28px 0 24px;font-weight:620}
-    h1 em{font-style:normal;background:linear-gradient(116deg,#f6edcb,#a9bff3 78%);-webkit-background-clip:text;background-clip:text;color:transparent}
-    .hero-copy{font-size:clamp(16px,1.7vw,19px);max-width:500px;color:var(--muted);line-height:1.8;margin-bottom:30px}
-    .actions{display:flex;gap:12px;flex-wrap:wrap}.btn{display:inline-flex;justify-content:center;align-items:center;gap:10px;min-height:49px;padding:13px 21px;text-decoration:none;border:1px solid var(--line);border-radius:12px;font-size:13px;font-weight:700;transition:background .2s,transform .2s,border-color .2s;cursor:pointer}
-    .btn:hover{transform:translateY(-2px)}.btn-primary{color:#090e13;background:#d9e4e9;border-color:#d9e4e9}.btn-primary:hover{background:white}.btn-quiet{color:#dce3e8;background:rgba(255,255,255,.045)}.btn-quiet:hover{border-color:rgba(255,255,255,.4);background:rgba(255,255,255,.08)}
-    .trust{margin-top:24px;font-size:12px;letter-spacing:.03em;color:#7b858b}.trust span{color:#b4b9b7}
-    .art{position:relative;height:570px;display:grid;place-items:center;isolation:isolate}
-    .ambient{position:absolute;width:500px;height:500px;max-width:100%;border-radius:50%;background:radial-gradient(circle,rgba(51,95,158,.18),rgba(35,54,93,.08) 45%,transparent 72%);filter:blur(13px)}
-    .device{position:relative;width:288px;height:555px;border:1px solid #3a404c;background:linear-gradient(145deg,#0c1119,#050709 67%);border-radius:43px;box-shadow:0 35px 90px rgba(0,0,0,.65),inset 0 0 0 5px #11161e,0 0 80px rgba(70,97,154,.1);overflow:hidden;transform:rotate(4deg)}
-    .device:before{content:"";position:absolute;left:50%;transform:translateX(-50%);top:11px;width:88px;height:23px;background:#020304;border-radius:0 0 15px 15px}
-    .stars{position:absolute;inset:0;opacity:.65;background-image:radial-gradient(circle,#9fc0db 0 1px,transparent 1.3px),radial-gradient(circle,#c8ad86 0 1px,transparent 1.4px),radial-gradient(circle,#bdb1d3 0 1px,transparent 1.4px);background-size:79px 103px,113px 91px,97px 147px;background-position:12px 20px,44px 70px,75px 49px;mask-image:linear-gradient(transparent,black 12%,black 80%,transparent)}
-    .device-ui-top{position:absolute;top:56px;left:28px;font-size:13px;font-weight:650;letter-spacing:.25em;color:#edf6ff}
-    .device-status{position:absolute;top:57px;right:28px;font-size:10px;color:#7f909c}
-    .eye-shell{position:absolute;left:50%;top:45%;width:237px;height:237px;border-radius:50%;transform:translate(-50%,-50%);display:grid;place-items:center;filter:drop-shadow(0 0 25px rgba(91,150,236,.3));animation:breathe 7s ease-in-out infinite}
-    .eye-shell:before{content:"";position:absolute;inset:4px;border-radius:50%;border:1px solid rgba(140,188,255,.26);background:radial-gradient(circle at 48% 46%,rgba(106,150,240,.28),rgba(31,47,77,.75) 41%,rgba(7,14,27,.98) 75%),conic-gradient(from 35deg,rgba(116,164,227,.3),transparent 30%,rgba(115,145,205,.15),transparent 67%,rgba(130,172,244,.2));box-shadow:inset 0 12px 32px rgba(119,151,240,.13),inset 0 -20px 60px rgba(0,0,0,.8),0 0 50px rgba(44,77,133,.16)}
-    .eye-shell:after{content:"";position:absolute;inset:21px;border-radius:50%;border:1px dashed rgba(164,183,234,.21);animation:orbit 41s linear infinite}
-    .iris{position:relative;width:145px;height:145px;border-radius:50%;background:radial-gradient(circle at 51% 49%,#dff7fc 0 4%,#75bfdf 7%,#4269b1 14%,rgba(25,47,92,.5) 25%,transparent 47%),repeating-conic-gradient(from 5deg,rgba(128,160,232,.19) 0deg 2deg,transparent 3deg 16deg);box-shadow:0 0 40px rgba(111,170,245,.1)}
-    .iris:before{content:"";position:absolute;inset:30px;border-radius:50%;border:1px solid rgba(150,185,241,.15)}
-    .iris:after{content:"";position:absolute;top:50%;left:50%;width:23px;height:23px;transform:translate(calc(-50% + var(--gx,0px)),calc(-50% + var(--gy,0px)));background:radial-gradient(circle,#f6ffff 0 19%,#caedff 35%,#7dbafa 65%,rgba(128,173,242,0) 75%);border-radius:50%;box-shadow:0 0 14px #b3dfff,0 0 35px #77aff0,0 0 65px #517bdb;transition:transform .45s ease}
-    .sat{position:absolute;width:6px;height:6px;border-radius:50%;background:#b5c9fc;box-shadow:0 0 11px #8caee4;opacity:.68}
-    .sat.a{left:43px;top:66px}.sat.b{right:36px;bottom:73px;background:#efd4ac}.sat.c{right:58px;top:42px;width:3px;height:3px}
-    .device-name{position:absolute;top:69%;width:100%;text-align:center;font-size:17px;letter-spacing:.13em;color:#e3eaf1}
-    .device-name span{display:block;font-size:11px;letter-spacing:.03em;color:#818d99;margin-top:2px}
-    .device-bottom{position:absolute;bottom:32px;left:24px;right:24px;display:flex;justify-content:space-between;gap:11px}
-    .device-bottom i{height:41px;flex:1;border:1px solid rgba(146,166,197,.18);border-radius:15px;background:rgba(39,53,73,.2)}
-    .device-bottom i:nth-child(2){background:rgba(89,107,152,.15)}
-    .float-note{position:absolute;z-index:2;padding:10px 14px;background:rgba(17,21,28,.92);border:1px solid rgba(221,235,250,.17);box-shadow:0 15px 35px rgba(0,0,0,.4);border-radius:11px;color:#d6e0e8;font-size:12px;backdrop-filter:blur(9px)}
-    .float-note.one{right:2%;top:17%;transform:rotate(-5deg)}.float-note.two{left:-1%;bottom:23%;transform:rotate(4deg)}
-    .floater{color:#9fc4de;margin-right:7px}
-    .rule{height:1px;background:linear-gradient(90deg,transparent,var(--line),transparent)}
-    .section{padding:92px 0}.section-top{display:flex;align-items:end;justify-content:space-between;gap:24px;margin-bottom:34px}
-    .kicker{color:var(--gold);font-size:11px;font-weight:750;letter-spacing:.22em;text-transform:uppercase;margin-bottom:15px}
-    h2{font-size:clamp(34px,4.3vw,59px);line-height:1.13;letter-spacing:-.055em;font-weight:600;max-width:650px;margin-bottom:0}
-    .intro{font-size:15px;color:var(--muted);max-width:385px;line-height:1.8}
-    .features{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-    .feature{border:1px solid var(--line);background:linear-gradient(145deg,rgba(37,44,56,.24),rgba(13,16,20,.65));padding:29px;border-radius:18px;min-height:245px}
-    .feature-icon{height:51px;width:51px;border-radius:16px;display:grid;place-items:center;background:rgba(171,193,220,.07);border:1px solid rgba(211,227,237,.12);font-size:23px;color:#d8eaf1;margin-bottom:22px}
-    .feature h3{font-size:18px;letter-spacing:-.025em;font-weight:650;margin-bottom:8px}.feature p{font-size:13px;color:var(--muted);line-height:1.8;margin:0}
-    .signal-section{display:grid;grid-template-columns:1fr 1.05fr;gap:70px;align-items:center}
-    .signal-board{min-height:340px;border:1px solid rgba(227,224,211,.14);border-radius:22px;background:radial-gradient(ellipse at 50% 40%,rgba(85,95,122,.14),transparent 66%),#0b0e12;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;padding:36px}
-    .signal-orb{width:130px;height:130px;border-radius:50%;background:radial-gradient(circle at 50% 50%,#fff 0 4%,#b4d6fe 7%,#5678b3 11%,#26334c 26%,#080d19 66%);box-shadow:0 0 0 1px rgba(150,180,230,.22),0 0 30px rgba(119,154,226,.1);position:relative;transition:filter .3s,box-shadow .3s,transform .3s}
-    .signal-orb:after{content:"";position:absolute;inset:14px;border-radius:50%;border:1px dashed rgba(193,211,243,.18);animation:orbit 30s linear infinite}
-    .signal-orb.pulse{box-shadow:0 0 0 22px rgba(235,137,174,.09),0 0 0 1px #de9ab4,0 0 50px rgba(236,145,182,.55);transform:scale(1.06)}
-    .signal-orb.spark{box-shadow:0 0 0 1px #e4c782,0 0 45px rgba(237,197,111,.65);filter:brightness(1.5);transform:scale(1.04)}
-    .signal-orb.calm{box-shadow:0 0 0 16px rgba(116,203,209,.08),0 0 0 1px #8ed1d7,0 0 40px rgba(112,201,220,.28);transform:scale(.98)}
-    .signal-buttons{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
-    .signal-buttons button{cursor:pointer;padding:10px 16px;color:#dee7ee;border-radius:100px;border:1px solid var(--line);background:#171c22;font-size:12px}
-    .signal-buttons button:hover,.signal-buttons button[aria-pressed=true]{background:#27323c;border-color:#708697}
-    .signal-feedback{min-height:22px;font-size:12px;color:#9ca8b3;text-align:center}
-    .get-section{padding-bottom:105px}
-    .download-head{text-align:center;margin:auto auto 37px;max-width:610px}.download-head h2{margin:0 auto 14px}.download-head p{color:var(--muted);line-height:1.7}
-    .downloads{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
-    .platform{border:1px solid rgba(197,222,239,.2);border-radius:20px;padding:34px;background:linear-gradient(160deg,rgba(23,31,44,.8),rgba(12,14,18,.75));position:relative;overflow:hidden}
-    .platform:before{content:"";position:absolute;inset:0 0 auto;height:2px;background:linear-gradient(90deg,transparent,rgba(154,198,241,.5),transparent)}.platform.ios:before{background:linear-gradient(90deg,transparent,rgba(228,193,141,.5),transparent)}
-    .platform-label{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#a9b8c4;font-weight:700}
-    .platform h3{font-size:26px;letter-spacing:-.04em;margin:15px 0 5px}.platform p{color:#aab4be;font-size:13px;line-height:1.7;min-height:48px;margin-bottom:25px}
-    .platform .btn{width:100%}.platform small{display:block;color:#7c888e;font-size:11px;margin-top:19px}
-    .how{border-top:1px solid var(--line);margin-top:22px;padding-top:18px;color:#b2bbc0;font-size:12px;line-height:1.8}
-    .bottom-note{margin:28px auto 0;max-width:700px;text-align:center;color:#747f87;font-size:12px;line-height:1.8}
-    footer{border-top:1px solid var(--line);padding:30px 0 44px;display:flex;align-items:center;justify-content:space-between;gap:20px;color:#737e85;font-size:12px}
-    footer strong{color:#b5c0c8;letter-spacing:.22em}
-    @keyframes breathe{0%,100%{scale:1}50%{scale:1.045}}@keyframes orbit{to{transform:rotate(360deg)}}
-    @media(max-width:890px){.hero{grid-template-columns:1fr;padding:80px 0 65px;text-align:center;min-height:0;gap:0}.hero .eyebrow,.actions{justify-content:center}.hero-copy{margin-left:auto;margin-right:auto}.art{height:540px}.features{grid-template-columns:1fr 1fr}.signal-section{gap:30px;grid-template-columns:1fr}.section-top{display:block}.intro{max-width:650px;margin-top:24px}}
-    @media(max-width:620px){.container{width:min(100% - 34px,1160px)}.site-head{height:71px}.head-links{gap:13px}.head-links a:first-child{display:none}.nav-get{padding:8px 13px}.hero{padding:62px 0 44px}h1{font-size:clamp(50px,12vw,70px)}.hero-copy{font-size:15px}.art{height:480px;overflow:hidden}.device{width:248px;height:474px;border-radius:37px;transform:rotate(3deg)}.eye-shell{width:205px;height:205px}.float-note.one{right:-2%;top:12%}.float-note.two{left:0;bottom:20%}.device-ui-top{top:48px}.device-status{top:50px}.device-bottom{bottom:23px}.device-name{top:69%}.section{padding:63px 0}.features,.downloads{grid-template-columns:1fr}.feature{min-height:0}.platform{padding:26px}.signal-board{min-height:320px}footer{align-items:flex-start;flex-direction:column}}
-    @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;scroll-behavior:auto!important;transition:none!important}}
+    :root {color-scheme:dark;--bg:#080a0d;--panel:#11161b;--ink:#e4f1f3;--muted:#94a4ae;--dim:#6f7e86;--line:rgba(205,223,233,.13);--teal:#6fc1ca;--gold:#e0bf8a;--pulse:#ff92a8;--spark:#ffd47a;--calm:#80d6e6}
+    *,*::before,*::after{box-sizing:border-box}
+    html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+    body::before{content:"";position:absolute;z-index:-1;inset:0 0 auto;height:1100px;background:radial-gradient(ellipse 52% 40% at 78% 28%,rgba(40,77,82,.14),transparent 80%);pointer-events:none}
+    a{color:inherit}a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--teal);outline-offset:4px}
+    button{font:inherit}img,video{display:block;max-width:100%}figure{margin:0}
+    .container{width:min(1160px,calc(100% - 46px));margin:0 auto}
+    .header{height:88px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.065)}
+    .wordmark{display:block;width:92px;height:auto}.brand{display:flex;align-items:center;gap:14px;text-decoration:none}
+    .head-meta{font-size:9px;color:var(--dim);font-weight:650;letter-spacing:.16em;text-transform:uppercase;border-left:1px solid #263036;padding-left:14px}
+    nav{display:flex;gap:26px;align-items:center}nav a{font-size:12px;text-decoration:none;color:#a9b8c0;transition:color .2s}nav a:hover{color:#fff}
+    nav .nav-cta{border-radius:100px;padding:9px 17px;border:1px solid rgba(214,235,240,.23);color:var(--ink)}
+    .hero{min-height:695px;display:grid;grid-template-columns:1fr .98fr;align-items:center;gap:24px;padding:55px 0 75px;position:relative}
+    .eyebrow{font-size:11px;color:#b7cac9;letter-spacing:.21em;text-transform:uppercase;font-weight:650;display:flex;gap:12px;align-items:center}
+    .beacon{height:6px;width:6px;border-radius:50%;background:var(--teal);box-shadow:0 0 10px rgba(111,193,202,.72)}
+    h1,h2,h3,p{margin-top:0}h1{font-size:clamp(54px,6.9vw,90px);line-height:1.05;letter-spacing:-.068em;font-weight:590;margin:24px 0 22px}
+    h1 em{font-style:normal;background:linear-gradient(120deg,#def4f1 0%,#add0d8 48%,#b1c7a7 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+    .lead{font-size:clamp(16px,1.75vw,18px);max-width:490px;color:#a0adb4;line-height:1.85;margin-bottom:30px}
+    .actions{display:flex;flex-wrap:wrap;gap:11px}.button{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:13px 20px;min-height:49px;border:1px solid var(--line);border-radius:12px;text-decoration:none;font-size:13px;font-weight:690;transition:transform .2s,background .2s,border-color .2s;cursor:pointer}
+    .button:hover{transform:translateY(-2px)}.button.primary{background:#d9e8e9;color:#0c1114;border-color:#d9e8e9}.button.primary:hover{background:#fff}.button.secondary{background:rgba(230,244,246,.04);color:#e8f3f5}.button.secondary:hover{background:rgba(230,244,246,.09);border-color:#758c94}
+    .hero-foot{font-size:11px;color:#71838d;letter-spacing:.03em;margin-top:24px}
+    .hero-stage{height:586px;display:grid;place-items:center;position:relative;isolation:isolate}
+    .hero-stage:before{content:"";position:absolute;width:min(95%,530px);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,rgba(41,89,95,.08),transparent 67%);pointer-events:none}
+    .hero-video,.hero-still{width:min(100%,560px);aspect-ratio:1;object-fit:contain;mix-blend-mode:screen}
+    .hero-still{display:none}.hero-specimen{position:absolute;z-index:2;bottom:33px;left:6%;display:flex;align-items:center;gap:13px;padding:11px 15px;border:1px solid rgba(186,221,225,.15);background:rgba(11,17,21,.73);border-radius:11px;backdrop-filter:blur(9px)}
+    .hero-specimen span{font-size:13px;font-weight:650;letter-spacing:.03em}.hero-specimen small{font-size:10px;color:#8da1a8;display:block;margin-top:1px}
+    .status-light{width:6px;height:6px;background:#8dcdc7;border-radius:50%;box-shadow:0 0 9px #8dcdc7}
+    .real-badge{position:absolute;right:4%;top:56px;color:#6e8991;font-size:10px;letter-spacing:.13em;text-transform:uppercase}
+    .line{height:1px;background:linear-gradient(90deg,transparent,var(--line) 14%,var(--line) 86%,transparent)}
+    .section{padding:100px 0}.kicker{color:var(--gold);font-size:10px;text-transform:uppercase;letter-spacing:.24em;font-weight:750;margin-bottom:17px}
+    h2{font-size:clamp(33px,4.45vw,58px);line-height:1.15;font-weight:570;letter-spacing:-.055em;margin-bottom:22px}
+    .intro{font-size:15px;line-height:1.85;color:#98a6af;max-width:520px}
+    .section-head{display:flex;justify-content:space-between;align-items:end;gap:30px;margin-bottom:34px}.section-head h2{max-width:650px;margin-bottom:0}.section-head p{max-width:350px;margin-bottom:3px;color:#98a6af;font-size:14px;line-height:1.8}
+    .trailer-grid{display:grid;grid-template-columns:.95fr 1.05fr;gap:70px;align-items:center}
+    .trailer-copy .details{margin-top:30px;font-size:12px;color:#78868e;line-height:1.8}
+    .film-container{position:relative;min-height:460px;display:grid;place-items:center;border:1px solid var(--line);border-radius:22px;background:radial-gradient(ellipse 80% 80% at 50% 45%,rgba(28,50,70,.23),transparent 78%),#0c1015;overflow:hidden;padding:22px}
+    .film-container:after{content:"";position:absolute;inset:auto 22px 22px auto;width:65px;height:65px;border-radius:50%;background:rgba(111,193,202,.03);pointer-events:none}
+    .trailer-player{width:min(100%,290px);aspect-ratio:9/16;max-height:590px;object-fit:contain;background:#04070b;border-radius:13px;box-shadow:0 0 0 1px #2d3942,0 22px 70px rgba(0,0,0,.62)}
+    .film-caption{position:absolute;left:25px;bottom:25px;color:#b8c4cb;font-size:11px;letter-spacing:.08em;background:rgba(8,10,13,.83);padding:7px 10px;border-radius:5px}
+    .feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
+    .feature{border:1px solid var(--line);border-radius:18px;background:linear-gradient(160deg,#13191f,#0c0f13);padding:18px;overflow:hidden}
+    .feature-media{border-radius:12px;background:#070c12;overflow:hidden;height:360px;display:grid;place-items:center;position:relative}
+    .feature-media img{width:100%;height:100%;object-fit:contain;object-position:center}
+    .feature-media .tag{position:absolute;left:13px;top:13px;border:1px solid rgba(220,231,238,.15);background:rgba(9,13,18,.78);padding:6px 9px;border-radius:100px;color:#cad9df;font-size:10px;letter-spacing:.05em}
+    .feature-text{padding:22px 6px 8px}.feature-text h3{font-size:19px;font-weight:650;letter-spacing:-.03em;margin-bottom:8px}.feature-text p{font-size:13px;line-height:1.8;color:#98a6b0;margin:0}
+    .lineup{margin:55px 0 22px;min-height:125px;display:grid;align-items:center;justify-items:center;background:radial-gradient(ellipse at 50% 50%,rgba(90,115,125,.08),transparent 73%)}
+    .lineup img{width:100%;max-width:970px;object-fit:contain}
+    .lineup-caption{text-align:center;color:#788890;font-size:12px;letter-spacing:.035em}
+    .social-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center}
+    .social-visual{display:grid;grid-template-columns:1fr .75fr;align-items:center;gap:14px}
+    .social-screen{width:100%;max-height:540px;object-fit:contain;border:1px solid rgba(196,220,233,.15);border-radius:19px;background:#0c1117;box-shadow:0 20px 50px rgba(0,0,0,.2)}
+    .social-aside{display:flex;flex-direction:column;gap:14px}.social-aside img{width:100%;max-height:300px;object-fit:contain;object-position:center;background:#080f16;border-radius:13px;border:1px solid var(--line)}
+    .social-label{font-size:11px;line-height:1.65;color:#82939e}
+    .compact-list{padding:0;list-style:none;margin:28px 0;display:grid;gap:16px}.compact-list li{display:grid;grid-template-columns:28px 1fr;gap:14px;color:#9eaeb6;font-size:13px;line-height:1.8}.compact-list strong{display:block;color:#e2edef;font-size:14px;margin-bottom:1px}
+    .number{display:grid;place-items:center;border:1px solid rgba(174,208,213,.25);border-radius:50%;width:27px;height:27px;color:#b0d6d9;font-size:11px}
+    .duel-grid{display:grid;grid-template-columns:.85fr 1.15fr;gap:40px;align-items:center}
+    .duel-stack{display:flex;align-items:center;justify-content:space-around;gap:18px;border:1px solid var(--line);border-radius:21px;overflow:hidden;background:radial-gradient(ellipse at center,rgba(69,46,51,.16),transparent 70%),#0d1015;padding:18px;min-height:470px}
+    .duel-stack img{max-height:425px;width:48%;object-fit:contain;border-radius:12px}
+    .duel-copy .intro{max-width:445px}
+    .quiet-link{color:var(--teal);text-decoration:underline;text-decoration-color:#517a80;text-underline-offset:5px;font-size:13px;font-weight:650}
+    .download-wrap{border:1px solid rgba(196,218,232,.14);border-radius:24px;padding:58px;background:radial-gradient(ellipse at 50% -10%,rgba(80,116,123,.11),transparent 60%),#0e1217}
+    .download-head{text-align:center;max-width:615px;margin:0 auto 36px}.download-head h2{margin-bottom:12px}.download-head p{color:#9aa8b0;line-height:1.8;font-size:14px;margin:0}
+    .platforms{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .platform{padding:31px;border-radius:17px;border:1px solid rgba(210,230,238,.14);background:rgba(11,16,21,.72)}
+    .platform-head{font-size:11px;letter-spacing:.2em;color:var(--teal);text-transform:uppercase;font-weight:700}
+    .platform.iphone .platform-head{color:var(--gold)}.platform h3{font-size:25px;letter-spacing:-.038em;font-weight:615;margin:16px 0 10px}.platform p{font-size:13px;line-height:1.85;color:#91a1ad;min-height:68px;margin-bottom:25px}
+    .platform .button{width:100%}.version{font-size:10px;color:#6f7f8b;margin-top:16px}
+    details{margin-top:23px;border-top:1px solid rgba(215,231,242,.1);padding-top:17px;color:#9ba9b3;font-size:12px;line-height:1.85}
+    summary{cursor:pointer;color:#d7e5ea;font-size:12px;font-weight:650}details ol{padding-left:21px;margin:13px 0 5px}details li{margin-bottom:9px}details p{margin:10px 0 0!important;min-height:0!important}
+    .download-fine{text-align:center;font-size:11px;color:#6f808a;line-height:1.8;max-width:660px;margin:28px auto 0}
+    .qa{display:grid;grid-template-columns:1fr 1.15fr;gap:70px;padding-top:72px}.qa h2{font-size:37px}.qa .intro{font-size:14px}
+    .qa details{margin:0;padding:18px 0;border-top:1px solid var(--line)}.qa details:last-child{border-bottom:1px solid var(--line)}.qa summary{font-size:14px;color:#dfe9ec}.qa details p{font-size:13px!important;color:#93a4ad}
+    footer{border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:24px;padding:33px 0 50px;color:#6f8089;font-size:12px}footer .wordmark{width:62px}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    @media(max-width:950px){.hero{grid-template-columns:1fr;text-align:center;min-height:0;gap:10px;padding-top:75px}.eyebrow,.actions{justify-content:center}.lead{margin-left:auto;margin-right:auto}.hero-stage{height:520px}.hero-specimen{left:18%}.real-badge{right:16%}.trailer-grid,.social-grid,.duel-grid{gap:32px}.section-head{display:block}.section-head p{max-width:700px;margin-top:20px}.feature-media{height:300px}.download-wrap{padding:35px}}
+    @media(max-width:680px){.container{width:calc(100% - 34px)}.header{height:72px}.head-meta,nav a:first-child{display:none}nav{gap:0}h1{font-size:clamp(50px,11.8vw,75px)}.hero{padding:58px 0 48px}.lead{font-size:15px}.hero-stage{height:370px}.hero-video,.hero-still{width:min(100%,400px)}.hero-specimen{left:3%;bottom:1px}.real-badge{right:0;top:0}.section{padding:70px 0}.section-head{margin-bottom:26px}.trailer-grid,.social-grid,.duel-grid,.platforms,.qa{grid-template-columns:1fr}.trailer-grid{gap:29px}.film-container{min-height:390px;padding:17px}.trailer-player{max-height:480px;width:auto}.film-caption{font-size:10px;left:13px;bottom:13px}.feature-grid{grid-template-columns:1fr}.feature{display:grid;grid-template-columns:130px 1fr;gap:14px;padding:14px;align-items:center}.feature-media{height:225px}.feature-text{padding:0 6px}.feature-text h3{font-size:17px}.feature-text p{font-size:12px}.lineup{margin:42px 0 8px;min-height:65px}.lineup-caption{font-size:11px}.social-grid{gap:30px}.social-visual{max-width:530px}.duel-grid{gap:25px}.duel-stack{min-height:340px;padding:10px}.duel-stack img{max-height:330px}.download-wrap{padding:27px 18px}.platform{padding:22px}.platform p{min-height:0}.qa{padding-top:52px;gap:16px}.qa h2{font-size:34px}footer{flex-wrap:wrap}}
+    @media(max-width:400px){.feature{grid-template-columns:104px 1fr}.feature-media{height:183px}.feature-text h3{font-size:16px}.feature-text p{font-size:11px}.feature-text{padding:0}.platform h3{font-size:23px}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}.hero-video{display:none}.hero-still{display:block}}
   </style>
 </head>
 <body>
   <div class="container">
-    <header class="site-head">
-      <a class="brand" href="#top" aria-label="EYES home"><span class="mark" aria-hidden="true"></span>EYES</a>
-      <nav class="head-links" aria-label="Main">
-        <a href="#about">What is EYES?</a>
-        <a class="nav-get" href="#download">Get EYES ↗</a>
-      </nav>
+    <header class="header">
+      <a href="#top" class="brand" aria-label="EYES home"><img class="wordmark" src="./media/eyes-wordmark.svg" alt="EYES" width="92" height="35"><span class="head-meta">a little life inside your phone</span></a>
+      <nav aria-label="Main navigation"><a href="#features">Explore</a><a href="#trailer">Watch the trailer</a><a class="nav-cta" href="#download">Get EYES ↗</a></nav>
     </header>
     <main id="top">
       <section class="hero" aria-labelledby="hero-title">
-        <div>
-          <div class="eyebrow"><span class="dot"></span> A little life inside your phone</div>
+        <div class="hero-copy">
+          <div class="eyebrow"><span class="beacon"></span> A little life inside your phone</div>
           <h1 id="hero-title">Something<br>that <em>looks back.</em></h1>
-          <p class="hero-copy">EYES isn't another wallpaper. It's a small, strange presence with a life of its own. It notices things. It has moods. And when you connect with someone, your Eyes can meet.</p>
-          <div class="actions">
-            <a class="btn btn-primary" href="#download">Meet your Eye <span aria-hidden="true">↗</span></a>
-            <a class="btn btn-quiet" href="#about">See what it does ↓</a>
-          </div>
-          <div class="trust">An independent little experiment. <span>Android + iPhone.</span></div>
+          <p class="lead">Not another wallpaper. A small, strange presence with a life of its own. It notices things. It has moods. And when you connect with someone, your Eyes can meet.</p>
+          <div class="actions"><a class="button primary" href="#download">Meet your Eye <span aria-hidden="true">↗</span></a><a class="button secondary" href="#trailer">Watch the trailer <span aria-hidden="true">▶</span></a></div>
+          <p class="hero-foot">A real creature from EYES · Android launcher + iPhone web app</p>
         </div>
-        <div class="art" aria-label="Illustration of a living blue Eye on a phone">
-          <div class="ambient"></div>
-          <div class="device">
-            <div class="stars" aria-hidden="true"></div>
-            <div class="device-ui-top">EYES</div><div class="device-status">● awake</div>
-            <div class="eye-shell" id="heroEye" aria-hidden="true"><div class="iris"></div><i class="sat a"></i><i class="sat b"></i><i class="sat c"></i></div>
-            <div class="device-name">YOUR EYE<span>a little company</span></div>
-            <div class="device-bottom"><i></i><i></i><i></i><i></i><i></i></div>
-          </div>
-          <div class="float-note one"><span class="floater">✦</span> It noticed you.</div>
-          <div class="float-note two"><span class="floater">◌</span> A friend's Eye visited.</div>
+        <div class="hero-stage" aria-label="Miry, an actual EYES creature from the app renderer">
+          <span class="real-badge">Actual EYES renderer</span>
+          <video class="hero-video" autoplay muted playsinline loop preload="metadata" poster="./media/hero-miry.webp" aria-label="Miry's subtle idle breathing and gaze animation"><source src="./media/miry-idle.webm" type="video/webm"><source src="./media/miry-idle.mp4" type="video/mp4"></video>
+          <img class="hero-still" src="./media/hero-miry.webp" alt="Miry, a teal and violet living Eye with a glowing center" width="900" height="900">
+          <div class="hero-specimen"><i class="status-light" aria-hidden="true"></i><div><span>Miry</span><small>Tide · swirl iris · Mythic</small></div></div>
         </div>
       </section>
-      <div class="rule"></div>
-      <section id="about" class="section" aria-labelledby="features-title">
-        <div class="section-top">
-          <div><p class="kicker">Not just a home screen</p><h2 id="features-title">A creature in the little moments.</h2></div>
-          <p class="intro">No endless chores. No pressure to check in. Just something curious sharing a corner of your day.</p>
+      <div class="line"></div>
+      <section id="trailer" class="section trailer-grid" aria-labelledby="trailer-title">
+        <div class="trailer-copy"><p class="kicker">Meet EYES</p><h2 id="trailer-title">It starts with a little light.</h2><p class="intro">Choose one of three drifting lights. Hold it until it wakes. Whatever looks back is uniquely yours, and it won't look quite like anybody else's.</p><p class="intro">An unusual little creature experience that happens to live on your phone.</p><div class="details">71-second official preview · genuine EYES gameplay footage · silent video</div></div>
+        <div class="film-container"><video class="trailer-player" controls playsinline preload="none" poster="./media/trailer-poster.webp" aria-label="Official EYES introduction trailer, 71 seconds"><source src="./media/eyes-trailer.mp4" type="video/mp4">Your browser does not support video. <a href="./media/eyes-trailer.mp4">Open the trailer file</a>.</video><span class="film-caption">EYES / Official preview</span></div>
+      </section>
+      <div class="line"></div>
+      <section id="features" class="section" aria-labelledby="features-title">
+        <div class="section-head"><div><p class="kicker">Not just a home screen</p><h2 id="features-title">A creature in the little moments.</h2></div><p>It's your Eye, with its own look and temperament. The moments are small. That’s the point.</p></div>
+        <div class="feature-grid">
+          <article class="feature"><div class="feature-media"><img loading="lazy" src="./media/shot-home.webp" alt="Actual EYES Android renderer view showing the Eye centered above the app dock"><span class="tag">Android · home</span></div><div class="feature-text"><h3>It feels alive.</h3><p>It follows your finger, takes a breath, glances around, and recognizes the quiet moments between everything else.</p></div></article>
+          <article class="feature"><div class="feature-media"><img loading="lazy" src="./media/shot-music.webp" alt="Android EYES renderer view with music controls appearing inside the iris"><span class="tag">Android · music</span></div><div class="feature-text"><h3>It reacts to your world.</h3><p>On Android, music reshapes the iris into controls. Charging and notifications get their own little reactions.</p></div></article>
+          <article class="feature"><div class="feature-media"><img loading="lazy" src="./media/shot-visit.webp" alt="A friend's blue Eye visiting another EYES Android home screen"><span class="tag">Connected Eyes · visits</span></div><div class="feature-text"><h3>Your friends can visit.</h3><p>Send a little signal while a friend is away, and your Eye might appear on their home screen when they return.</p></div></article>
         </div>
-        <div class="features">
-          <article class="feature"><div class="feature-icon" aria-hidden="true">◉</div><h3>It feels alive.</h3><p>Your Eye looks around, reacts to what matters, and makes your phone feel a little less like a slab of glass.</p></article>
-          <article class="feature"><div class="feature-icon" aria-hidden="true">♫</div><h3>It lives with your phone.</h3><p>Music, charging, notifications, and everyday moments can change how your Eye behaves. Android has a living home screen.</p></article>
-          <article class="feature"><div class="feature-icon" aria-hidden="true">✳</div><h3>It meets other Eyes.</h3><p>Connect with a friend, send tiny signals, see visiting Eyes, and even have a quick, playful battle.</p></article>
+        <div class="lineup"><img loading="lazy" src="./media/eyes-lineup.webp" alt="A lineup of seven differently colored real EYES creatures"></div>
+        <p class="lineup-caption">Different colours. Different temperaments. No two Eyes quite alike.</p>
+      </section>
+      <div class="line"></div>
+      <section class="section social-grid" aria-labelledby="social-title">
+        <div class="social-visual">
+          <img class="social-screen" loading="lazy" src="./media/shot-meeting.webp" alt="EYES Meeting Space with Miry and Fen, with Pulse, Spark, Calm, Mirror and Battle controls">
+          <div class="social-aside"><img loading="lazy" src="./media/shot-mirror.webp" alt="Two real Eyes mirroring one another during Eye Contact"><div class="social-label">Two Eyes, one quiet moment. <strong>Mirror</strong> lets them try to copy each other.</div></div>
+        </div>
+        <div class="social-copy"><p class="kicker">Eye Contact</p><h2 id="social-title">An entirely different kind of hello.</h2><p class="intro">No chat feed. No streak to protect. Just two Eyes, meeting somewhere between your phones.</p>
+          <ul class="compact-list">
+            <li><span class="number">01</span><div><strong>Pulse</strong>A warm pink beat, sent across the distance.</div></li>
+            <li><span class="number">02</span><div><strong>Spark</strong>A bright little star, quick and playful.</div></li>
+            <li><span class="number">03</span><div><strong>Calm</strong>A slow, soft tide to say hello.</div></li>
+          </ul>
+          <p class="intro">And yes, if neither of you can resist, your Eyes can have a tiny staring battle.</p>
         </div>
       </section>
-      <div class="rule"></div>
-      <section class="section signal-section" aria-labelledby="signals-title">
-        <div>
-          <p class="kicker">A different kind of hello</p>
-          <h2 id="signals-title">Say something without a word.</h2>
-          <p class="intro" style="margin-top:23px;max-width:520px">EYES has little gestures you can send between friends. A warm Pulse. A bright Spark. A quiet Calm. Try tapping one below for a tiny visual taste.</p>
-          <a class="btn btn-quiet" href="#download" style="margin-top:17px">Find your Eye ↗</a>
-        </div>
-        <div class="signal-board">
-          <div class="signal-orb" id="signalOrb" aria-hidden="true"></div>
-          <div class="signal-buttons" role="group" aria-label="Preview EYES signals">
-            <button type="button" data-signal="pulse" aria-pressed="false">◉ Pulse</button>
-            <button type="button" data-signal="spark" aria-pressed="false">✦ Spark</button>
-            <button type="button" data-signal="calm" aria-pressed="false">◎ Calm</button>
+      <div class="line"></div>
+      <section class="section duel-grid" aria-labelledby="play-title">
+        <div class="duel-copy"><p class="kicker">A little mischief</p><h2 id="play-title">Every Eye fights like itself.</h2><p class="intro">Challenge a friend's Eye to a quick turn-based duel. Pick your move, keep your cool, and find out what your creature's personality does under pressure.</p><p class="intro">No grinding, no lost creature. Just a ridiculous little showdown between friends.</p><a href="#download" class="quiet-link">Find your opponent ↗</a></div>
+        <div class="duel-stack"><img loading="lazy" src="./media/shot-duel.webp" alt="Two EYES creatures trading a special attack in a turn-based battle"><img loading="lazy" src="./media/shot-victory.webp" alt="Victory screen at the end of an EYES creature duel"></div>
+      </section>
+      <div class="line"></div>
+      <section class="section" id="download" aria-labelledby="download-title">
+        <div class="download-wrap">
+          <div class="download-head"><p class="kicker">Early access</p><h2 id="download-title">Ready to meet yours?</h2><p>One place to start. Choose your phone, wake your Eye, and see what happens.</p></div>
+          <div class="platforms">
+            <article class="platform"><span class="platform-head">01 / Android</span><h3>The living home screen.</h3><p>Install the signed Android app. Give your Eye a home in the middle of your phone, with music, app shortcuts, and more.</p><a class="button primary" href="./EYES_4.4.0_build103_signed.apk" download="EYES_4.4.0_build103_signed.apk">↓ Download Android APK</a><div class="version">EYES 4.4.0 · signed build 103 · Android 8+</div>
+              <details><summary>How do I install it?</summary><ol><li>Download the APK and open it from <strong>Files</strong> or <strong>Downloads</strong>.</li><li>If Android asks, allow your browser or Files app to install this downloaded app, then tap <strong>Install</strong>.</li><li>Open EYES and wake your Eye. In <strong>The Optic → Make EYES home</strong>, choose EYES as your default launcher.</li><li>Optional: give access to notifications and music in The Optic.</li></ol><p>To switch back, use Android Settings → Apps → Default apps → Home app. Only install software from sources you trust.</p></details>
+            </article>
+            <article class="platform iphone"><span class="platform-head">02 / iPhone</span><h3>Wake your Eye in Safari.</h3><p>The iPhone companion web app gives you your own creature, Eye Contact, visits, Mirror and duels. No App Store download needed.</p><a class="button secondary" href="../">↗ Open EYES for iPhone</a><div class="version">EYES for iPhone 2.4.0 · Home Screen web app</div>
+              <details><summary>How do I add it to my iPhone?</summary><ol><li>Open EYES in <strong>Safari</strong>.</li><li>Tap <strong>Share → Add to Home Screen</strong>, then <strong>Add</strong>.</li><li>Open EYES from its new Home Screen icon and wake your Eye there.</li></ol><p>The iPhone version is not a system launcher and cannot control other apps' music or read Android-style notifications.</p></details>
+            </article>
           </div>
-          <div class="signal-feedback" id="signalFeedback" role="status">Pick a signal.</div>
+          <p class="download-fine">EYES is an independent early-access experiment. Features vary by platform. Android installs directly from this website, outside the Play Store; the iPhone experience runs as a web app. Artwork shown is captured from the genuine app renderer, with representative demo app icons and content.</p>
         </div>
-      </section>
-      <div class="rule"></div>
-      <section class="section get-section" id="download" aria-labelledby="download-title">
-        <div class="download-head">
-          <p class="kicker">Early access</p>
-          <h2 id="download-title">Ready to meet yours?</h2>
-          <p>One place to start. Choose your phone, meet your Eye, and see what happens.</p>
-        </div>
-        <div class="downloads">
-          <article class="platform">
-            <div class="platform-label">01 / Android</div>
-            <h3>The living home screen.</h3>
-            <p>Install EYES as an Android app and bring your Eye right onto your home screen.</p>
-            <a class="btn btn-primary" href="./EYES_4.4.0_build103_signed.apk" download="EYES_4.4.0_build103_signed.apk">↓ Download Android APK</a>
-            <small>EYES 4.4.0 · signed build 103 · early access</small>
-            <div class="how"><strong>Install:</strong> Download the APK, open it in Files/Downloads, and approve the Android installation prompt. Android may ask you to allow installs from your browser or Files app. Only install files you trust.</div>
-          </article>
-          <article class="platform ios">
-            <div class="platform-label">02 / iPhone</div>
-            <h3>Meet your Eye in Safari.</h3>
-            <p>Open the iPhone web experience and save it to your home screen as a web app.</p>
-            <a class="btn btn-quiet" href="../">↗ Open EYES for iPhone</a>
-            <small>EYES iPhone 2.4.0 · web app experience</small>
-            <div class="how"><strong>Add to home screen:</strong> Open in Safari, tap Share, then choose <em>Add to Home Screen</em>. The iPhone web experience differs from the Android launcher.</div>
-          </article>
-        </div>
-        <p class="bottom-note">EYES is an experimental project in active development. Features differ by platform; installation is at your discretion. No App Store or Play Store listing yet.</p>
+        <div class="qa" aria-labelledby="faq-title"><div><p class="kicker">Little questions</p><h2 id="faq-title">It's weird. Here's how it works.</h2><p class="intro">A few things people ask when they first meet another Eye.</p></div><div>
+          <details><summary>What does Mirror do?</summary><p>It's a short shared moment. Two connected Eyes turn toward each other, try to copy each other's movements, breathe together, and part. Their temperaments affect how it plays out.</p></details>
+          <details><summary>What happens when I send Pulse, Spark or Calm?</summary><p>Each is a wordless signal: Pulse is a warm beat, Spark is playful energy, and Calm is a gentle tide. If your friend's Eye is awake, it reacts. Otherwise the signal may become a visit when they return.</p></details>
+          <details><summary>Can Android and iPhone Eyes connect?</summary><p>Yes. Both versions support Eye Contact. One person creates a private invite code and shares it with the other, who connects from their own Eye Contact screen.</p></details>
+          <details><summary>Can I try something else if I don't like my new home screen?</summary><p>Absolutely. On Android, change your default Home app in Settings → Apps → Default apps → Home app, or uninstall EYES.</p></details>
+        </div></div>
       </section>
     </main>
-    <footer><strong>EYES</strong><span>Weird. Understated. Alive.</span><span>Made with curiosity, not a roadmap.</span></footer>
+    <footer><img class="wordmark" src="./media/eyes-wordmark.svg" alt="EYES" width="62" height="25"><span>Weird. Understated. Alive.</span><span>Built to be a little company.</span></footer>
   </div>
   <script>
-    (function(){
-      var eye=document.getElementById('heroEye');
-      var art=document.querySelector('.art');
-      if(eye&&art&&window.matchMedia('(pointer:fine)').matches){
-        art.addEventListener('pointermove',function(event){
-          var box=art.getBoundingClientRect();
-          eye.style.setProperty('--gx',Math.max(-9,Math.min(9,(event.clientX-box.left-box.width/2)/25))+'px');
-          eye.style.setProperty('--gy',Math.max(-8,Math.min(8,(event.clientY-box.top-box.height/2)/30))+'px');
-        });
-        art.addEventListener('pointerleave',function(){eye.style.setProperty('--gx','0px');eye.style.setProperty('--gy','0px');});
-      }
-      var orb=document.getElementById('signalOrb');
-      var feedback=document.getElementById('signalFeedback');
-      var messages={pulse:'A warm little beat. Sent with feeling.',spark:'A bright little star. Something to smile at.',calm:'A slow, soft tide. Just saying hello.'};
-      document.querySelectorAll('[data-signal]').forEach(function(btn){
-        btn.addEventListener('click',function(){
-          var kind=btn.getAttribute('data-signal');
-          orb.className='signal-orb '+kind;
-          feedback.textContent=messages[kind];
-          document.querySelectorAll('[data-signal]').forEach(function(other){other.setAttribute('aria-pressed',String(other===btn));});
-        });
-      });
+    (function () {
+      var hero=document.querySelector('.hero-video');
+      var reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
+      function setMotion(){if (!hero)return;if(reduced.matches){hero.pause()}else{hero.play().catch(function(){})}}
+      setMotion();if(reduced.addEventListener)reduced.addEventListener('change',setMotion);
     })();
   </script>
 </body>
