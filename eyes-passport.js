@@ -239,7 +239,7 @@
     box.hidden = false;
     box.innerHTML = `<label class="passport-field">Passphrase<input id="ppPass" type="password" autocomplete="new-password" minlength="${MIN_PASS}" placeholder="At least ${MIN_PASS} characters"></label>
       <label class="passport-field">Again<input id="ppPass2" type="password" autocomplete="new-password"></label>
-      <p class="passport-note">Nobody can open the passport without this passphrase, including FRAY, INC. Write it down somewhere safe. It holds your friendships' secrets, so share the passport only with yourself.</p>
+      <p class="passport-note">Nobody can open the passport without this passphrase, not even FRAY. Write it down somewhere safe. It holds your friendships' secrets, so share the passport only with yourself.</p>
       <span class="backup-actions"><button id="ppCancel" type="button">Cancel</button><button id="ppGo" type="button">Create passport</button></span>`;
     $('ppCancel').onclick = () => { box.hidden = true; box.innerHTML = ''; say(); };
     $('ppGo').onclick = async () => {

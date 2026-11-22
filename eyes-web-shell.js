@@ -164,10 +164,10 @@
     if (here && HavenDNA.has() && window.EyesContact) { setTimeout(() => EyesContact.join(code), 700); return; }
     const el = document.createElement('section'); el.className = 'eyes-screen'; el.id = 'joinPage';
     const how = isIOS
-      ? `<ol class="join-steps"><li>Copy the invite.</li><li>Open <b>EYES</b> from your Home Screen.</li><li>Tap <b>Eye Contact</b>, then <b>Join</b>, then <b>Paste</b>.</li></ol><p class="fine">No EYES yet? Add it to your Home Screen and wake your Eye first. The invite keeps.</p>`
+      ? `<ol class="join-steps"><li>Copy the invite.</li><li>Open <b>EYES</b> from your Home Screen.</li><li>Tap <b>Eye Contact</b>, then <b>I have an invite</b>, then <b>Paste</b>, then <b>Join</b>.</li></ol><p class="fine">No EYES yet? Add it to your Home Screen and wake your Eye first. The invite keeps.</p>`
       : isAndroid
-        ? `<p class="fine card-fine">Open it in the EYES app. Or copy the invite and paste it under <b>Eye Contact → Join</b>.</p>`
-        : `<p class="fine card-fine">Copy the invite and paste it in EYES under <b>Eye Contact → Join</b>.</p>`;
+        ? `<p class="fine card-fine">Open it in the EYES app. Or copy the invite and paste it under <b>Eye Contact → I have an invite → Paste → Join</b>.</p>`
+        : `<p class="fine card-fine">Copy the invite and paste it in EYES under <b>Eye Contact → I have an invite → Paste → Join</b>.</p>`;
     el.innerHTML = `<div class="inner"><svg class="eyemark" viewBox="0 0 120 70" aria-hidden="true"><path d="M4 35C24 6 96 6 116 35C96 64 24 64 4 35Z"/><circle cx="60" cy="35" r="16"/><circle class="p" cx="60" cy="35" r="5"/></svg>
       <h1 class="card-name">Let our Eyes meet</h1><p class="lead">Someone you know invited your Eye to make Eye Contact.</p>${how}
       ${isAndroid ? '<a class="primary join-open" id="joinOpenApp">Open in EYES</a>' : ''}

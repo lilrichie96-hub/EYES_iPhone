@@ -1,7 +1,7 @@
 /* EYES 4.0 · notifications through the EYES push relay (push/worker.js).
    Receiving needs an iPhone Home Screen web app (iOS 16.4+) or another browser with Web Push; Android's
    WebView can't receive, but it still sends nudges so iPhone friends get buzzed.
-   The relay address comes from eyes-config.js (Patch sets it once) or The Optic. */
+   The relay address comes from eyes-config.js or The Optic (empty until a relay exists). */
 'use strict';
 (function (root) {
   const KEY_SERVER = 'eyes.push.server', KEY_ON = 'eyes.push.on', NAMES = 'eyes-push-names';

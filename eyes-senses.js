@@ -138,7 +138,7 @@ window.createEyesSenses = function ({ core, personality, now, schedule, eyeCentr
       row('Tilt to look', 'Tip your phone and its gaze rolls toward the low side.', tilt),
       row('Bedside', 'Left still and flat at night, it falls asleep and the screen dims around it.', bed)];
     if ('wakeLock' in navigator) rows.push(row('Keep the screen on while it sleeps', 'For a nightstand. Uses more battery.', awake));
-    rows.push(row('Their eye nearby', 'In Eye Contact, their eye rests faintly in its corner.', fr));
+    rows.push(row('Their Eye nearby', 'In Eye Contact, their Eye rests faintly in its corner.', fr));
     // after the "Your Eye" group (Eye.D. + Eye Contact)
     let after = anchor; rows.forEach((r) => { after.insertAdjacentElement('afterend', r); after = r; });
   }

@@ -9,7 +9,7 @@
     original: Object.freeze({
       id: 'original',
       name: 'Your Eye',
-      description: 'Its own colours, from its DNA.',
+      description: 'Its own colors, from its DNA.',
       accent: [111, 193, 202],
       link: [131, 237, 243],
       resonance: [195, 165, 255],

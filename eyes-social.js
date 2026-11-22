@@ -94,10 +94,10 @@
       if (nat) box.appendChild(friendRow(nat));
       list.filter((f) => f.peer).forEach((f) => box.appendChild(friendRow(f)));
       list.filter((f) => !f.peer).forEach((f) => box.appendChild(pendingRow(f)));
-      if (!nat && !list.length) b.insertAdjacentHTML('beforeend', '<p class="es-empty">No friends yet. Eye Contact links two Eyes: no messages, no names, just signals they feel from anywhere: a pulse, a spark, calm.</p>');
+      if (!nat && !list.length) b.insertAdjacentHTML('beforeend', '<p class="es-empty">No friends yet. Eye Contact links two Eyes. No chat, no feed, just signals they feel from anywhere: a pulse, a spark, calm.</p>');
       b.insertAdjacentHTML('beforeend', `<div class="es-row"><button type="button" id="esInvite" class="es-primary">Invite a friend</button><button type="button" id="esJoinOpen">I have an invite</button></div>
-        <div id="esJoin" hidden><textarea id="esJoinCode" rows="2" placeholder="Paste their invite (the HL1- code or the whole message)" autocomplete="off" spellcheck="false"></textarea>
-        <div class="es-row"><button type="button" id="esPaste">Paste</button><button type="button" id="esJoinGo" class="es-primary">Connect</button></div><p class="es-err" id="esJoinErr"></p></div>`);
+        <div id="esJoin" hidden><textarea id="esJoinCode" rows="2" placeholder="Paste their invite (the HL1- code or the whole message)" autocomplete="off" spellcheck="false" aria-label="Invitation"></textarea>
+        <div class="es-row"><button type="button" id="esPaste">Paste</button><button type="button" id="esJoinGo" class="es-primary">Join</button></div><p class="es-err" id="esJoinErr"></p></div>`);
       $('esInvite').onclick = async () => { const f = await F().invite(); views.friends(); shareInvite(f.code); };
       $('esJoinOpen').onclick = () => { $('esJoin').hidden = false; $('esJoinCode').focus(); };
       $('esPaste').onclick = async () => { try { $('esJoinCode').value = await navigator.clipboard.readText(); } catch (e) { $('esJoinCode').focus(); } };
@@ -147,7 +147,8 @@
     }; });
     return row;
   }
-  const inviteText = (code) => `Eye contact? Open EYES → The Optic → Eye Contact → I have an invite, and paste this:\n${code}`;
+  // 4.4.1: one wording everywhere, matching the buttons (eyes-contact.js builds the same message, with the iPhone link)
+  const inviteText = (code) => (root.EyesContact && EyesContact.inviteText ? EyesContact.inviteText(code) : `Let our Eyes meet.\nIn EYES: Eye Contact → I have an invite → Paste → Join.\n\n${code}`);
   function shareInvite(code) { if (navigator.share) navigator.share({ text: inviteText(code) }).catch(() => {}); else navigator.clipboard && navigator.clipboard.writeText(inviteText(code)).then(() => caption('Invite copied: send it to them'), () => {}); }
 
   function friendDetail(f, refreshing) {
@@ -199,22 +200,31 @@
       b.insertAdjacentHTML('beforeend', `<div class="es-setting"><span>Buzz me when they reach out<small>${s.on ? 'On. A signal from a friend shows up on your lock screen.' : 'A soft notification when a friend sends a signal and EYES is closed.'}</small></span><button type="button" id="esNotify">${s.on ? 'Turn off' : 'Turn on'}</button></div><p class="es-err" id="esNotifyErr"></p>`);
       $('esNotify').onclick = async () => { try { if (s.on) await P.disable(); else await P.enable(); redo(); } catch (e) { $('esNotifyErr').textContent = e.message; } };
     } else if (s.canReceive && !s.server && isWeb) {
-      // nothing to show until Patch sets the relay up
+      // no push relay is deployed yet: nothing to switch on, so nothing is offered
     } else if (isWeb && !s.standalone) {
       b.insertAdjacentHTML('beforeend', '<p class="es-note">Open EYES from your Home Screen to get notifications.</p>');
     }
-    if (!isWeb) {   // Android: where to send nudges (and card links)
-      b.insertAdjacentHTML('beforeend', `<details class="es-conn"><summary>Connections</summary>
-        <label>Notification relay<input id="esRelay" placeholder="https://eyes-push.….workers.dev" value="${esc(P.server())}" autocomplete="off" spellcheck="false"></label>
-        <label>EYES website (for card links)<input id="esSite" placeholder="https://….github.io/eyes/" value="${esc(X().site())}" autocomplete="off" spellcheck="false"></label>
-        <div class="es-row"><button type="button" id="esConnSave">Save</button></div><p class="es-err" id="esConnErr"></p>
-        <p class="es-note">Patch sets these up once. They let your signals buzz iPhone friends, and your Eye.D. card open as a page.</p></details>`);
+    // 4.4.1: what to expect from signals, in plain words (eyes-friends.js: the relay keeps a signal for up to 12 h)
+    b.insertAdjacentHTML('beforeend', `<p class="es-note es-delivery">${esc(DELIVERY_NOTE())}</p>`);
+    if (!isWeb) {   // Android: advanced, normally untouched. The website comes built in (eyes-config.js).
+      const builtIn = !!(root.EYES_CONFIG && root.EYES_CONFIG.site);
+      b.insertAdjacentHTML('beforeend', `<details class="es-conn"><summary>Advanced connection settings</summary>
+        <p class="es-note">EYES sets these up for you. You don't need to change anything here.</p>
+        ${builtIn ? `<p class="es-note">Eye.D. card and invite links open: <span class="es-mono">${esc(X().site())}</span></p>` : `<label>EYES website (for card and invite links)<input id="esSite" placeholder="https://…" value="${esc(X().site())}" autocomplete="off" spellcheck="false"></label>`}
+        <label>Notification relay (optional)<input id="esRelay" placeholder="Not set up" value="${esc(P.server())}" autocomplete="off" spellcheck="false"></label>
+        <div class="es-row"><button type="button" id="esConnSave">Save</button></div><p class="es-err" id="esConnErr" role="status"></p>
+        <p class="es-note">A notification relay isn't available yet, so leave this empty. Without one, signals still reach friends the next time they open EYES.</p></details>`);
       $('esConnSave').onclick = () => {
-        try { P.setServer($('esRelay').value); const s2 = $('esSite').value.trim(); if (s2 && !/^https:\/\//.test(s2)) throw new Error('The website starts with https://'); s2 ? localStorage.setItem('eyes.site', s2) : localStorage.removeItem('eyes.site'); $('esConnErr').textContent = 'Saved.'; }
-        catch (e) { $('esConnErr').textContent = e.message; }
+        try {
+          P.setServer($('esRelay').value);
+          if (!builtIn) { const s2 = $('esSite').value.trim(); if (s2 && !/^https:\/\//.test(s2)) throw new Error('The website starts with https://'); s2 ? localStorage.setItem('eyes.site', s2) : localStorage.removeItem('eyes.site'); }
+          $('esConnErr').textContent = 'Saved.';
+        } catch (e) { $('esConnErr').textContent = e.message; }
       };
     }
   }
+  // Shared by the Eye Contact screens: honest about the relay's 12-hour window and the missing iPhone push alerts.
+  const DELIVERY_NOTE = () => 'Signals can wait up to 12 hours for a friend who isn\u2019t in EYES, and arrive when they open it. Delivery isn\u2019t guaranteed, and iPhone alerts while EYES is closed aren\u2019t available yet.';
 
   // ---------- Eye Dex ----------
   views.dex = function () {
@@ -245,7 +255,7 @@
       b.insertAdjacentHTML('beforeend', `<div class="es-hero"><canvas></canvas></div><p class="es-words">${esc(d.words.join(' · '))}</p>`);
       liveEye(b.querySelector('.es-hero canvas'), d);
       const st = HavenDNA.STAGES[d.stage || 0].name + (d.branch ? ' · ' + HavenDNA.BRANCHES[d.branch].name : '');
-      const facts = [['Rarity', d.tier[0].toUpperCase() + d.tier.slice(1)], ['Colour', d.pal.id], ['Pattern', d.pattern.name], ['Pupil', d.pupil.name], ['Rare traits', (d.rare || []).map((t) => t.name).join(', ') || 'none'], ['Stage', st],
+      const facts = [['Rarity', d.tier[0].toUpperCase() + d.tier.slice(1)], ['Color', d.pal.id], ['Pattern', d.pattern.name], ['Pupil', d.pupil.name], ['Rare traits', (d.rare || []).map((t) => t.name).join(', ') || 'none'], ['Stage', st],
         ['Met', `${day(e.met)} · ${e.how === 'linked' ? 'Eye Contact' : 'swapped cards'}`], ['Origin', HavenDNA.lib.originLine(d, e.p.born) || '']].filter((x) => x[1]);
       b.insertAdjacentHTML('beforeend', `<dl class="es-facts">${facts.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>`);
       if (e.how !== 'linked') {
@@ -311,6 +321,116 @@
     const dex = mk('dexOpen', 'Eye Dex', 'Every Eye you’ve met, and the traits you’ve seen', () => views.dex());
     const pl = mk('playOpen', 'Play', 'Chase the light · staring contest', () => views.play());
     link.insertAdjacentElement('afterend', dex); dex.insertAdjacentElement('afterend', pl);
+    mountExtras();
+  }
+
+  // ---------- 4.4.1 · Share EYES and Report a problem (The Optic) ----------
+  // Share EYES sends only the public download page. Never an invite, an Eye.D. card or anything about this Eye.
+  const GET_URL = 'https://lilrichie96-hub.github.io/EYES_iPhone/get/';
+  // 4.4.1: where problem reports go (chosen by the developer for the tester period)
+  const SUPPORT_EMAIL = 'lilrichie96@gmail.com';
+  const SHARE_EYES_TEXT = `Meet EYES — a little life inside your phone. Get your own Eye: ${GET_URL}`;
+  // Android: a native share sheet only if this build's bridge has one (Phone.shareText, not in 4.4.1's native code).
+  // iPhone: the Web Share API. Otherwise: copy.
+  const nativeShare = () => !!(root.Phone && typeof Phone.shareText === 'function');
+  const canShare = () => nativeShare() || !!navigator.share;
+  async function copyText(text) {
+    try { if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(text); return true; } } catch (e) {}
+    return false;
+  }
+  async function shareOut(text, files) {
+    if (nativeShare() && !(files && files.length)) { try { Phone.shareText(text); return 'shared'; } catch (e) {} }
+    if (navigator.share) {
+      const data = { text };
+      if (files && files.length && navigator.canShare && navigator.canShare({ files })) data.files = files;
+      try { await navigator.share(data); return 'shared'; } catch (e) { if (e && e.name === 'AbortError') return 'cancelled'; }
+    }
+    return (await copyText(text)) ? 'copied' : 'manual';
+  }
+  views.shareEyes = function () {
+    openSheet('Share EYES', (b) => {
+      b.insertAdjacentHTML('beforeend', `<p class="es-sub">Send someone the EYES download page so they can get an Eye of their own. This shares only the public link, never your Eye, your Eye.D. card or an Eye Contact invite.</p>
+        <textarea id="esShareText" class="es-plain" rows="3" readonly aria-label="Message to share">${esc(SHARE_EYES_TEXT)}</textarea>
+        <div class="es-row">${canShare() ? '<button type="button" id="esShareGo" class="es-primary">Share…</button>' : ''}<button type="button" id="esShareCopy"${canShare() ? '' : ' class="es-primary"'}>Copy link</button></div>
+        <p class="es-err" id="esShareMsg" role="status"></p>`);
+      const msg = (t) => { $('esShareMsg').textContent = t; };
+      const sel = () => { const t = $('esShareText'); t.focus(); t.select(); };
+      if ($('esShareGo')) $('esShareGo').onclick = async () => { const r = await shareOut(SHARE_EYES_TEXT); if (r === 'copied') msg('Copied. Paste it anywhere.'); else if (r === 'manual') { msg('Select the text above and copy it.'); sel(); } };
+      $('esShareCopy').onclick = async () => { if (await copyText(GET_URL)) msg('Link copied. Paste it anywhere.'); else { msg('Select the text above and copy it.'); sel(); } };
+    }, { view: 'shareEyes' });
+  };
+
+  // A report is only what the person writes plus a few plain facts they can see and switch off.
+  // Never: notifications, invites, Eye.D. cards, passports, friends, names or logs.
+  function deviceFacts() {
+    const ua = navigator.userAgent || '', facts = [];
+    const app = root.EYES_APP || {};
+    const shown = (document.querySelector('.version') || {}).textContent || '';
+    facts.push(['App', (app.version ? 'EYES ' + app.version : shown.trim() || 'EYES') + (app.build ? ` (Build ${app.build})` : '')]);
+    const and = ua.match(/Android\s([\d.]+)(?:;\s*([^;)]+?))?(?:\sBuild\/|\)|;)/);
+    const ios = ua.match(/(?:iPhone|iPad|CPU) OS (\d+(?:_\d+)*)/);
+    if (!isWeb) facts.push(['Platform', 'Android app']);
+    else facts.push(['Platform', 'iPhone web app' + ((matchMedia('(display-mode: standalone)').matches || navigator.standalone) ? ' (Home Screen)' : ' (in the browser)')]);
+    if (and) { facts.push(['Android', and[1]]); const m = (and[2] || '').trim(); if (m && !/^(K|wv|Linux|U)$/.test(m)) facts.push(['Device', m]); }
+    else if (ios) facts.push(['iOS', ios[1].replace(/_/g, '.')]);
+    const ch = ua.match(/Chrome\/([\d.]+)/), sf = ua.match(/Version\/([\d.]+).*Safari/);
+    if (ch) facts.push([isWeb ? 'Browser' : 'WebView', 'Chrome ' + ch[1].split('.')[0]]); else if (sf) facts.push(['Browser', 'Safari ' + sf[1]]);
+    facts.push(['Screen', `${screen.width}×${screen.height} @${(devicePixelRatio || 1).toFixed(2).replace(/\.?0+$/, '')}x`]);
+    return facts;
+  }
+  function reportText(what, withFacts) {
+    const lines = ['EYES problem report', '', (what || '').trim() || '(no description)'];
+    if (withFacts) { lines.push(''); deviceFacts().forEach(([k, v]) => lines.push(`${k}: ${v}`)); }
+    lines.push('', `Sent ${new Date().toISOString().slice(0, 10)}`);
+    return lines.join('\n');
+  }
+  views.report = function () {
+    openSheet('Report a problem', (b) => {
+      const pickFiles = isWeb && !!(navigator.canShare && root.File) && (() => { try { return navigator.canShare({ files: [new File([''], 'x.png', { type: 'image/png' })] }); } catch (e) { return false; } })();
+      b.insertAdjacentHTML('beforeend', `<p class="es-sub">Tell us what isn't working. EYES puts your words together with the details below, and you send it yourself. Nothing is sent automatically.</p>
+        <textarea id="esRepWhat" class="es-plain" rows="5" maxlength="2000" placeholder="What happened, and what were you doing just before?" aria-label="What happened"></textarea>
+        <label class="es-check"><input type="checkbox" id="esRepFacts" checked> Include app and device details</label>
+        <dl class="es-facts es-repfacts" id="esRepFactsList">${deviceFacts().map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
+        ${pickFiles ? '<label class="es-check es-file">Screenshot (optional)<input type="file" id="esRepShot" accept="image/*"></label>' : '<p class="es-note">To include a screenshot, attach it yourself in the app you send this with.</p>'}
+        <div class="es-row">${isWeb ? `<a id="esRepMail" class="es-btn es-primary" role="button" href="mailto:${SUPPORT_EMAIL}">Email report</a>` : ''}${canShare() ? '<button type="button" id="esRepShare">Share report…</button>' : ''}<button type="button" id="esRepCopy"${isWeb || canShare() ? '' : ' class="es-primary"'}>Copy report</button></div>
+        <p class="es-err" id="esRepMsg" role="status"></p>
+        <p class="es-note es-sendto">${isWeb ? 'Reports go to' : 'Copy the report, then paste it into an email to'} <span class="es-mono">${SUPPORT_EMAIL}</span></p>
+        <div class="es-row"><button type="button" id="esRepAddr" class="es-quiet">Copy email address</button></div>
+        <p class="es-note">A report never includes your notifications, invites, Eye.D. card, Eye Passport or friends.</p>`);
+      const facts = $('esRepFacts'), list = $('esRepFactsList'), msg = (t) => { $('esRepMsg').textContent = t; };
+      facts.onchange = () => { list.hidden = !facts.checked; };
+      const text = () => reportText($('esRepWhat').value, facts.checked);
+      const ready = () => { if ($('esRepWhat').value.trim()) return true; msg('Add a few words about what happened first.'); $('esRepWhat').focus(); return false; };
+      if ($('esRepShare')) $('esRepShare').onclick = async () => {
+        if (!ready()) return;
+        const shot = $('esRepShot') && $('esRepShot').files && $('esRepShot').files[0];
+        const r = await shareOut(text(), shot ? [shot] : null);
+        if (r === 'copied') msg(`Report copied. Paste it into an email to ${SUPPORT_EMAIL}.`); else if (r === 'manual') msg("Couldn't copy automatically. Select the text and copy it."); else if (r === 'shared') msg('Thanks. That helps.');
+      };
+      // iPhone: Mail opens with the report filled in. (Not on Android: the 4.4.1 WebView has no verified mailto handling.)
+      if ($('esRepMail')) $('esRepMail').onclick = (e) => {
+        if (!ready()) { e.preventDefault(); return; }
+        const shot = $('esRepShot') && $('esRepShot').files && $('esRepShot').files[0];
+        $('esRepMail').href = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('EYES problem report')}&body=${encodeURIComponent(text())}`;
+        msg(shot ? 'Opening Mail. To include your screenshot, use Share report and choose Mail instead.' : 'Opening Mail…');
+      };
+      $('esRepAddr').onclick = async () => { msg((await copyText(SUPPORT_EMAIL)) ? 'Email address copied.' : `The address is ${SUPPORT_EMAIL}`); };
+      $('esRepCopy').onclick = async () => {
+        if (!ready()) return;
+        if (await copyText(text())) msg(`Report copied. Paste it into an email to ${SUPPORT_EMAIL}.`);
+        else { const t = $('esRepWhat'); t.value = text(); t.focus(); t.select(); msg('Select the text and copy it.'); }
+      };
+    }, { view: 'report' });
+  };
+  function mountExtras() {
+    if ($('shareEyesOpen')) return;
+    const mk = (id, title, small, fn) => { const b = document.createElement('button'); b.id = id; b.type = 'button'; b.className = 'setting'; b.innerHTML = `<span>${title}<small>${small}</small></span><span class="row-go" aria-hidden="true"></span>`; b.onclick = fn; return b; };
+    const head = document.createElement('h2'); head.className = 'optic-group'; head.textContent = 'Share & feedback';
+    const share = mk('shareEyesOpen', 'Share EYES', 'Send someone the download page', () => views.shareEyes());
+    const rep = mk('reportOpen', 'Report a problem', 'Tell us what isn’t working', () => views.report());
+    const colophon = document.querySelector('#settings .optic-colophon');
+    if (colophon) { colophon.before(head, share, rep); return; }
+    const after = $('playOpen') || $('dexOpen'); if (after) after.after(share, rep);
   }
 
   // ---------- glue: friends → the living eye ----------
@@ -320,7 +440,7 @@
     Fr.on('incoming', (f, kind) => { visit(f); Haven.receive({ type: 'havenLink', event: 'incoming', kind, _eyes: 1 }); if (sheet && sheet.dataset.view === 'friends') views.friends(true); });
     Fr.on('outgoing', (f, kind) => { visit(f); Haven.receive({ type: 'havenLink', event: 'outgoing', kind, _eyes: 1 }); });
     const contact = () => !!(root.EyesContact && EyesContact.isOpen());
-    Fr.on('paired', (f) => { if (!contact()) caption('Eye contact made'); react('link-hello'); if (sheet && sheet.dataset.view === 'friends') views.friends(true); });
+    Fr.on('paired', (f) => { if (!contact()) caption('Eye Contact made'); react('link-hello'); if (sheet && sheet.dataset.view === 'friends') views.friends(true); });
     Fr.on('profile', (f, first) => {
       if (first) { visit(f, 6000); react('link-hello'); if (!contact()) caption(`${f.profile.name || 'Their Eye'} is looking back`); }
       if (sheet && sheet.dataset.view === 'friends') views.friends(true);
@@ -385,5 +505,6 @@
   // ---------- go ----------
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => { mountOptic(); boot(); }); else { mountOptic(); boot(); }
   root.EyesSocial = { friends: () => views.friends(), dex: () => views.dex(), play: () => views.play(), addCard, close: closeSheet, caption, notifyBlock,
+    shareEyes: () => views.shareEyes(), report: () => views.report(), deliveryNote: () => DELIVERY_NOTE(), _report: { reportText, deviceFacts, SHARE_EYES_TEXT, GET_URL, SUPPORT_EMAIL },
     list: () => { closeSheet(); views.friends(true); } };
 })(window);

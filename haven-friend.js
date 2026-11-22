@@ -126,7 +126,7 @@
     'shy+shy': 'Two shy Eyes. They will take turns not looking at each other.',
     'hyper+sleepy': 'One bounces off the walls, the other wants a nap.',
     'grumpy+hyper': 'The hyper one is trying. The grumpy one is not impressed.',
-    'hyper+shy': 'Too much energy for one very shy eye.',
+    'hyper+shy': 'Too much energy for one very shy Eye.',
     'dramatic+dramatic': 'Every pulse is an event. Every single one.',
     'calm+hyper': 'One calm, one chaos. A classic.',
     'grumpy+grumpy': 'Two grumpy Eyes, judging the world together.',

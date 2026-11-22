@@ -133,7 +133,7 @@ window.createHavenLinkUI = function ({
         openPanel('linkSheet');
         $('linkJoinForm').hidden = false;
         $('linkJoinCode').value = found;
-        feedback('Your friend invited you. Tap Connect eyes.');
+        feedback('Your friend invited you. Tap Connect Eyes.');
         $('linkJoin').focus();
       } else if (state.linked)
         feedback('Already in Eye Contact. End it first to connect with someone else.');
@@ -176,14 +176,14 @@ window.createHavenLinkUI = function ({
   $('linkJoinCode').addEventListener('input', () => {
     const found = findCode($('linkJoinCode').value);
     if (found && found !== $('linkJoinCode').value) $('linkJoinCode').value = found;
-    if (found) feedback('Found the invite. Tap Connect eyes.');
+    if (found) feedback('Found the invite. Tap Connect Eyes.');
   });
   $('linkPaste').onclick = async () => {
     try {
       const found = findCode(await navigator.clipboard.readText());
       if (found) {
         $('linkJoinCode').value = found;
-        feedback('Found the invite. Tap Connect eyes.');
+        feedback('Found the invite. Tap Connect Eyes.');
         return;
       }
       feedback("Your clipboard doesn't have an invite in it.");

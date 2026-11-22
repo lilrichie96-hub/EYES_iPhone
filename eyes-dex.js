@@ -75,7 +75,7 @@
     const groups = [
       group('Pupils', G.PUPILS, seen.pupil, (x) => x.name),
       group('Patterns', G.PATTERNS, seen.pattern, (x) => x.name),
-      group('Colours', G.PALETTES, seen.pal, (x) => x.id),
+      group('Colors', G.PALETTES, seen.pal, (x) => x.id),
       group('Rare traits', G.RARE_TRAITS, seen.rare, (x) => x.name),
       group('Rarity', tiers, new Set([...seen.tier].map((t) => String(t).toLowerCase())), (x) => x.id[0].toUpperCase() + x.id.slice(1))
     ];

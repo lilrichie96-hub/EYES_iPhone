@@ -1,7 +1,7 @@
 {
   "name": "EYES",
   "short_name": "EYES",
-  "description": "EYES by FRAY, INC. Weird. Understated. Alive.",
+  "description": "EYES by FRAY Weird. Understated. Alive.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

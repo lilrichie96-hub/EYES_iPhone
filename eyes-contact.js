@@ -170,18 +170,21 @@
       <div class="ec-ui">
         <header class="ec-top"><button type="button" class="ec-icon ec-back" aria-label="Back"><span aria-hidden="true">‹</span></button>
           <div class="ec-title"><h2>Eye Contact</h2><p class="ec-chip" hidden><i></i><span></span></p></div>
+          <button type="button" class="ec-icon ec-help" aria-label="What the signals do" aria-haspopup="dialog"><span aria-hidden="true">?</span></button>
           <button type="button" class="ec-icon ec-more" aria-label="More" aria-expanded="false"><span aria-hidden="true">⋯</span></button>
           <button type="button" class="ec-icon ec-close" aria-label="Close Eye Contact"><span aria-hidden="true">×</span></button></header>
         <div class="ec-panel"></div>
         <p class="ec-live" role="status" aria-live="polite"></p>
         <div class="ec-toast" role="status" aria-live="polite" hidden></div>
         <div class="ec-drawer" hidden><div class="ec-drawer-in"></div></div>
+        <div class="ec-guide" role="dialog" aria-modal="false" aria-labelledby="ecGuideTitle" hidden></div>
       </div>`;
     document.body.appendChild(el);
     sky = el.querySelector('.ec-sky'); sx = sky.getContext('2d'); stageEl = el.querySelector('.ec-stage'); ui = el.querySelector('.ec-ui');
     el.querySelector('.ec-close').onclick = close;
     el.querySelector('.ec-back').onclick = () => back();
     el.querySelector('.ec-more').onclick = () => toggleDrawer();
+    el.querySelector('.ec-help').onclick = () => (el.querySelector('.ec-guide').hidden ? showGuide(true) : hideGuide());
     el.querySelector('.ec-toast').onclick = (e) => { const k = e.currentTarget.dataset.key; if (k) meet(k); };
     myColor = eyeColor(D().dna());
     el.style.setProperty('--me', myColor.map((x) => x | 0).join(','));
@@ -191,6 +194,7 @@
   function back() {
     if (!el) return false;
     const dr = el.querySelector('.ec-drawer'); if (!dr.hidden) { toggleDrawer(false); return true; }
+    if (!el.querySelector('.ec-guide').hidden) { hideGuide(); return true; }
     if (mode === 'sky') { close(); return true; }
     setMode('sky'); return true;
   }
@@ -478,6 +482,7 @@
     if (!n.b.native && n.b.f.missed && n.b.f.missed.length && !missedPlayed.has(key)) later(() => replayMissed(n), 1300);
     else if (!n.b.native && root.EyesVisits) EyesVisits.seen(n.b.f);
     if (!n.b.native && !n.b.f.profile) F().refreshProfile(n.b.f);
+    if (!guideSeen()) later(() => maybeGuide(key), madeAt.has(key) ? 4200 : 2600);
   }
 
   // ---------- panels ----------
@@ -504,6 +509,8 @@
     if (!el) return;
     const p = panel(); p.className = 'ec-panel ec-p-' + mode;
     el.querySelector('.ec-more').hidden = mode === 'invite' || mode === 'join';
+    el.querySelector('.ec-help').hidden = mode === 'invite' || mode === 'join';
+    if (mode !== 'meet' && mode !== 'sky') hideGuide();
     el.querySelector('.ec-back').hidden = mode === 'sky';
     if (mode === 'sky') panelSky(p);
     else if (mode === 'meet') panelMeet(p);
@@ -514,12 +521,12 @@
     const list = beings(), paired = list.filter((b) => !b.pending);
     if (!list.length) {
       p.innerHTML = `<div class="ec-empty"><p class="ec-lead">Your Eye is alone out here.</p>
-        <p class="ec-sub">Eye Contact links your Eye with someone you know. No messages, no names, just signals your Eyes feel from anywhere.</p></div>
+        <p class="ec-sub">Eye Contact links your Eye with someone you know. No chat, no feed, just signals your Eyes feel from anywhere.</p></div>
         <div class="ec-actions"><button type="button" class="ec-btn ec-primary" data-a="invite">Invite someone</button><button type="button" class="ec-btn" data-a="join">I have an invite</button></div>`;
     } else {
       p.innerHTML = `<p class="ec-hint">${paired.length ? 'Tap an Eye to meet it' : 'Your invitation is out there'}</p>
         ${paired.length > 1 ? `<div class="ec-all"><span>Send to everyone</span>${['pulse', 'spark', 'calm'].map((k) => `<button type="button" class="ec-mini" data-all="${k}" aria-label="Send a ${k} to everyone"><i class="ec-g ec-g-${k}"></i></button>`).join('')}</div>` : ''}
-        <div class="ec-actions"><button type="button" class="ec-btn ec-primary" data-a="invite">Invite</button><button type="button" class="ec-btn" data-a="join">Join</button></div>`;
+        <div class="ec-actions"><button type="button" class="ec-btn ec-primary" data-a="invite">Invite someone</button><button type="button" class="ec-btn" data-a="join">I have an invite</button></div>`;
     }
     p.querySelectorAll('[data-a]').forEach((b) => { b.onclick = () => (b.dataset.a === 'invite' ? newInvite() : showJoin('')); });
     p.querySelectorAll('[data-all]').forEach((b) => { b.onclick = () => sendAll(b.dataset.all, b); });
@@ -531,8 +538,8 @@
     let note = '';
     if (st.id === 'introducing') note = `<div class="ec-note"><p>Their Eye is still introducing itself. Keep EYES open on both phones for a moment.</p><button type="button" class="ec-btn ec-small" data-a="retry">Ask their Eye again</button></div>`;
     else if (st.id === 'reconnecting') note = `<div class="ec-note"><p>The relay can't be reached right now. EYES keeps trying on its own.</p><button type="button" class="ec-btn ec-small" data-a="reconnect">Reconnect now</button></div>`;
-    else if (st.id === 'resting') note = `<p class="ec-hint">${esc(nameOf(n.b))}'s Eye isn't open right now. Signals wait for them and arrive when they open EYES.</p>`;
-    else if (st.id === 'unsure') note = `<p class="ec-hint">Can't tell if ${esc(nameOf(n.b))}'s Eye is open. Signals still wait for them if it isn't.</p>`;
+    else if (st.id === 'resting') note = `<p class="ec-hint">${esc(nameOf(n.b))}'s Eye isn't open right now. Signals wait up to 12 hours and arrive when they open EYES.</p>`;
+    else if (st.id === 'unsure') note = `<p class="ec-hint">Can't tell if ${esc(nameOf(n.b))}'s Eye is open. If it isn't, signals wait up to 12 hours.</p>`;
     else if (st.id === 'linked') note = `<p class="ec-hint">Signals travel through your first Eye Contact.</p>`;
     p.innerHTML = `${note}<div class="ec-sigs" role="group" aria-label="Signals">${sigs.map(([k, d]) => `<button type="button" class="ec-sig ec-sig-${k}" data-sig="${k}" aria-label="Send a ${esc(d.label)}: ${esc(d.hint)}"><span class="ec-orb" aria-hidden="true"><i class="ec-g ec-g-${k}"></i></span><b>${esc(d.label)}</b><small>${esc(d.hint)}</small></button>`).join('')}</div>
       <p class="ec-hint ec-gesture">${motion === 'off' ? 'Tap to send' : 'Tap to send, or drag one to their Eye'}</p><div class="ec-together"><div class="ec-mirror-slot"></div><div class="ec-duel-slot"></div></div>`;
@@ -560,7 +567,8 @@
     const first = box.querySelector('button, input, textarea'); if (first) first.focus();
   }
   function drawerSky(box) {
-    box.insertAdjacentHTML('beforeend', '<h3>Eye Contact</h3><p class="ec-sub">Signals are end-to-end encrypted with the secret in each invitation. Only the two linked phones can read them.</p>');
+    box.insertAdjacentHTML('beforeend', '<h3>Eye Contact</h3><p class="ec-sub">Signals are end-to-end encrypted with the secret in each invitation. Only the two linked phones can read them.</p><div class="ec-actions"><button type="button" class="ec-btn" data-a="guide">What do the signals do?</button></div>');
+    box.querySelector('[data-a=guide]').onclick = () => { toggleDrawer(false); showGuide(true); };
     const holder = document.createElement('div'); box.appendChild(holder);
     if (root.EyesSocial && EyesSocial.notifyBlock) EyesSocial.notifyBlock(holder, () => toggleDrawer(true));
   }
@@ -608,10 +616,57 @@
   }
   function manageNative() { close(); const o = document.getElementById('linkOpen'); if (o) { o.dataset.eyesPass = '1'; o.click(); } }
 
+  // ---------- 4.4.1 · a one-time guide to the signals and Mirror ----------
+  // Shown once, the first time a connected Eye is met in the Meeting Space (right after a new connection, or the
+  // first visit to an existing friend after updating). It never opens over a Mirror, a duel, the drawer, or a signal
+  // that just arrived, and it sits over the panel, not the Eyes. The ? in the header brings it back any time.
+  const GUIDE_KEY = 'eyes.guide.contact.v1';
+  let lastIncomingAt = 0;
+  const guideSeen = () => { try { return localStorage.getItem(GUIDE_KEY) === '1'; } catch (e) { return true; } };
+  const markGuide = () => { try { localStorage.setItem(GUIDE_KEY, '1'); } catch (e) {} };
+  function busyElsewhere() {
+    try { if (root.EyesDuel && EyesDuel.isOpen && EyesDuel.isOpen()) return true; } catch (e) {}
+    try { if (root.EyesMirror && EyesMirror.busy && EyesMirror.busy()) return true; } catch (e) {}
+    return false;
+  }
+  function maybeGuide(key) {
+    if (!el || guideSeen() || mode !== 'meet' || focusKey !== key || ctrl || busyElsewhere()) return;
+    if (!el.querySelector('.ec-drawer').hidden || document.visibilityState !== 'visible') return;
+    if (Date.now() - lastIncomingAt < 5000) { later(() => maybeGuide(key), 5000); return; }
+    const n = nodes.get(key); if (!n || n.b.pending) return;
+    showGuide(false);
+  }
+  function showGuide(asked) {
+    if (!el || (!asked && (ctrl || busyElsewhere()))) return;
+    markGuide();
+    const g = el.querySelector('.ec-guide');
+    const mirror = !!root.EyesMirror, battle = !!root.EyesDuel;
+    g.innerHTML = `<div class="ec-guide-in"><h3 id="ecGuideTitle">What the signals do</h3>
+      <dl class="ec-guide-list">
+        <dt><i class="ec-g ec-g-pulse" aria-hidden="true"></i>Pulse</dt><dd>A warm little beat for their Eye. Answer their Pulse with one of your own within about half a minute, while you\u2019re both in EYES, and your Eyes resonate.</dd>
+        <dt><i class="ec-g ec-g-spark" aria-hidden="true"></i>Spark</dt><dd>A bright, playful flash.</dd>
+        <dt><i class="ec-g ec-g-calm" aria-hidden="true"></i>Calm</dt><dd>A slow, gentle tide.</dd>
+        ${mirror ? '<dt>Mirror</dt><dd>Invite their Eye for about twenty seconds of copying each other’s looks and little gestures. Both of you need EYES open, and they choose whether to join.</dd>' : ''}
+        ${battle ? '<dt>Battle</dt><dd>A short, friendly staring duel. Nothing about either Eye changes.</dd>' : ''}
+      </dl>
+      <p class="ec-fine">Their Eye feels a signal the next time they open EYES, for up to 12 hours. Delivery isn’t guaranteed, and iPhone alerts while EYES is closed aren’t available yet.</p>
+      <button type="button" class="ec-btn ec-primary ec-guide-ok">Got it</button></div>`;
+    g.hidden = false;
+    g.querySelector('.ec-guide-ok').onclick = hideGuide;
+    if (asked) { const b = g.querySelector('.ec-guide-ok'); try { b.focus({ preventScroll: true }); } catch (e) { b.focus(); } }
+  }
+  function hideGuide() {
+    if (!el) return;
+    const g = el.querySelector('.ec-guide'); if (!g || g.hidden) return;
+    g.hidden = true; g.innerHTML = '';
+    const h = el.querySelector('.ec-help'); if (h && !h.hidden) { try { h.focus({ preventScroll: true }); } catch (e) {} }
+  }
+
   // ---------- invitations ----------
   const site = () => { try { return root.EyesDex && EyesDex.site ? EyesDex.site() : ''; } catch (e) { return ''; } };
   const inviteLink = (code) => (site() ? site().replace(/#.*$/, '') + '#join=' + code : '');
-  const inviteText = (code) => `Let our Eyes meet.\nIn EYES, open Eye Contact → Join, and paste this invite:\n${code}${inviteLink(code) ? `\n\nOr open it here: ${inviteLink(code)}` : ''}`;
+  // 4.4.1: the steps match the buttons the other person sees first: Eye Contact → I have an invite → Paste → Join
+  const inviteText = (code) => `Let our Eyes meet.\nCopy this whole message, then in EYES: Eye Contact → I have an invite → Paste → Join.\n\n${code}${inviteLink(code) ? `\n\nOn iPhone, you can open this link instead:\n${inviteLink(code)}` : ''}`;
   async function newInvite() {
     const pend = F().list().find((f) => !f.peer && !f.joined && Date.now() - (f.addedAt || 0) < 7 * 86400000);
     const f = pend || (await F().invite());
@@ -853,7 +908,7 @@
   const nativeOut = [];
   function deliveryWatch(e, nm, lbl) {
     e._nm = nm; e._lbl = lbl;
-    later(() => { if (!e.felt && e.st === 'relayed' && e.canFeel && e.awake) say(`Sent. ${nm} hasn't felt it yet. It'll wait for them.`); }, 11000);
+    later(() => { if (!e.felt && e.st === 'relayed' && e.canFeel && e.awake) say(`Sent. ${nm} hasn't felt it yet. It can wait up to 12 hours.`); }, 11000);
   }
   function deliveryText(e) {
     const nm = e._nm || 'Their Eye', lbl = e._lbl || SIG[e.k].label.toLowerCase();
@@ -863,7 +918,7 @@
     if (e.st === 'relayed') {
       if (e.native) return `Sent through your first Eye Contact.`;
       if (!e.canFeel) return `Sent. ${nm}'s EYES is an older version, so it can't confirm when it lands.`;
-      if (!e.awake) return `Sent. It'll reach ${nm} when they open EYES.`;
+      if (!e.awake) return `Sent. It'll reach ${nm} if they open EYES within 12 hours.`;
       return `On its way to ${nm}…`;
     }
     return '';
@@ -902,6 +957,7 @@
   }
   function incoming(key, kind) {
     if (!el) return;
+    lastIncomingAt = Date.now();
     const n = nodes.get(key), me = nodes.get('me'); if (!n || !me) return;
     if (kind === 'resonance') return resonate(n);
     if (!SIG[kind]) return;
@@ -1270,8 +1326,10 @@
     join: (code) => open({ join: code || '' }),
     joining: (key) => { open(); sync(); showJoinProgress(key); },
     nativeEvent,
+    inviteText: (code) => inviteText(code),
+    guide: () => { if (el) showGuide(true); },
     // 4.4: for interactions that happen inside the Meeting Space (Mirror)
-    attach(c) { if (!el || mode !== 'meet' || !c) return false; if (ctrl && ctrl !== c) detach('replaced'); ctrl = c; relayout(); renderPanel(); kick(); return true; },
+    attach(c) { if (!el || mode !== 'meet' || !c) return false; if (ctrl && ctrl !== c) detach('replaced'); ctrl = c; hideGuide(); relayout(); renderPanel(); kick(); return true; },
     detach(c) { if (c && ctrl !== c) return; if (!ctrl) return; ctrl = null; nodes.forEach((n) => { n.mx = n.my = n.rot = 0; n.ms = 1; }); if (el) { relayout(); renderPanel(); resetControllers(); kick(); } },
     focus: () => (el && mode === 'meet' ? focusKey : null),
     node: (key) => nodes.get(key) || null,
