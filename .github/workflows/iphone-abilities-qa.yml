@@ -17,7 +17,7 @@ jobs:
       - name: Validate JavaScript syntax and feature references
         run: |
           set -euo pipefail
-          for f in eyes-ios-abilities.js eyes-ios-pocket.js eyes-ios-weather.js eyes-ios-vision.js eyes-ios-arcade.js sw.js; do node --check "$f"; done
+          for f in eyes-ios-abilities.js eyes-ios-pocket.js eyes-ios-weather.js eyes-ios-vision.js eyes-ios-arcade.js eyes-friends.js sw.js; do node --check "$f"; done
           python3 - <<'PY'
           from pathlib import Path
           html=Path('index.html').read_text()
