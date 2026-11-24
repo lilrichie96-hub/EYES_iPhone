@@ -103,6 +103,7 @@
     }
     // the pupil: a luminous core in its own shape (spreading like ink as it forms)
     if (rU > 0.001) {
+      const pupilAlpha = P.pupilAlpha == null ? 1 : clamp(P.pupilAlpha);
       if (rU < 1) {
         const ink = ctx.createRadialGradient(gx, gy, 0, gx, gy, pupilR * 2.4);
         ink.addColorStop(0, color(0.9, 0.5 * (1 - rU))); ink.addColorStop(1, color(0.6, 0));
@@ -112,12 +113,12 @@
       pg.addColorStop(0, `rgba(235,255,252,${light})`); pg.addColorStop(0.3, `rgba(216,251,246,${light * 0.98})`);
       pg.addColorStop(0.58, color(0.95, light * 0.85)); pg.addColorStop(1, color(0.8, 0));
       ctx.save();
-      ctx.globalAlpha *= 1 - m;
+      ctx.globalAlpha *= (1 - m) * pupilAlpha;
       ctx.fillStyle = pg; ctx.beginPath();
       if (!(D && D.pupilPath(ctx, gx, gy, pupilR, t, dna))) ctx.arc(gx, gy, pupilR, 0, TAU);
       ctx.fill(D ? D.fillRule(dna) : 'nonzero');
       ctx.restore();
-      if (E) E.paintPupilCore(ctx, { gx, gy, radius: pupilR, light, alpha: (1 - m) * rU });
+      if (E && pupilAlpha > 0.001) E.paintPupilCore(ctx, { gx, gy, radius: pupilR, light, alpha: (1 - m) * rU * pupilAlpha });
     }
     if (H.paintMusicPupil && m > 0.001) H.paintMusicPupil(ctx, { gx, gy, size, light, breathing });
     if ((P.energy || 0) > 0.01) {
