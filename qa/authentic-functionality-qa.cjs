@@ -47,6 +47,10 @@ const fs=require('node:fs');
   await page.waitForFunction(()=>window.EyesPocketStore && window.EyesIOSPocketFiles && EyesIOSPocketFiles.all().then(a=>a.length>=1),{timeout:10000});
   await page.waitForFunction(()=>EyesPocketStore.all().then(a=>a.some(r=>r.kind==='image')&&a.some(r=>r.kind==='thought')),{timeout:15000}).catch(async e=>{ const rows=await page.evaluate(()=>EyesPocketStore.all()); throw new Error(label+' Pocket persistence missing: '+JSON.stringify(rows.map(x=>({id:x.id,kind:x.kind,title:x.title})))+' / '+e.message); });
   const rows=await page.evaluate(()=>EyesPocketStore.all());
+  if(label==='webkit'){
+   const state=await page.evaluate(async()=>({pending:EyesPocketNative.inbox(),diag:EyesPocket.diagnostics(),files:(await EyesIOSPocketFiles.all()).map(x=>({id:x.id,name:x.name,size:x.blob?.size})),items:(await EyesPocketStore.all()).map(x=>({id:x.id,kind:x.kind})),errors:window.__eyesPocketErrors||[]}));
+   console.log('WEBKIT POCKET STATE',JSON.stringify(state).slice(0,4500));
+  }
   assert(rows.some(x=>x.kind==='image')&&rows.some(x=>x.kind==='thought'),'Original Pocket did not retain image and thought: '+JSON.stringify(rows.map(x=>({id:x.id,kind:x.kind}))));
   await page.screenshot({path:'verification/'+label+'-pocket-original.png'});
   await close();
