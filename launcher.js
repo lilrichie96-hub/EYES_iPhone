@@ -120,6 +120,10 @@
     y: innerHeight * 0.49,
     size: Math.min(innerWidth * 0.235, 101, innerHeight * 0.125)
   });
+  // The exact Android 4.4.9 clock, remarks and satellite beacon share this living Eye.
+  window.EyesPolishHost={core,tips,now,eyeCentre,panel:()=>panel,
+    react:name=>{const ok=core.react(name,now());draw(now());schedule();return ok},
+    motion:()=>!!core.motion,visible:()=>visibility};
   // Personality: temperament, idle habits, greetings, touch and sleep (personality.js).
   const personality = createPersonality({
     core,
@@ -970,7 +974,8 @@
   }
   function updateTime() {
     const d = new Date();
-    $('clock').textContent = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    const clockText=d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    if(!(window.EyesPolish&&EyesPolish.clock(clockText)))$('clock').textContent=clockText;
     $('date').textContent = d.toLocaleDateString([], {
       weekday: 'short',
       month: 'short',
