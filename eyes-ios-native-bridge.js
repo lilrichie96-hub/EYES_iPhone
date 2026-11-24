@@ -14,7 +14,21 @@
    r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains(STORE))r.result.createObjectStore(STORE,{keyPath:'id'})};
    r.onsuccess=()=>ok(r.result);r.onerror=()=>{openDB=null;no(r.error)};
  }));
- const txn=async(mode,method,...args)=>{const d=await open();return request(d.transaction(STORE,mode).objectStore(STORE)[method](...args))};
+ const txn=async(mode,method,...args)=>{
+  const db=await open();
+  return new Promise((resolve,reject)=>{
+   let result, tx;
+   try{
+    tx=db.transaction(STORE,mode);
+    const req=tx.objectStore(STORE)[method](...args);
+    req.onsuccess=()=>{result=req.result};
+    req.onerror=()=>reject(req.error);
+    tx.oncomplete=()=>resolve(result);
+    tx.onabort=()=>reject(tx.error||Error('File transaction aborted'));
+    tx.onerror=()=>reject(tx.error||Error('File storage unavailable'));
+   }catch(e){reject(e)}
+  });
+ };
  const tell=m=>{try{root.EyesPocket?.fromNative?.(JSON.stringify(m))}catch(e){console.error('Pocket iOS callback',e)}};
  const id=()=>('ios_'+(crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)).replace(/-/g,'')).slice(0,60);
  const bytesToBase64=async(blob)=>{const data=await new Promise((ok,no)=>{const f=new FileReader();f.onload=()=>ok(f.result);f.onerror=()=>no(f.error);f.readAsDataURL(blob)});return String(data).split(',')[1]||''};
