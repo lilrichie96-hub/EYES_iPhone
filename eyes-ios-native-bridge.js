@@ -52,8 +52,12 @@
      return {b64:await bytesToBase64(await new Promise(ok=>c.toBlob(ok,'image/jpeg',.75))),w,h};
    }catch(e){return null}
  };
+ const DEBUG=[];
+ const mark=(stage,details)=>{DEBUG.push({stage,details:details||'',at:Date.now()});if(DEBUG.length>30)DEBUG.shift()};
+ root.EyesIOSPocketDebug={events:()=>DEBUG.slice(),pending:()=>PENDING.size};
  let input=null;
  async function importFile(file){
+   mark('import-enter',file?{name:file.name,size:file.size,type:file.type}:null);
    if(!file)return;
    if(file.size>25*1024*1024){tell({type:'import-error',name:file.name,reason:'Choose a file smaller than 25 MB.'});return}
    const nid=id(),kind=file.type.startsWith('image/')?'image':'file';
@@ -61,19 +65,23 @@
      // Save the actual file BEFORE image decoding. Safari's createImageBitmap can stall
      // on unusual images or headless inputs; it must never block the keepsake itself.
      await txn('readwrite','put',{id:nid,blob:file,name:file.name,mime:file.type,size:file.size,created:Date.now()});
+     mark('file-committed',{id:nid});
      const tiny=kind==='image' ? await Promise.race([thumb(file),new Promise(resolve=>setTimeout(()=>resolve(null),900))]) : null;
      const rid=id().replace(/^ios_/,'');
      PENDING.set(rid,{id:rid,nid,kind,name:file.name,mime:file.type||'application/octet-stream',size:file.size,w:tiny?.w||0,h:tiny?.h||0,thumb:!!tiny,b64:tiny?.b64||'',created:Date.now(),source:'pick'});
      saveQueue();
+     mark('queued-inbox',{id:rid});
      deliver();
-   }catch(err){tell({type:'import-error',name:file.name,reason:'Could not save the file locally. Check available storage.'})}
+   }catch(err){mark('import-error',String(err));tell({type:'import-error',name:file.name,reason:'Could not save the file locally. Check available storage.'})}
  }
  function pick(kind){
    if(!input){input=document.createElement('input');input.type='file';input.style.display='none';document.body.append(input);input.addEventListener('change',async()=>{
      const file=input.files?.[0];
+     mark('file-change',{count:input.files?.length||0,name:file?.name});
      try { await importFile(file); } finally { input.value=''; }
    })}
    input.accept=kind==='image'?'image/*':'*/*';
+   mark('picker-click',kind);
    input.click();return 'ok';
  }
  const urlFor=async nid=>{const row=await txn('readonly','get',nid);if(!row?.blob)throw Error('File not found');return {row,url:URL.createObjectURL(row.blob)}};
