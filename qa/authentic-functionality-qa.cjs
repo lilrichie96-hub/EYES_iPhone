@@ -57,6 +57,23 @@ const fs=require('node:fs');
   }
   assert(rows.some(x=>x.kind==='image')&&rows.some(x=>x.kind==='thought'),'Original Pocket did not retain image and thought: '+JSON.stringify(rows.map(x=>({id:x.id,kind:x.kind}))));
   await page.screenshot({path:'verification/'+label+'-pocket-original.png'});
+  // Real Pocket export and restore are mandatory because Safari can clear site data.
+  await page.locator('#pocketInfo').click();
+  await page.waitForSelector('[data-ios-pocket-backup]',{timeout:7000});
+  const downloadReady=page.waitForEvent('download',{timeout:12000});
+  await page.getByRole('button',{name:'Export Pocket backup'}).click();
+  const archive=await downloadReady;
+  const archivePath=await archive.path();
+  const archiveData=JSON.parse(fs.readFileSync(archivePath,'utf8'));
+  assert.equal(archiveData.format,'eyes-pocket-ios-v1');
+  assert(archiveData.items.some(x=>x.kind==='image')&&archiveData.items.some(x=>x.kind==='thought'),label+' export missed keepsakes');
+  await page.evaluate(()=>EyesPocketStore.clear());
+  const pickerReady=page.waitForEvent('filechooser',{timeout:10000});
+  await page.getByRole('button',{name:'Restore backup'}).click();
+  const picker=await pickerReady;
+  await picker.setFiles({name:'EYES_Pocket_Backup.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(archiveData))});
+  await page.waitForFunction(async()=>{const a=await EyesPocketStore.all();return a.some(x=>x.kind==='image')&&a.some(x=>x.kind==='thought')},null,{timeout:12000});
+  console.log(label+' Pocket backup export and restore passed');
   await close();
   // Weather: original atmosphere/forecast stage, no fake live reading.
   await launch('weather');await page.waitForTimeout(1450);
