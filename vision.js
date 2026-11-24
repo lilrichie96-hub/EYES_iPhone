@@ -239,6 +239,7 @@
     stage.addEventListener('keydown', onKey);
     shutter.addEventListener('click', () => capture('button'));
     camera.addEventListener('click', handoff);
+    if (window.EYES_IOS_ABILITIES) camera.hidden = true;
     close.addEventListener('click', () => close_('button'));
     document.body.append(stage);
   }
@@ -687,6 +688,11 @@
     let u;
     try { u = new URL(info.href); } catch { return note("That address isn't valid.", 2400); }
     if ((u.protocol !== 'https:' && u.protocol !== 'http:') || !u.hostname) return note("EYES won't open that.", 2400);
+    if (!nativeV() && window.EYES_IOS_ABILITIES) {
+      try { window.open(u.href, '_blank', 'noopener,noreferrer'); note('Opening link…', 1200); }
+      catch(e){ note('Could not open the link. Copy it instead.', 2400); }
+      return;
+    }
     if (!nativeV()) return note('Links open from EYES on Android.', 2400);
     const href = u.href;
     close_('open-link', true);
@@ -778,6 +784,17 @@
     return out;
   }
   function save(shot, gen) {
+    if (window.EYES_IOS_ABILITIES && !nativeV()) {
+      const blob=shot.blob;
+      if (!blob) { note('Could not prepare photo.',2600);return; }
+      const url=URL.createObjectURL(blob), name='EYES_Vision_'+Date.now()+'.jpg';
+      const file=new File([blob],name,{type:blob.type||'image/jpeg'});
+      const fallback=()=>{const a=document.createElement('a');a.href=url;a.download=name;a.rel='noopener';a.click();note('Save your photo from Safari’s downloads.',3000)};
+      if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))) {
+        navigator.share({files:[file],title:'EYES Vision'}).catch(err=>{if(err.name!=='AbortError')fallback()}).finally(()=>setTimeout(()=>URL.revokeObjectURL(url),20000));
+      } else {fallback();setTimeout(()=>URL.revokeObjectURL(url),20000)}
+      return;
+    }
     if (!nativeV() || typeof nativeV().savePhoto !== 'function') { note('Saving photos needs EYES on Android.', 2600); return; }
     V.pendingSaves++;
     note('Saving…', 0);
@@ -976,6 +993,7 @@
 
   function available() {
     if (window.EYES_WEB && !window.EYES_IOS_ABILITIES) return false;
+    if (window.EYES_IOS_ABILITIES) return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
     if (window.EyesVisionNative) return true;
     try { return localStorage.getItem('eyes.vision.preview') === '1'; } catch { return false; }
   }
