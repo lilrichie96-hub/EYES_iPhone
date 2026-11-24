@@ -88,7 +88,7 @@
 
   // ---------- wheel ----------
   function availableAbilities() {
-    if (window.EYES_WEB) return [];
+    if (window.EYES_WEB && !window.EYES_IOS_ABILITIES) return [];
     return registry.filter((a) => { try { return a.available ? !!a.available() : true; } catch { return false; } });
   }
   function satellitePoint(g) {
