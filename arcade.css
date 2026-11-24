@@ -1,0 +1,380 @@
+/* EYES 4.4.4 · Pocket Arcade. The screen sits in the opening his iris unfolds (arcade.js paints the lip into
+   the Eye's canvas); everything here is the screen itself, its menus, and the controls on the living rim. */
+#arcade {
+  --arcade-rgb: 111, 193, 202;
+  --arcade-u: 2.6px;
+  position: fixed;
+  inset: 0;
+  z-index: 26;
+  outline: none;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+#arcade[hidden] {
+  display: none;
+}
+/* the rest of home steps back while he plays; nothing there can be touched until the Arcade closes */
+#home.arcade-owned > :not(#world) {
+  opacity: 0.1;
+  pointer-events: none;
+  transition: opacity 380ms var(--ease, ease);
+}
+#home.arcade-owned > #coreHit,
+#home.arcade-owned > #irisGlint,
+#home.arcade-owned > #irisMode,
+#home.arcade-owned > #irisReach,
+#home.arcade-owned > #music,
+#home.arcade-owned > #notice,
+#home.arcade-owned > #abilitySatellite {
+  visibility: hidden;
+}
+
+/* ---- the screen: exactly the opening, a whole number of device pixels per game pixel ---- */
+#arcadeScreen {
+  position: fixed;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 40%, #071114, #020507 70%);
+  opacity: 0;
+  will-change: clip-path, opacity;
+  contain: layout paint;
+}
+#arcadeScreen.veiled {
+  visibility: hidden;
+}
+#arcadeCanvas {
+  position: absolute;
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  background: #05070b;
+}
+#arcadeScreen .arcade-glass {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  /* only a hairline at the lip; nothing lies over the playfield */
+  box-shadow: inset 0 0 0 1.5px rgba(var(--arcade-rgb), 0.38), inset 0 1px 0 2px rgba(255, 255, 255, 0.04);
+}
+
+/* ---- menus inside the screen ---- */
+#arcadeMenu {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  font-size: clamp(12px, calc(var(--arcade-u) * 4.6), 17px);
+  color: #dff8f3;
+}
+#arcadeMenu[data-panel='title'] {
+  align-items: flex-end;
+}
+.arcade-panel {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45em;
+  max-height: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-y: auto;
+  padding: 0.9em 1.1em;
+  text-align: center;
+  animation: arcade-panel-in 220ms var(--ease, ease) both;
+}
+.arcade-panel-pause,
+.arcade-panel-result,
+.arcade-panel-help,
+.arcade-panel-error {
+  width: 100%;
+  height: 100%;
+  justify-content: center;
+  background: rgba(2, 7, 9, 0.8);
+}
+.arcade-panel-title {
+  width: 100%;
+  padding-bottom: 1.1em;
+  background: linear-gradient(to bottom, rgba(2, 7, 9, 0), rgba(2, 7, 9, 0.82) 38%);
+}
+.arcade-panel h2 {
+  margin: 0 0 0.15em;
+  font-size: 1.18em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #effffb;
+}
+.arcade-blurb,
+.arcade-detail,
+.arcade-keys {
+  margin: 0;
+  font-size: 0.82em;
+  color: #9fcfc8;
+  line-height: 1.35;
+}
+.arcade-keys {
+  font-size: 0.72em;
+  color: #6f9c97;
+}
+.arcade-score {
+  margin: 0;
+  font-size: 2em;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #effffb;
+  font-variant-numeric: tabular-nums;
+}
+.arcade-best {
+  margin: 0;
+  font-size: 0.8em;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #8fb9b4;
+}
+.arcade-best.new {
+  color: #ffe08a;
+}
+.arcade-help {
+  margin: 0;
+  padding: 0 0 0 1.1em;
+  max-width: 30em;
+  text-align: left;
+  font-size: 0.8em;
+  line-height: 1.38;
+  color: #bfe6e0;
+}
+.arcade-help li + li {
+  margin-top: 0.25em;
+}
+.arcade-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.45em;
+}
+.arcade-btn {
+  min-height: 36px;
+  min-width: 6.5em;
+  padding: 0.35em 1em;
+  border: 1.2px solid rgba(var(--arcade-rgb), 0.55);
+  border-radius: 999px;
+  background: rgba(4, 14, 16, 0.6);
+  color: #dff8f3;
+  font: inherit;
+  font-size: 0.9em;
+  letter-spacing: 0.03em;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.arcade-btn.primary {
+  min-width: 9em;
+  border-color: rgba(var(--arcade-rgb), 0.95);
+  background: rgba(var(--arcade-rgb), 0.85);
+  color: #021012;
+  font-weight: 600;
+  box-shadow: 0 0 18px rgba(var(--arcade-rgb), 0.35);
+}
+.arcade-btn.quiet {
+  border-color: rgba(var(--arcade-rgb), 0.3);
+  color: #a9d6cf;
+}
+.arcade-btn:active {
+  transform: scale(0.97);
+}
+.arcade-btn:focus-visible {
+  outline: 1.5px solid #effffb;
+  outline-offset: 2px;
+}
+@keyframes arcade-panel-in {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ---- the controls, grown from the rim ---- */
+#arcadeRim {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+}
+.arcade-zone {
+  position: fixed;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  pointer-events: none;
+}
+#arcadeRim.live .arcade-zone {
+  pointer-events: auto;
+}
+.arcade-stick-base {
+  position: absolute;
+  width: 96px;
+  height: 96px;
+  margin: -48px 0 0 -48px;
+  border-radius: 50%;
+  border: 1.2px solid rgba(var(--arcade-rgb), 0.4);
+  background: radial-gradient(circle, rgba(var(--arcade-rgb), 0.1), rgba(2, 8, 10, 0.35) 70%);
+  box-shadow: 0 0 22px rgba(var(--arcade-rgb), 0.12), inset 0 0 14px rgba(var(--arcade-rgb), 0.1);
+  transform: scale(calc(0.7 + 0.3 * var(--rim, 1)));
+  pointer-events: none;
+}
+.arcade-stick-base.held {
+  border-color: rgba(var(--arcade-rgb), 0.75);
+  box-shadow: 0 0 26px rgba(var(--arcade-rgb), 0.25), inset 0 0 18px rgba(var(--arcade-rgb), 0.2);
+}
+.arcade-knob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 40px;
+  height: 40px;
+  margin: -20px 0 0 -20px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, rgba(236, 255, 252, 0.95), rgba(var(--arcade-rgb), 0.85) 55%, rgba(var(--arcade-rgb), 0.35));
+  box-shadow: 0 0 14px rgba(var(--arcade-rgb), 0.55);
+}
+#arcadeRim:not(.live) .arcade-knob {
+  opacity: 0.45;
+}
+.arcade-chev {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border: 5px solid transparent;
+  opacity: 0.45;
+}
+.arcade-chev-n { left: 50%; top: 6px; margin-left: -5px; border-bottom-color: rgb(var(--arcade-rgb)); border-top: 0; }
+.arcade-chev-s { left: 50%; bottom: 6px; margin-left: -5px; border-top-color: rgb(var(--arcade-rgb)); border-bottom: 0; }
+.arcade-chev-w { top: 50%; left: 6px; margin-top: -5px; border-right-color: rgb(var(--arcade-rgb)); border-left: 0; }
+.arcade-chev-e { top: 50%; right: 6px; margin-top: -5px; border-left-color: rgb(var(--arcade-rgb)); border-right: 0; }
+.arcade-stick-base[data-dir='1'] .arcade-chev-n,
+.arcade-stick-base[data-dir='2'] .arcade-chev-e,
+.arcade-stick-base[data-dir='3'] .arcade-chev-s,
+.arcade-stick-base[data-dir='4'] .arcade-chev-w {
+  opacity: 1;
+  filter: drop-shadow(0 0 4px rgb(var(--arcade-rgb)));
+}
+#arcadePulse:focus-visible .arcade-pulse-face {
+  outline: 1.5px solid #effffb;
+  outline-offset: 4px;
+}
+.arcade-pulse-face {
+  --ready: 1;
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  margin: -40px 0 0 -40px;
+  border-radius: 50%;
+  /* the ring fills while the pulse recharges */
+  background: conic-gradient(rgba(var(--arcade-rgb), 0.95) calc(var(--ready) * 360deg), rgba(var(--arcade-rgb), 0.14) 0);
+  transform: scale(calc(0.7 + 0.3 * var(--rim, 1)));
+  transition: transform 90ms ease-out;
+  pointer-events: none;
+}
+.arcade-pulse-core {
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 45% 38%, rgba(var(--arcade-rgb), 0.38), rgba(2, 9, 11, 0.94) 72%);
+  box-shadow: inset 0 0 14px rgba(var(--arcade-rgb), 0.2);
+}
+.arcade-pulse-core::after {
+  content: '';
+  position: absolute;
+  inset: 24px;
+  border-radius: 50%;
+  border: 2px solid rgba(var(--arcade-rgb), 0.45);
+  box-shadow: 0 0 0 6px rgba(var(--arcade-rgb), 0.08);
+}
+.arcade-pulse-face.ready {
+  box-shadow: 0 0 24px rgba(var(--arcade-rgb), 0.45);
+}
+.arcade-pulse-face.ready .arcade-pulse-core::after {
+  border-color: rgba(236, 255, 252, 0.95);
+  background: rgba(var(--arcade-rgb), 0.55);
+  animation: arcade-ready 1600ms ease-in-out infinite;
+}
+#arcadePulse.pressed .arcade-pulse-face {
+  transform: scale(0.92);
+}
+#arcadeRim:not(.live) .arcade-pulse-face {
+  opacity: 0.4;
+}
+@keyframes arcade-ready {
+  0%, 100% { box-shadow: 0 0 0 4px rgba(var(--arcade-rgb), 0.1); }
+  50% { box-shadow: 0 0 0 8px rgba(var(--arcade-rgb), 0.18); }
+}
+#arcadePause {
+  position: fixed;
+  width: 44px;
+  height: 44px;
+  margin: -22px 0 0 -22px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  pointer-events: auto;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+#arcadePause::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background: rgba(3, 10, 12, 0.7);
+  border: 1.2px solid rgba(var(--arcade-rgb), 0.6);
+  box-shadow: 0 0 10px rgba(var(--arcade-rgb), 0.2);
+}
+#arcadePause::after {
+  content: '';
+  position: absolute;
+  inset: 15px;
+  background: rgb(var(--arcade-rgb));
+  -webkit-mask: var(--glyph) center / contain no-repeat;
+  mask: var(--glyph) center / contain no-repeat;
+  --glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='6' y='5' width='4' height='14' rx='1.2'/%3E%3Crect x='14' y='5' width='4' height='14' rx='1.2'/%3E%3C/svg%3E");
+}
+#arcadePause.is-close::after {
+  --glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6L6 18'/%3E%3C/svg%3E");
+}
+#arcadePause:focus-visible {
+  outline: 1.5px solid rgba(var(--arcade-rgb), 0.9);
+  outline-offset: -4px;
+}
+
+#arcadeNote {
+  position: fixed;
+  left: 50%;
+  width: 82vw;
+  margin: 0;
+  transform: translateX(-50%);
+  text-align: center;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: #9fc4ca;
+  opacity: 0;
+  transition: opacity 420ms var(--ease, ease);
+  pointer-events: none;
+  text-shadow: 0 1px 12px #000;
+}
+#arcadeNote.on {
+  opacity: 1;
+}
+
+/* reduced motion: nothing pulses or eases on its own */
+#arcade.still .arcade-panel,
+#arcade.still .arcade-pulse-face.ready .arcade-pulse-core::after {
+  animation: none;
+}
+#arcade.still .arcade-pulse-face {
+  transition: none;
+}

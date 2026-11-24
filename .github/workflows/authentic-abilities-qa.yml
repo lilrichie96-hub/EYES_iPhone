@@ -1,0 +1,53 @@
+name: iPhone authentic Android abilities integration QA
+concurrency:
+  group: ios-authentic-ability-qa
+  cancel-in-progress: true
+on:
+  push:
+    branches: [feature/ios-authentic-android-abilities]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check original asset loading and JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in ability-wheel.js arcade.js tunnelbug.js tunnelbug-render.js tunnelbug-audio.js pocket.js pocket-store.js weather.js weather-data.js weather-sky.js vision.js vision-qr.js eyes-ios-native-bridge.js launcher.js eye-render.js sw.js; do
+            node --check "$f"
+            test -s "$f"
+          done
+          python3 - <<'PY'
+          from pathlib import Path
+          html=Path('index.html').read_text()
+          for file in ['ability-wheel.js','ability-wheel.css','arcade.js','arcade.css','pocket.js','pocket.css','weather.js','weather.css','vision.js','vision.css','vision-qr.js','eyes-ios-native-bridge.js']:
+            assert 'src="'+file+'"' in html or 'href="'+file+'"' in html, file+' not loaded'
+          for symbol,path in [('TunnelbugCore','tunnelbug.js'),('EyesArcade','arcade.js'),('EyesPocket','pocket.js'),('EyesWeather','weather.js'),('EyesVision','vision.js'),('EyesAbility','ability-wheel.js')]:
+            assert symbol in Path(path).read_text(),symbol
+          print('Original 4.4.9 source modules and HTML references verified')
+          PY
+      - name: Install Chromium and WebKit browser engines
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Run original animation and state machine smoke tests
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/eyes-iphone-http.log 2>&1 &
+          node qa/authentic-abilities-smoke.cjs
+          node qa/authentic-functionality-qa.cjs
+      - name: Upload real browser screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-original-ability-render-screenshots
+          path: verification/
+          retention-days: 7
+          if-no-files-found: warn

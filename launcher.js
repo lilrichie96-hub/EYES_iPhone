@@ -120,6 +120,10 @@
     y: innerHeight * 0.49,
     size: Math.min(innerWidth * 0.235, 101, innerHeight * 0.125)
   });
+  // The exact Android 4.4.9 clock, remarks and satellite beacon share this living Eye.
+  window.EyesPolishHost={core,tips,now,eyeCentre,panel:()=>panel,
+    react:name=>{const ok=core.react(name,now());draw(now());schedule();return ok},
+    motion:()=>!!core.motion,visible:()=>visibility};
   // Personality: temperament, idle habits, greetings, touch and sleep (personality.js).
   const personality = createPersonality({
     core,
@@ -267,6 +271,7 @@
         !core.state.saver &&
         core.state.battery > 20,
       profileFps = HavenPresence.profile(core.state).fps,
+      abilityFps = window.EyesAbility ? EyesAbility.fps(t, {lowPower:core.state.saver || core.state.battery <= 20}) : 0,
       calm =
         !pointerActive &&
         !iris.flinging() &&
@@ -275,10 +280,12 @@
         !core.busy(t) &&
         !(window.HavenLife && HavenLife.busy(t)) &&
         !(window.EyesVisits && EyesVisits.active(t)) &&
-        !(play && play.busy()),
+        !(play && play.busy()) && !abilityFps,
       fps = eyeDive.active(t)
         ? 60
-        : grooving
+        : abilityFps
+          ? abilityFps
+          : grooving
           ? 45
           : calm
             ? Math.min(core.asleep ? CALM_FPS / 2 : CALM_FPS, profileFps)
@@ -319,6 +326,7 @@
   function draw(t) {
     model = core.sample(t);
     if (!ctx || !w) return;
+    const ab = window.EyesAbility ? EyesAbility.pose(t) : null;
     // The body grooves: a bob on the beat and a sway every two beats, shaped by Music energy.
     const groove = model.music > 0.001 ? iris.groove(t) : null;
     // 4.4: it blinks while you listen, on a phrase boundary (every 4th beat), never during a press or drag
@@ -357,8 +365,16 @@
           !core.asleep &&
           !core.activeReaction(t) &&
           !eyeDive.active(t) &&
-          !panel
+          !panel && !ab
       );
+    if (ab) {
+      const p0=model.pose,n=ab.neutral;
+      p0.tilt=mix(p0.tilt,0,n);p0.sx=mix(p0.sx,1,n);p0.sy=mix(p0.sy,1,n);
+      p0.x=mix(p0.x,0,n);p0.y=mix(p0.y,0,n);p0.focus=mix(p0.focus,1,n);
+      model.gaze={x:mix(model.gaze.x,ab.gaze.x,ab.look),y:mix(model.gaze.y,ab.gaze.y,ab.look)};
+      model.lift=mix(model.lift||0,0,n);
+      if(ab.bodySx)p0.sx*=ab.bodySx;if(ab.bodySy)p0.sy*=ab.bodySy;if(ab.glow)p0.glow*=ab.glow;
+    }
     const diveHome = { x: w * 0.5, y: h * 0.49 },
       diveSize = Math.min(w * 0.235, 101, h * 0.125),
       dived = eyeDive.apply(model.pose, t, diveHome, diveSize);
@@ -366,7 +382,7 @@
     const v = model,
       p = v.pose,
       breathing = v.breathe,
-      m = ease(v.music),
+      m = ease(v.music) * (ab ? 1-ab.hush : 1),
       cx = w * 0.5 + v.gaze.x * 3 + p.x,
       cy = h * 0.49 + v.gaze.y * 2 - v.lift * 7 + p.y;
     const focusAmount = iris.focusAmount(t);
@@ -414,16 +430,20 @@
         lower: Math.max(mix(v.eye?.lower || 0, vibe[1], m), mblink * 0.92)
       },
       pupilScale = mix(v.eye?.pupil || 1, 1, m) * (DNA ? DNA.looks().pupil : 1);
+    if(ab){lids.upper*=1-ab.open;lids.lower*=1-ab.open;if(ab.lid)lids.upper=Math.max(lids.upper,ab.lid)}
     model.lids = lids;
     const volumeShading = iris.shading(t);
     // One renderer for every eye (eye-render.js): the home screen adds its music and skin layers.
     const drawn = HavenRender.paintEye(ctx, {
-      cx, cy, size, rx, ry, pose: p, gaze: v.gaze, lids, pupilScale, t, music: m,
+      cx, cy, size, rx, ry, pose: p, gaze: v.gaze, lids, t, music: m,
+      pupilScale: ab ? mix(pupilScale,ab.pupil,ab.k) : pupilScale,
+      pupilAlpha: ab ? 1-ab.lens : 1,
       light: v.light, breathing, sleepDim: v.eye?.sleep || 0, energy: v.energy,
       color: tintNow, material, own: ownColours, motion: core.motion, lowPower,
       haloBoost: (groove?.beat || 0) * 0.6 + (groove?.drop || 0),
       irisLightK: volumeShading === null ? 1 : mix(1, 0.44 + 0.56 * volumeShading.level, volumeShading.amount),
-      irisScaleK: volumeShading === null ? 1 : mix(1, 0.82 + volumeShading.level * 0.32, volumeShading.amount),
+      irisScaleK: (volumeShading === null ? 1 : mix(1, 0.82 + volumeShading.level * 0.32, volumeShading.amount)) *
+        (ab ? mix(1,ab.iris/(0.62*(DNA?DNA.looks().iris:1)),ab.k) : 1),
       hooks: {
         paintBody: (c, o) => skins.paintBody(c, { ...o, motion: core.motion, lowPower }),
         paintSkinIris: (c, o) => skins.paintIris(c, { ...o, motion: core.motion, gaze: v.gaze, pose: p, music: m, lowPower }),
@@ -598,6 +618,11 @@
     });
     iris.paint(ctx, (intensity, alpha) => color(v, intensity, alpha));
     syncIrisMode(screen(-size * 0.9, size * 0.9));
+    if(window.EyesAbility)EyesAbility.frame(ctx,{
+      t,cx,cy,size,rx:rx*p.sx,ry:ry*p.sy,pose:p,screen,drawn,w,h,
+      insets:{top:0,bottom:0},lids,
+      tint:(intensity,alpha)=>color(v,intensity,alpha),motion:core.motion,lowPower
+    });
     if (v.music > 0.001 || !$('music').hidden) {
       const positions = [
         screen(gx - size * 0.66 * ease(m), gy),
@@ -949,7 +974,8 @@
   }
   function updateTime() {
     const d = new Date();
-    $('clock').textContent = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    const clockText=d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    if(!(window.EyesPolish&&EyesPolish.clock(clockText)))$('clock').textContent=clockText;
     $('date').textContent = d.toLocaleDateString([], {
       weekday: 'short',
       month: 'short',
@@ -1896,6 +1922,16 @@
     // 4.4: what Distant Visits need from the home screen. quiet() is true only while nobody is busy with
     // anything: no panel, folder, ring, drag, finger down, notification card, call/alarm, music controls,
     // full-screen scene, game, eye dive, or a reaction that matters more than an idle habit.
+    abilityHost() {
+      return {core,now,schedule,toast,draw:()=>draw(now()),motion:()=>!!core.motion,
+        gentle:()=>!!core.gentle,lowPower:()=>!!(core.state.saver||core.state.battery<=20),
+        look:(point)=>livingEvent('inspect',{...point,id:'ability'}),
+        blocked(){if(!visibility||document.hidden)return 'hidden';if(homeHeld)return 'scene';
+          if(panel)return 'panel';if(folderOpen()||iris.reachOpen()||iris.busy()||iris.flinging())return 'iris';
+          if(appManager.dragActive()||pointerActive)return 'touch';if(eyeDive.active(now()))return 'dive';
+          if(play&&play.busy())return 'play';if(core.mode==='alert')return 'alert';return ''}
+      };
+    },
     livingHost() {
       return {
         core, now, schedule, draw: () => draw(now()), eyeCentre,
@@ -1920,10 +1956,12 @@
       };
     },
     holdHome(on) {
+      if(on&&window.EyesAbility)EyesAbility.interrupt('scene');
       homeHeld = !!on;
       if (!homeHeld) { draw(now()); schedule(); }
     },
     back() {
+      if (window.EyesAbility && EyesAbility.back()) return true;
       if (appManager.back()) return true;
       if (iris.back()) return true;
       if (dismissMusic()) return true;

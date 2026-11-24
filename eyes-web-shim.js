@@ -4,6 +4,7 @@
    protocol as Android's native link); the launcher's single-link state follows your first friend, so
    their Eye rests in the corner and the original link machinery stays happy. */
 'use strict';
+window.EYES_IOS_ABILITIES = true; // native Android ability renderer with browser-only hardware adapters
 window.EYES_WEB = true;          // launcher.js: no apps / notifications / folders panels
 window.EYES_HOLD_BIRTH = true;   // awakening.js: wait for the welcome screen
 (function () {

@@ -1,0 +1,74 @@
+/* EYES 4.4.3 · Ability Satellite and Ability Wheel.
+   The light itself is painted into the Eye's canvas (ability-wheel.js). These are its touch targets. */
+#abilitySatellite {
+  position: absolute;
+  z-index: 9;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  transform: translate(-50%, -50%);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+#abilitySatellite[hidden],
+#abilityWheel[hidden],
+#abilityCatcher[hidden] {
+  display: none;
+}
+#abilitySatellite:focus-visible {
+  outline: 1.5px solid rgba(159, 196, 202, 0.75);
+  outline-offset: -9px;
+}
+#abilityCatcher {
+  position: fixed;
+  inset: 0;
+  z-index: 7;
+  background: transparent;
+  touch-action: none;
+}
+#abilityWheel {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+}
+.ability-item {
+  position: absolute;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.ability-item:disabled {
+  pointer-events: none;
+}
+.ability-item:focus-visible {
+  outline: 1.5px solid rgba(190, 230, 232, 0.85);
+  outline-offset: 2px;
+}
+.ability-label {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 1px);
+  transform: translateX(-50%);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #9fc4ca;
+  white-space: nowrap;
+  pointer-events: none;
+  text-shadow: 0 1px 10px #000;
+}
+.ability-item.above-eye .ability-label {
+  top: auto;
+  bottom: calc(100% + 1px);
+}

@@ -1,0 +1,387 @@
+/* EYES 4.4.9 · Polish (eyes-polish.js) */
+
+/* ---------- the clock face ---------- */
+#clock.drawn {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 0;
+  letter-spacing: 0;
+  line-height: 1;
+  padding-top: 0.16em;
+  padding-bottom: 0.1em;
+}
+#clock .clock-text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+#clock .clock-face {
+  height: 0.76em;
+  width: calc(0.76em * var(--clock-aspect, 2.4));
+  overflow: visible;
+  display: block;
+}
+#clock .clock-ink path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+#clock .clock-ink path.drawing {
+  stroke-dasharray: 100;
+  animation: polish-draw 1100ms cubic-bezier(0.45, 0.05, 0.25, 1) both;
+}
+@keyframes polish-draw {
+  from { stroke-dashoffset: 100; opacity: 0.35; }
+  to { stroke-dashoffset: 0; opacity: 1; }
+}
+#clock .clock-colon circle {
+  fill: rgb(var(--eye-rgb));
+  filter: drop-shadow(0 0 3px rgba(var(--eye-rgb), 0.75));
+  transform-box: fill-box;
+  transform-origin: center;
+}
+#clock .clock-colon.blink circle {
+  animation: polish-colon-blink 380ms ease-in-out;
+}
+#clock .clock-colon.blink circle + circle {
+  animation-delay: 40ms;
+}
+@keyframes polish-colon-blink {
+  0%, 100% { transform: none; }
+  40%, 55% { transform: scaleY(0.12) scaleX(1.25); }
+}
+#clock .clock-suffix {
+  font-size: 0.2em;
+  font-weight: 450;
+  letter-spacing: 0.24em;
+  color: var(--ash);
+  margin: 0.1em 0 0 0.55em;
+}
+
+/* ---------- remarks ---------- */
+#eyeRemark {
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  z-index: 4;
+  margin: 0;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.45;
+  letter-spacing: 0.035em;
+  color: rgba(231, 226, 217, 0.62);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(5px);
+  filter: blur(2px);
+  transition: opacity 1.1s ease, transform 1.1s ease, filter 1.1s ease;
+}
+#eyeRemark.shown {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+
+/* ---------- the drawer: pours from the pupil, swallowed back ---------- */
+#drawer.pouring {
+  animation: none !important;
+}
+.polish-gulp {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+}
+.polish-gulp-panel {
+  position: absolute;
+  border: 1px solid var(--hair);
+  border-top-color: rgba(var(--eye-rgb), 0.24);
+  border-radius: var(--lid);
+  background:
+    radial-gradient(55% 46px at 50% 0, rgba(var(--eye-rgb), 0.12), transparent),
+    linear-gradient(180deg, var(--panel-a), var(--panel-b));
+}
+.polish-gulp-panel.expanded {
+  border: 0;
+  border-radius: 0;
+  background: var(--void);
+}
+.polish-flyer {
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  will-change: transform, opacity;
+}
+.polish-flyer img {
+  width: 37px;
+  height: 37px;
+}
+
+/* recent apps */
+#recentApps {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin: 8px 0 12px;
+  padding: 0 2px 11px;
+  border-bottom: 1px solid var(--hair);
+}
+#recentApps[hidden] {
+  display: none;
+}
+#recentApps .recent-app {
+  padding: 0;
+  border: 0;
+  background: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  -webkit-tap-highlight-color: transparent;
+}
+#recentApps .recent-app img {
+  width: 36px;
+  height: 36px;
+  display: block;
+}
+#recentApps .recent-app:active {
+  transform: scale(0.92);
+}
+#drawer.drawer-peek.has-recents:not(.expanded) .hint {
+  display: none;
+}
+#drawer.drawer-peek.expanded #recentApps {
+  gap: 22px;
+  margin: 0 0 20px;
+  padding-bottom: 18px;
+}
+#drawer.drawer-peek.expanded #recentApps .recent-app,
+#drawer.drawer-peek.expanded #recentApps .recent-app img {
+  width: 46px;
+  height: 46px;
+}
+
+/* A–Z scrubber (expanded drawer, long lists) */
+#appScrubber {
+  position: fixed;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 16;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 6px;
+  border-radius: 999px;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+#appScrubber[hidden] {
+  display: none;
+}
+#appScrubber span {
+  font-size: 9.5px;
+  line-height: 1.5;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  color: var(--dim);
+  transition: color 120ms ease, transform 120ms ease;
+}
+#appScrubber.active {
+  background: rgba(var(--eye-rgb), 0.06);
+}
+#appScrubber span.on {
+  color: rgb(var(--eye-rgb));
+  transform: scale(1.5);
+}
+#appScrubBubble {
+  position: fixed;
+  right: 46px;
+  z-index: 17;
+  width: 54px;
+  height: 54px;
+  margin-top: -27px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  font-weight: 300;
+  color: var(--bone);
+  background: radial-gradient(circle, rgba(var(--eye-rgb), 0.28), rgba(var(--eye-rgb), 0.08) 70%);
+  border: 1px solid rgba(var(--eye-rgb), 0.35);
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+#appScrubBubble.shown {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---------- empty dock: it reads as a button now ---------- */
+.dock-empty,
+html[data-skin] .dock-empty {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px 10px 14px;
+  border: 1px dashed rgba(var(--eye-rgb), 0.38);
+  border-radius: 999px;
+  background: rgba(var(--eye-rgb), 0.04);
+  color: var(--ash);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+.dock-empty::before {
+  content: '+';
+  font-size: 16px;
+  line-height: 1;
+  color: rgb(var(--eye-rgb));
+}
+
+/* ---------- the ability light beckons until it has been found ---------- */
+#abilitySatellite.beckon::after {
+  content: '';
+  position: absolute;
+  inset: 14px;
+  border-radius: 50%;
+  border: 1px solid rgba(var(--eye-rgb), 0.6);
+  pointer-events: none;
+  animation: polish-beckon 3.2s ease-out infinite;
+}
+@keyframes polish-beckon {
+  0% { transform: scale(0.55); opacity: 0; }
+  20% { opacity: 0.8; }
+  70%, 100% { transform: scale(1.7); opacity: 0; }
+}
+
+/* ---------- onboarding: sound is an icon that shows its state ---------- */
+#awMute.aw-sound {
+  width: 40px;
+  height: 40px;
+  padding: 0 !important;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+#awMute.aw-sound svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+#awMute.aw-sound .off { display: none; }
+#awMute.aw-sound.muted .on { display: none; }
+#awMute.aw-sound.muted .off { display: inline; }
+#awMute.aw-sound.muted { opacity: 0.6; }
+
+/* ---------- Eye.D. rarity: a slow light passes over rarer cards ---------- */
+#awaken .bcard::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background-size: 320% 100%;
+  background-repeat: no-repeat;
+}
+#awaken .bcard.uncommon::after {
+  background-image: linear-gradient(112deg, transparent 38%, rgba(150, 235, 200, 0.07) 46%, rgba(255, 255, 255, 0.13) 50%, rgba(150, 235, 200, 0.07) 54%, transparent 62%);
+  animation: polish-sweep 8s ease-in-out 1.4s infinite;
+}
+#awaken .bcard.rare::after {
+  background-image: linear-gradient(112deg, transparent 34%, rgba(143, 184, 255, 0.1) 44%, rgba(255, 255, 255, 0.2) 50%, rgba(143, 184, 255, 0.1) 56%, transparent 66%);
+  animation: polish-sweep 6s ease-in-out 1.2s infinite;
+}
+#awaken .bcard.mythic::after {
+  background-image: linear-gradient(112deg, transparent 30%, rgba(255, 140, 190, 0.1) 40%, rgba(255, 207, 122, 0.22) 47%, rgba(255, 255, 255, 0.26) 50%, rgba(140, 220, 255, 0.18) 54%, rgba(190, 150, 255, 0.1) 60%, transparent 70%);
+  animation: polish-sweep 4.8s ease-in-out 1s infinite;
+}
+@keyframes polish-sweep {
+  0% { background-position: 115% 0; opacity: 0; }
+  6% { opacity: 1; }
+  34% { background-position: -15% 0; opacity: 1; }
+  40%, 100% { background-position: -15% 0; opacity: 0; }
+}
+
+/* ---------- The Optic ---------- */
+#settings .optic-fold {
+  margin-top: 34px;
+  border-top: 1px solid var(--hair);
+  border-bottom: 1px solid var(--hair);
+}
+#settings .optic-fold > summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 18px 0;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--bone);
+  -webkit-tap-highlight-color: transparent;
+}
+#settings .optic-fold > summary::-webkit-details-marker { display: none; }
+#settings .optic-fold > summary span { display: flex; flex-direction: column; }
+#settings .optic-fold > summary small {
+  color: var(--ash);
+  font-size: 12px;
+  line-height: 1.5;
+  margin-top: 4px;
+}
+#settings .optic-fold > summary i {
+  width: 9px;
+  height: 9px;
+  flex: none;
+  border-right: 1.5px solid var(--ash);
+  border-bottom: 1.5px solid var(--ash);
+  transform: rotate(45deg) translate(-2px, -2px);
+  transition: transform 220ms var(--rise);
+}
+#settings .optic-fold[open] > summary i {
+  transform: rotate(225deg) translate(-2px, -2px);
+}
+#settings .optic-fold-body { padding-bottom: 18px; }
+#settings .optic-fold-body > h2.optic-group:first-child { margin-top: 6px !important; }
+#settings details.polish-more { margin: 2px 0 8px; }
+#settings details.polish-more > summary {
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+  font-size: 12px;
+  color: rgba(var(--eye-rgb), 0.85);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+#settings details.polish-more > summary::-webkit-details-marker { display: none; }
+#settings details.polish-more > summary::after {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-right: 1.3px solid currentColor;
+  border-bottom: 1.3px solid currentColor;
+  transform: rotate(45deg) translateY(-2px);
+  transition: transform 200ms ease;
+}
+#settings details.polish-more[open] > summary::after { transform: rotate(225deg) translate(-1px, -1px); }
+#settings details.polish-more > p.detail { margin-top: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  #awaken .bcard::after,
+  #abilitySatellite.beckon::after,
+  #clock .clock-ink path.drawing { animation: none; }
+}

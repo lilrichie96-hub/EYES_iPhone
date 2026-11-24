@@ -128,16 +128,39 @@
       if (b.length < 29) return null;
       try { return JSON.parse(dec.decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b.slice(0, 12), tagLength: 128 }, this.key, b.slice(12)))); } catch (e) { return null; }
     }
+    // 2.5.0: respect relay throttling instead of repeatedly trying and displaying misleading delivery.
+    retryAfter(response) {
+      const v = response.headers?.get('Retry-After');
+      if (!v) return 30000;
+      const seconds = Number(v);
+      const delay = Number.isFinite(seconds) ? seconds * 1000 : Date.parse(v) - Date.now();
+      return Number.isFinite(delay) ? Math.max(5000, Math.min(300000, delay)) : 30000;
+    }
     async publish(obj, silent, keepalive) {
       if (!this.key) return false;
-      // 4.1: a relay that never answers counts as not delivered (15 s), so nothing waits forever
+      if ((this.relayBlockedUntil || 0) > Date.now()) {
+        if (!silent) emit('error','Eye Contact relay is cooling down. Try again shortly.');
+        return false;
+      }
       const ctl = typeof AbortController === 'function' ? new AbortController() : null, stall = ctl ? setTimeout(() => ctl.abort(), 15000) : 0;
       try {
-        const r = await fetch(RELAY + this.topic + '?priority=min&firebase=no', { method: 'POST', body: await this.encrypt(obj), headers: { 'Content-Type': 'text/plain; charset=utf-8' }, cache: 'no-store', keepalive: !!keepalive, signal: ctl ? ctl.signal : undefined });
-        if (!r.ok) throw new Error('rejected');
+        const r = await fetch(RELAY + this.topic + '?priority=min&firebase=no', {
+          method:'POST',body:await this.encrypt(obj),
+          headers:{'Content-Type':'text/plain; charset=utf-8'},
+          cache:'no-store',keepalive:!!keepalive,signal:ctl ? ctl.signal : undefined
+        });
+        if(r.status===429) {
+          this.relayBlockedUntil=Date.now()+this.retryAfter(r);
+          if(!silent) emit('error','Eye Contact relay is rate-limiting. Your signal was not sent. Retry later.');
+          return false;
+        }
+        if(!r.ok) throw new Error('Relay HTTP '+r.status);
+        this.relayBlockedUntil=0;
         return true;
-      } catch (e) { if (!silent) emit('error', 'Your signal could not reach the relay'); return false; }
-      finally { clearTimeout(stall); }
+      } catch(e) {
+        if(!silent)emit('error','Your signal could not reach the relay');
+        return false;
+      } finally { clearTimeout(stall); }
     }
     msg(kind) { return { v: 1, s: st.myId, k: kind, t: Date.now(), n: randomId(12) }; }
     since() { return this.f.cursor && Date.now() - (this.f.cursorAt || 0) < 11 * 3600000 ? this.f.cursor : '12h'; }
@@ -195,6 +218,7 @@
         try {
           kick();
           const r = await fetch(RELAY + this.topic + '/json?since=' + encodeURIComponent(this.since()), { signal: ctl.signal, cache: 'no-store', headers: { Accept: 'application/x-ndjson' } });
+          if (r.status === 429) this.relayBlockedUntil = Date.now() + this.retryAfter(r);
           if (!r.ok || !r.body) throw new Error('unavailable');
           if (g !== this.gen) return;
           this.retry = 0; this.setConn('online');
@@ -209,7 +233,7 @@
         finally { clearTimeout(idle); }
         if (!this.active || g !== this.gen) return;
         this.retry = Math.min(6, this.retry + 1);
-        await new Promise((res) => { const t = setTimeout(() => { this.wakeWait = null; res(); }, Math.min(30000, 800 * 2 ** this.retry)); this.wakeWait = () => { clearTimeout(t); res(); }; });
+        await new Promise((res) => { const t = setTimeout(() => { this.wakeWait = null; res(); }, Math.max(Math.min(30000, 800 * 2 ** this.retry), Math.max(0, (this.relayBlockedUntil || 0) - Date.now()))); this.wakeWait = () => { clearTimeout(t); res(); }; });
       }
     }
     async line(text) {
