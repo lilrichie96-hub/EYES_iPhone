@@ -56,9 +56,12 @@
  async function importFile(file){
    if(!file)return;
    if(file.size>25*1024*1024){tell({type:'import-error',name:file.name,reason:'Choose a file smaller than 25 MB.'});return}
-   const nid=id(),kind=file.type.startsWith('image/')?'image':'file',tiny=await thumb(file);
+   const nid=id(),kind=file.type.startsWith('image/')?'image':'file';
    try{
+     // Save the actual file BEFORE image decoding. Safari's createImageBitmap can stall
+     // on unusual images or headless inputs; it must never block the keepsake itself.
      await txn('readwrite','put',{id:nid,blob:file,name:file.name,mime:file.type,size:file.size,created:Date.now()});
+     const tiny=kind==='image' ? await Promise.race([thumb(file),new Promise(resolve=>setTimeout(()=>resolve(null),900))]) : null;
      const rid=id().replace(/^ios_/,'');
      PENDING.set(rid,{id:rid,nid,kind,name:file.name,mime:file.type||'application/octet-stream',size:file.size,w:tiny?.w||0,h:tiny?.h||0,thumb:!!tiny,b64:tiny?.b64||'',created:Date.now(),source:'pick'});
      saveQueue();
