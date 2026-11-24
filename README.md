@@ -1,3 +1,17 @@
+# EYES for iPhone 2.5.0 — Original Android 4.4.9 abilities
+
+This update uses the **actual Android 4.4.9 ability modules** and their existing animations, not substitute web games or simplified UI. The original Ability Wheel, Vision iris opening, Tunnelbug Pocket Arcade gameplay/pixel renderer/audio, Pocket Dimension swallowing and storage, Weather Organ atmosphere, and illustrated clock/temperament polish were ported into the existing iPhone living Eye and DNA renderer.
+
+Browser-specific bridges replace only hardware/OS integrations: camera via permission-gated `getUserMedia`, real QR detection from the original decoder, real weather from Open-Meteo and opt-in location/city selection, Pocket files via an explicit browser file picker and Safari-compatible IndexedDB byte storage, plus export/restore. iPhone web apps cannot read battery charge/other apps' music, become the home launcher, or receive Android system-wide share intents.
+
+**Existing users:** Same Home Screen icon, Eye DNA, Eye Contact friends and local storage. No reinstall or new Eye is required. The 2.5.0 PWA service worker updates on reopening online; close/reopen once if an older screen remains. Export Pocket backups for important keepsakes. This release also adds 429 relay cooldown handling.
+
+**Quality gate:** Chromium and WebKit automated tests verify original Tunnelbug active play, original Pocket animated UI/photo import/storage/reload and actual backup/restore, Weather/Vision original lenses, eye identity persistence, and no overlapping dock; screenshots are produced as GitHub Actions artifacts. Real-device camera/geolocation and Safari/Home Screen behavior still require manual acceptance testing.
+
+Public `/get/` marketing/download page intentionally remains unchanged until the planned website redesign.
+
+---
+
 # EYES for iPhone · 2.4.0 · Distant Connections
 
 New in 2.4.0: Distant Visits (a friend's Eye comes by when you return) and Mirror (in the Meeting Space). New files: `eyes-visits.js`, `eyes-mirror.js`, `eyes-mirror.css`; cache is `eyes-web-2.4.0`. Storage keys unchanged; `eyes.visits.v1` is added. Keep the live `eyes-config.js` when uploading.
