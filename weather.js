@@ -99,7 +99,7 @@
     const chip = ensureChip();
     if (!chip) return;
     const p = svc.prefs;
-    const show = !window.EYES_WEB && p.enabled && p.chip;
+    const show = (!window.EYES_WEB || window.EYES_IOS_ABILITIES) && p.enabled && p.chip;
     if (!show) { if (!chip.hidden) chip.hidden = true; return; }
     const v = svc.now();
     const glyph = chip.querySelector('svg'), temp = chip.querySelector('.wx-chip-temp'), cond = chip.querySelector('.wx-chip-cond');
@@ -784,7 +784,7 @@
     placeDom();
     if (W.state === 'WEATHER_ACTIVE') planSteady();
   });
-  function available() { return !window.EYES_WEB && svc.prefs.enabled; }
+  function available() { return (!window.EYES_WEB || window.EYES_IOS_ABILITIES) && svc.prefs.enabled; }
 
   // =====================================================================================================
   // 6 · Idle weather moments: now and then, he senses what's outside (a few seconds, then nothing)
@@ -800,7 +800,7 @@
   function planIdle(soon) {
     clearTimeout(IDLE.timer); IDLE.timer = 0;
     const p = svc.prefs;
-    if (window.EYES_WEB || !p.enabled || !p.idle || !p.place || document.hidden) return;
+    if ((window.EYES_WEB && !window.EYES_IOS_ABILITIES) || !p.enabled || !p.idle || !p.place || document.hidden) return;
     // every few minutes, with some looseness so it never feels like a timer
     const delay = IDLE.first ? 70e3 + Math.random() * 60e3 : soon ? 120e3 + Math.random() * 60e3 : 240e3 + Math.random() * 360e3;
     IDLE.timer = setTimeout(tryMoment, delay);
@@ -949,7 +949,7 @@
   // only, one fix, rounded on the phone before JavaScript sees it. Without the bridge (an older EYES build)
   // the option says so instead of failing silently. A plain browser falls back to navigator.geolocation.
   const wxNative = () => (window.EyesWeatherNative && typeof window.EyesWeatherNative.locate === 'function' ? window.EyesWeatherNative : null);
-  const inApp = () => !!window.Phone;
+  const inApp = () => !!window.Phone && !window.EYES_IOS_ABILITIES;
   const LOC = { wait: null, timer: 0 };
   function nativeLocate(ask) {
     return new Promise((resolve, reject) => {
