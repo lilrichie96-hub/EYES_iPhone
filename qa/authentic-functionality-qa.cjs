@@ -41,9 +41,13 @@ const fs=require('node:fs');
   assert.equal(await page.evaluate(()=>getComputedStyle(document.getElementById('eyesDock')).visibility),'hidden','Dock overlays Pocket');
   const original=await page.evaluate(()=>EyesPocketStore.put({id:'ios_qa_note',kind:'thought',title:'Test thought',text:'Remember the original Eye',created:Date.now(),updated:Date.now()}));
   assert.equal(original.id,'ios_qa_note');
-  await page.evaluate(()=>EyesPocketNative.pick('image'));
-  const pick=page.locator('input[type=file][accept="image/*"]');
-  await pick.setInputFiles({name:'sample.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMBAfWlX3sAAAAASUVORK5CYII=','base64')});
+  // Safari will not open a file picker from a programmatic script without a
+  // user activation. Exercise the original Pocket "Swallow -> Image" menu.
+  await page.locator('#pocketAdd').click();
+  const fileChooserPromise=page.waitForEvent('filechooser',{timeout:8000});
+  await page.getByRole('menuitem',{name:'Image',exact:true}).click();
+  const fileChooser=await fileChooserPromise;
+  await fileChooser.setFiles({name:'sample.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC0lEQVR42mP8/x8AAwMBAfWlX3sAAAAASUVORK5CYII=','base64')});
   await page.waitForFunction(()=>window.EyesPocketStore && window.EyesIOSPocketFiles && EyesIOSPocketFiles.all().then(a=>a.length>=1),{timeout:10000});
   await page.waitForFunction(()=>EyesPocketStore.all().then(a=>a.some(r=>r.kind==='image')&&a.some(r=>r.kind==='thought')),{timeout:15000}).catch(async e=>{ const rows=await page.evaluate(()=>EyesPocketStore.all()); throw new Error(label+' Pocket persistence missing: '+JSON.stringify(rows.map(x=>({id:x.id,kind:x.kind,title:x.title})))+' / '+e.message); });
   const rows=await page.evaluate(()=>EyesPocketStore.all());
