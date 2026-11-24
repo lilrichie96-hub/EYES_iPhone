@@ -1,3 +1,13 @@
+# EYES for iPhone · 2.5.0 · Living Abilities
+
+This release adds browser-safe versions of four Android ability concepts in a new ability satellite (✦): **Pocket Dimension** (notes, links, photo keepsakes in IndexedDB, explicit JSON backup/restore), **Pocket Arcade** (a lightweight touch-based underground crystal game), **Weather Organ** (real Open-Meteo weather by city or opt-in location), and **Vision** (permission-based live camera, photo capture, and QR scanning when Safari exposes BarcodeDetector). It also respects Eye Contact relay Retry-After responses to reduce request flooding.
+
+The iPhone versions are adapted experiences, not byte-identical Android modules. iOS web apps cannot observe system battery/charging state, control other apps' music or notifications, become the default home launcher, or receive Android-style incoming share intents. Pocket stays local to the Home Screen app unless exported. Back up keepsakes before clearing website data. Camera access stops when Vision closes or EYES is backgrounded.
+
+**Existing users:** no reinstall, no new Eye, no friendship re-pairing. The 2.5.0 service-worker cache updates when the web app opens online; close/reopen once if an older screen remains. Keep the original app icon and origin; user storage keys for existing identity/contacts remain unchanged.
+
+---
+
 # EYES for iPhone · 2.4.0 · Distant Connections
 
 New in 2.4.0: Distant Visits (a friend's Eye comes by when you return) and Mirror (in the Meeting Space). New files: `eyes-visits.js`, `eyes-mirror.js`, `eyes-mirror.css`; cache is `eyes-web-2.4.0`. Storage keys unchanged; `eyes.visits.v1` is added. Keep the live `eyes-config.js` when uploading.
