@@ -991,7 +991,7 @@
   });
 
   function available() {
-    if (window.EYES_WEB) return false;
+    if (window.EYES_WEB && !window.EYES_IOS_ABILITIES) return false;
     try { if (localStorage.getItem('eyes.arcade.off') === '1') return false; } catch {}
     return true;
   }
