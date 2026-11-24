@@ -612,7 +612,7 @@
     empty.hidden = list.length > 0 || !P.loaded;
     if (!list.length && P.loaded) {
       empty.replaceChildren(el('p', { class: 'pk-empty-title', text: P.items.length ? 'Nothing like that in here.' : 'His pocket is empty.' }),
-        el('p', { class: 'pk-empty-sub', text: P.items.length ? 'Try another word or category.' : 'Tap Swallow, or share something to EYES from any app.' }));
+        el('p', { class: 'pk-empty-sub', text: P.items.length ? 'Try another word or category.' : (window.EYES_IOS_ABILITIES ? 'Tap Swallow to keep a note, link, photo, or file.' : 'Tap Swallow, or share something to EYES from any app.') }));
     }
     observeThumbs();
   }
