@@ -43,3 +43,5 @@
 .ea-status{font-size:12px;line-height:1.5;color:#9db9c2}
 @media(prefers-reduced-motion:reduce){.ea-space .ea-orb{animation:none}}
 @media(max-width:480px){#eyesAbilityBeacon{bottom:86px}.ea-content{margin-top:12px}.ea-content h2{font-size:21px}}
+.ea-living-eye{width:65px;height:65px;object-fit:contain;flex:0 0 65px;filter:drop-shadow(0 0 9px #54b6d444)}
+.eyes-ability-surface .ea-header{min-height:67px}
