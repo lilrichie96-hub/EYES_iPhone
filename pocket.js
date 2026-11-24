@@ -1500,7 +1500,7 @@
   setTimeout(() => { if (!document.hidden) drainInbox(); }, 1600);
 
   function available() {
-    if (window.EYES_WEB) return false;
+    if (window.EYES_WEB && !window.EYES_IOS_ABILITIES) return false;
     if (!window.indexedDB || !window.EyesPocketStore) return false;
     try { if (localStorage.getItem('eyes.pocket.off') === '1') return false; } catch {}
     return true;
