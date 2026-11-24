@@ -70,7 +70,8 @@
  }
  function pick(kind){
    if(!input){input=document.createElement('input');input.type='file';input.style.display='none';document.body.append(input);input.addEventListener('change',async()=>{
-     const file=input.files?.[0];input.value='';await importFile(file);
+     const file=input.files?.[0];
+     try { await importFile(file); } finally { input.value=''; }
    })}
    input.accept=kind==='image'?'image/*':'*/*';
    input.click();return 'ok';
