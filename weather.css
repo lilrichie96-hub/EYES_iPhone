@@ -1,0 +1,252 @@
+/* EYES 4.4.6 · Weather Organ. The atmosphere and the forecast dial are painted into the Eye's canvas
+   (weather.js / weather-sky.js); this is the quiet text around him, the home-screen temperature and the
+   place picker. */
+
+/* ---- the temperature on the home screen: a third item in the date line ---- */
+.weather-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 32px;              /* a comfortable touch target without changing the line's look */
+  margin: -10px 0;
+  padding: 0 2px 0 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  min-width: 0;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 300ms ease;
+}
+.weather-chip[hidden] { display: none; }
+/* the same hairline divider the battery uses, kept to the text's height */
+.weather-chip::before { content: ''; flex: none; width: 1px; height: 15px; margin-right: 10px; background: var(--hair-strong, #29404b); }
+.weather-chip svg { width: 15px; height: 15px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; opacity: 0.9; }
+.weather-chip .wx-chip-temp { color: var(--bone, #e7e2d9); opacity: 0.86; }
+.weather-chip .wx-chip-cond { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.weather-chip.setup .wx-chip-temp { color: inherit; opacity: 1; }
+.weather-chip.stale { opacity: 0.55; }
+.weather-chip.stale .wx-chip-temp::after { content: ''; display: inline-block; width: 3px; height: 3px; margin-left: 3px; border-radius: 50%; background: currentColor; vertical-align: 3px; opacity: 0.8; }
+.weather-chip:active { opacity: 0.6; }
+.weather-chip:focus-visible { outline: 1.5px solid rgba(160, 220, 225, 0.7); outline-offset: 3px; border-radius: 4px; }
+#timeBlock .dayline { min-width: 0; }
+/* narrow phones keep just the glyph and temperature; very narrow ones (cover screens) still fit */
+@media (max-width: 400px) { .weather-chip .wx-chip-cond { display: none; } }
+@media (max-width: 300px) { .weather-chip::before { margin-right: 6px; } #timeBlock .dayline { gap: 10px; } }
+#home.music-focus .weather-chip { pointer-events: none; }
+/* short screens (landscape, cover displays): the Eye's touch area reaches up to the date line, so the time
+   block's buttons sit above it while the rest of the block lets touches through to the Eye */
+@media (max-height: 520px) {
+  #timeBlock { z-index: 3; pointer-events: none; }
+  #timeBlock button { pointer-events: auto; }
+}
+
+/* ---- Weather Organ owns the screen ---- */
+#weather {
+  --wx-rgb: 111, 193, 202;
+  --wx-ink: rgba(238, 246, 246, 0.95);
+  --wx-dim: rgba(214, 230, 232, 0.62);
+  --wx-glass: rgba(6, 13, 17, 0.7);
+  --wx-edge: rgba(var(--wx-rgb), 0.3);
+  position: fixed;
+  inset: 0;
+  z-index: 26;
+  outline: none;
+  touch-action: manipulation;
+  overscroll-behavior: contain;
+  -webkit-tap-highlight-color: transparent;
+  color: var(--wx-ink);
+  font-size: 14px;
+  /* transparent, but it catches every touch so nothing reaches the home screen's gestures underneath */
+}
+#weather[hidden] { display: none; }
+#home.weather-owned > :not(#world) { opacity: 0.08; pointer-events: none; transition: opacity 380ms var(--ease, ease); }
+#home.weather-owned > #coreHit,
+#home.weather-owned > #irisGlint,
+#home.weather-owned > #irisMode,
+#home.weather-owned > #irisReach,
+#home.weather-owned > #music,
+#home.weather-owned > #notice,
+#home.weather-owned > #abilitySatellite,
+#home.weather-owned > header,
+#home.weather-owned > #timeBlock,
+/* the forecast sits where Home apps, the dock and the drawer handle live */
+#home.weather-owned > #homeApps,
+#home.weather-owned > #dock,
+#home.weather-owned > footer { visibility: hidden; }
+
+#weather button { font: inherit; color: inherit; }
+#weather svg, #wxPlace svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+#wxHead, #wxFoot {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 280ms ease, transform 340ms cubic-bezier(.2, .8, .3, 1);
+  pointer-events: none;
+}
+#wxHead.on, #wxFoot.on { opacity: 1; transform: none; pointer-events: auto; }
+#weather.still #wxHead, #weather.still #wxFoot { transition: none; transform: none; }
+
+/* ---- the readout above him ---- */
+#wxHead { align-items: center; justify-content: flex-end; text-align: center; gap: 2px; }
+#weather .wx-place {
+  display: inline-flex; align-items: center; gap: 6px; max-width: 100%;
+  padding: 6px 12px; margin-bottom: 4px;
+  border: 0; border-radius: 16px; background: transparent; color: var(--wx-dim);
+  font-size: 13px;
+}
+#weather .wx-place svg { width: 15px; height: 15px; }
+#weather .wx-btn.wx-place { height: auto; background: transparent; box-shadow: none; }
+#weather .wx-place:active { background: rgba(var(--wx-rgb), 0.08); }
+.wx-place-name { color: var(--wx-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 56vw; }
+.wx-updated { font-size: 11.5px; white-space: nowrap; }
+.wx-updated.stale { color: #e9c58a; }
+.wx-when { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--wx-dim); }
+.wx-main { display: flex; align-items: baseline; justify-content: center; gap: 12px; }
+.wx-temp { font-size: 64px; font-weight: 200; letter-spacing: -0.04em; line-height: 1.02; font-variant-numeric: tabular-nums; color: var(--bone, #eee); }
+.wx-cond { font-size: 17px; font-weight: 350; color: var(--wx-ink); }
+.wx-facts { font-size: 13px; color: var(--wx-dim); white-space: pre-wrap; font-variant-numeric: tabular-nums; }
+.wx-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding-bottom: 6px; }
+.wx-empty[hidden], #weather .wx-main[hidden], .wx-facts[hidden], .wx-when[hidden] { display: none; }
+.wx-empty-title { margin: 0; font-size: 20px; font-weight: 300; color: var(--wx-ink); }
+.wx-empty-text { margin: 0; max-width: 300px; font-size: 13px; line-height: 1.4; color: var(--wx-dim); }
+#weather.tight .wx-temp { font-size: 46px; }
+#weather.tight .wx-cond { font-size: 15px; }
+#weather.tight .wx-place { padding: 3px 10px; margin-bottom: 0; }
+
+/* ---- the invisible dial over his iris (the ring itself is painted) ---- */
+#wxDial {
+  position: fixed;
+  border-radius: 50%;
+  touch-action: none;
+  pointer-events: none;
+  outline: none;
+}
+#wxDial.on { pointer-events: auto; cursor: grab; }
+#wxDial:focus-visible { box-shadow: 0 0 0 2px rgba(var(--wx-rgb), 0.55); }
+
+/* ---- below him: hourly strip or days, the controls, the credit ---- */
+#wxFoot { justify-content: flex-end; gap: 10px; }
+#wxStrip {
+  display: flex; gap: 4px;
+  overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity;
+  scrollbar-width: none; padding: 2px 0;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 18px, #000 calc(100% - 18px), transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 18px, #000 calc(100% - 18px), transparent);
+}
+#wxStrip::-webkit-scrollbar { display: none; }
+#wxStrip[hidden], #wxDays[hidden] { display: none; }
+#weather .wx-hour {
+  flex: none; width: 56px; padding: 7px 0 6px;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  border: 0; border-radius: 16px; background: transparent; scroll-snap-align: center;
+  color: var(--wx-dim); font-variant-numeric: tabular-nums;
+}
+#weather .wx-hour:first-child { margin-left: 14px; }
+#weather .wx-hour:last-child { margin-right: 14px; }
+#weather .wx-hour svg { width: 22px; height: 22px; color: var(--wx-ink); opacity: 0.85; }
+.wx-h-time { font-size: 11.5px; }
+.wx-h-temp { font-size: 15px; color: var(--wx-ink); }
+.wx-h-pop { font-size: 10.5px; color: #9cc8f0; min-height: 13px; }
+#weather .wx-hour[aria-selected='true'] { background: rgba(var(--wx-rgb), 0.14); box-shadow: inset 0 0 0 1px rgba(var(--wx-rgb), 0.42); color: var(--wx-ink); }
+/* the coming days: the same kind of strip as the hours, one card per day */
+#wxDays {
+  display: flex; gap: 4px; justify-content: safe center;
+  overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; padding: 2px 14px;
+}
+#wxDays::-webkit-scrollbar { display: none; }
+#weather .wx-day {
+  flex: none; width: 58px; padding: 7px 0 6px;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  border: 0; border-radius: 16px; background: transparent; color: var(--wx-dim);
+  font-variant-numeric: tabular-nums;
+}
+#weather .wx-day svg { width: 22px; height: 22px; color: var(--wx-ink); opacity: 0.85; }
+#weather .wx-day.on { background: rgba(var(--wx-rgb), 0.14); box-shadow: inset 0 0 0 1px rgba(var(--wx-rgb), 0.42); color: var(--wx-ink); }
+.wx-d-name { font-size: 11.5px; color: var(--wx-ink); }
+.wx-d-temps { display: flex; gap: 5px; font-size: 13.5px; }
+.wx-d-temps b { font-weight: 450; color: var(--wx-ink); }
+.wx-d-temps span { color: var(--wx-dim); }
+.wx-d-pop { font-size: 10.5px; color: #9cc8f0; min-height: 13px; }
+#weather .wx-controls { display: flex; align-items: center; justify-content: center; gap: 10px; }
+#weather .wx-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  height: 42px; padding: 0 16px; border: 0; border-radius: 21px;
+  background: var(--wx-glass); box-shadow: inset 0 0 0 1px var(--wx-edge);
+}
+#weather .wx-btn[hidden] { display: none; }
+#weather .wx-btn:active, #wxPlace .wx-btn:active { transform: scale(0.96); }
+#weather .wx-icon, #wxPlace .wx-icon { width: 42px; padding: 0; }
+#weather .wx-now { color: #fff; background: rgba(var(--wx-rgb), 0.22); }
+#weather .wx-seg { display: inline-flex; padding: 3px; border-radius: 21px; background: var(--wx-glass); box-shadow: inset 0 0 0 1px var(--wx-edge); }
+#weather .wx-seg[hidden] { display: none; }
+#weather .wx-tab { height: 36px; padding: 0 13px; background: transparent; box-shadow: none; color: var(--wx-dim); }
+#weather .wx-tab[aria-selected='true'] { background: rgba(var(--wx-rgb), 0.2); color: var(--wx-ink); }
+#weather .primary, #wxPlace .primary { background: rgba(var(--wx-rgb), 0.24); box-shadow: inset 0 0 0 1px rgba(var(--wx-rgb), 0.55); color: #fff; }
+.wx-credit { margin: 0; text-align: center; font-size: 10.5px; color: rgba(214, 230, 232, 0.42); letter-spacing: 0.02em; }
+#wxNote {
+  position: fixed; transform: translateX(-50%);
+  margin: 0; max-width: min(86vw, 380px); text-align: center;
+  font-size: 12.5px; color: var(--wx-dim); pointer-events: none;
+}
+#weather.tight #wxFoot { gap: 6px; }
+#weather.tight .wx-hour { padding: 4px 0; }
+#weather.tight .wx-btn { height: 38px; }
+#weather.tight .wx-icon { width: 38px; }
+#weather.tight .wx-credit { font-size: 9.5px; }
+/* cover screens: one line of readout, the dial and the controls */
+#weather.mini .wx-temp { font-size: 30px; }
+#weather.mini .wx-cond { font-size: 13px; }
+#weather.mini .wx-facts, #weather.mini .wx-when, #weather.mini .wx-updated, #weather.mini .wx-credit, #weather.mini #wxStrip, #weather.mini #wxDays, #weather.mini .wx-seg { display: none; }
+#weather.mini .wx-place { padding: 2px 8px; font-size: 12px; }
+#weather.mini .wx-main { gap: 8px; }
+#weather.mini .wx-empty-text { display: none; }
+#weather.mini .wx-empty-title { font-size: 15px; }
+/* landscape and unfolded: text to his left, forecast to his right */
+#weather.wide #wxHead { justify-content: center; }
+#weather.wide #wxFoot { justify-content: center; }
+#weather.wide #wxStrip { flex-wrap: nowrap; }
+#weather.wide .wx-temp { font-size: 54px; }
+
+/* ---- where is outside? ---- */
+#wxPlace {
+  position: fixed; inset: 0; z-index: 40;
+  display: flex; align-items: flex-end; justify-content: center;
+  background: rgba(2, 5, 8, 0.6);
+  color: rgba(238, 246, 246, 0.95);
+  font-size: 14px;
+}
+#wxPlace[hidden] { display: none; }
+#wxPlace button { font: inherit; color: inherit; }
+.wx-place-panel {
+  width: min(100%, 520px); max-height: 82vh; overflow: auto;
+  padding: 16px 18px calc(18px + var(--native-inset-bottom, 0px));
+  border-radius: 22px 22px 0 0;
+  background: #0b151d; box-shadow: 0 -1px 0 rgba(160, 210, 215, 0.14);
+  display: flex; flex-direction: column; gap: 10px;
+}
+.wx-place-head { display: flex; align-items: center; justify-content: space-between; }
+.wx-place-head h2 { margin: 0; font-size: 20px; font-weight: 350; }
+#wxPlace .wx-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 44px; padding: 0 16px; border: 0; border-radius: 22px; background: rgba(6, 13, 17, 0.8); box-shadow: inset 0 0 0 1px rgba(111, 193, 202, 0.3); }
+#wxPlace .wx-search { display: flex; height: 46px; padding: 0 16px; border-radius: 23px; background: rgba(255, 255, 255, 0.05); box-shadow: inset 0 0 0 1px rgba(111, 193, 202, 0.3); }
+#wxPlaceSearch { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: inherit; font: inherit; font-size: 16px; }
+#wxPlaceSearch::placeholder { color: rgba(214, 230, 232, 0.5); }
+#wxPlaceStatus { margin: 0; min-height: 18px; font-size: 13px; color: rgba(214, 230, 232, 0.65); }
+#wxPlaceResults { display: flex; flex-direction: column; gap: 2px; }
+#wxPlace .wx-result { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 14px; border: 0; border-radius: 14px; background: transparent; text-align: left; }
+#wxPlace .wx-result:active, #wxPlace .wx-result:focus-visible { background: rgba(111, 193, 202, 0.12); outline: none; }
+#wxPlace .wx-result b { font-weight: 450; }
+#wxPlace .wx-result span { font-size: 12.5px; color: rgba(214, 230, 232, 0.6); }
+#wxPlace .wx-locate { align-self: flex-start; }
+#wxPlace .wx-locate:disabled { opacity: 0.5; }
+.wx-explain { margin: 0; font-size: 12px; line-height: 1.45; color: rgba(214, 230, 232, 0.55); }
+
+/* ---- The Optic ---- */
+#wxOptic .wx-off { opacity: 0.45; }
