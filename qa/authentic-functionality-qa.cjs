@@ -28,7 +28,7 @@ const fs=require('node:fs');
   await page.waitForFunction(()=>window.TunnelbugCore&&EyesArcade.diagnostics().game,{timeout:15000});
   await page.getByRole('button',{name:'Play',exact:true}).click();
   await page.waitForFunction(()=>['ready','playing'].includes(EyesArcade.diagnostics().game?.phase),{timeout:8000});
-  await page.waitForTimeout(1600);
+  await page.waitForFunction(()=>EyesArcade.diagnostics().game?.phase==='playing',{timeout:8500}).catch(async e=>{throw Error(label+' Tunnelbug countdown did not advance: '+JSON.stringify(await page.evaluate(()=>EyesArcade.diagnostics()))+' '+e.message)});
   const game=await page.evaluate(()=>({status:EyesArcade.diagnostics().game,canvas:document.getElementById('arcadeCanvas'),dock:getComputedStyle(document.getElementById('eyesDock')).visibility}));
   assert(game.status.phase==='playing','Original Tunnelbug game did not enter playing: '+JSON.stringify(game.status));
   assert(game.canvas,'No actual Tunnelbug canvas');
