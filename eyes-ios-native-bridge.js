@@ -6,7 +6,17 @@
 (function(root){
  if(!root.EYES_IOS_ABILITIES)return;
  const DB='eyes.ios.pocket.files.v1',STORE='files';
+ const QUEUE_KEY='eyes.ios.pocket.pending.v1';
  const PENDING=new Map();
+ try{const old=JSON.parse(localStorage.getItem(QUEUE_KEY)||'[]');if(Array.isArray(old))for(const item of old.slice(0,60)){if(item&&typeof item.id==='string')PENDING.set(item.id,{...item,b64:''})}}catch(e){}
+ const saveQueue=()=>{try{localStorage.setItem(QUEUE_KEY,JSON.stringify([...PENDING.values()].map(({b64,...r})=>r)))}catch(e){}};
+ const deliver=()=>{
+  tell({type:'inbox'});
+  // On WebKit, the receiver can still be loading its inventory when files finish saving.
+  // Unacknowledged imports retry, and remain pending across browser restarts.
+  for(const delay of [200,900,2500])setTimeout(()=>{if(PENDING.size && !document.hidden)tell({type:'inbox'})},delay);
+ };
+
  let openDB=null, picker=null;
  const request=(r)=>new Promise((ok,no)=>{r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)});
  const open=()=>openDB||(openDB=new Promise((ok,no)=>{
@@ -51,7 +61,8 @@
      await txn('readwrite','put',{id:nid,blob:file,name:file.name,mime:file.type,size:file.size,created:Date.now()});
      const rid=id().replace(/^ios_/,'');
      PENDING.set(rid,{id:rid,nid,kind,name:file.name,mime:file.type||'application/octet-stream',size:file.size,w:tiny?.w||0,h:tiny?.h||0,thumb:!!tiny,b64:tiny?.b64||'',created:Date.now(),source:'pick'});
-     tell({type:'inbox'});
+     saveQueue();
+     deliver();
    }catch(err){tell({type:'import-error',name:file.name,reason:'Could not save the file locally. Check available storage.'})}
  }
  function pick(kind){
@@ -80,7 +91,7 @@
  root.EyesPocketNative={
    pick,
    inbox:()=>JSON.stringify([...PENDING.values()].map(({b64,...r})=>r)),
-   ack:(ids)=>{for(const id of parseIDs(ids))PENDING.delete(String(id));return 'ok'},
+   ack:(ids)=>{for(const id of parseIDs(ids))PENDING.delete(String(id));saveQueue();return 'ok'},
    thumb:nid=>[...PENDING.values()].find(r=>r.nid===nid)?.b64||'',
    preview:(req,nid)=>{txn('readonly','get',nid).then(async row=>{
      if(!row?.blob?.type.startsWith('image/'))return tell({type:'preview',req,ok:false});
@@ -97,5 +108,7 @@
    clear:()=>{txn('readwrite','clear').catch(()=>{});return 'ok'},
    usage:()=>JSON.stringify({bytes:0,free:0})
  };
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{if(PENDING.size)deliver()},300),{once:true});
+ else setTimeout(()=>{if(PENDING.size)deliver()},300);
  root.EyesIOSPocketFiles={all:async()=>{const d=await open();return request(d.transaction(STORE,'readonly').objectStore(STORE).getAll())},put:row=>txn('readwrite','put',row)};
 })(window);
