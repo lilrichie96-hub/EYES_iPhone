@@ -21,9 +21,27 @@
     surface.setAttribute('role','dialog');
     surface.setAttribute('aria-modal','true');
     surface.setAttribute('aria-label',name);
-    surface.innerHTML='<div class="ea-header"><span class="ea-brand">EYES <small>/ '+esc(name)+'</small></span><button class="ea-exit" type="button" aria-label="Return to your Eye">✕</button></div><div class="ea-content"></div><p class="ea-message" role="status" aria-live="polite"></p>';
+    surface.innerHTML='<div class="ea-header"><span class="ea-brand">EYES <small>/ '+esc(name)+'</small></span><canvas class="ea-living-eye" width="72" height="72" aria-hidden="true"></canvas><button class="ea-exit" type="button" aria-label="Return to your Eye">✕</button></div><div class="ea-content"></div><p class="ea-message" role="status" aria-live="polite"></p>';
     document.body.appendChild(surface);
     on(surface.querySelector('.ea-exit'),'click',dismiss);
+    // The actual Eye accompanies every ability. Its DNA comes from the existing profile;
+    // no second creature is created or saved.
+    try {
+      if(root.HavenEye&&root.HavenDNA?.has?.()){
+        const canvas=surface.querySelector('.ea-living-eye');
+        const eye=new root.HavenEye(root.HavenDNA.dna(),canvas);
+        eye.resize();
+        let frame=0,last=0;
+        function tick(t){
+          if(!surface?.isConnected)return;
+          if(t-last>=65){eye.step(t,Math.min(.07,(t-last)/1000||.033));eye.draw(t);last=t}
+          frame=requestAnimationFrame(tick);
+        }
+        frame=requestAnimationFrame(tick);
+        clean.push(()=>cancelAnimationFrame(frame));
+      }
+    } catch(err){ console.warn('[EYES] mini Eye unavailable',err); }
+
     on(document,'keydown',e=>{if(e.key==='Escape')dismiss()});
     return surface.querySelector('.ea-content');
   }
