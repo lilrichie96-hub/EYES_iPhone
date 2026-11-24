@@ -1,4 +1,7 @@
 name: iPhone authentic Android abilities integration QA
+concurrency:
+  group: ios-authentic-ability-qa
+  cancel-in-progress: true
 on:
   push:
     branches: [feature/ios-authentic-android-abilities]
@@ -39,6 +42,7 @@ jobs:
         run: |
           python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/eyes-iphone-http.log 2>&1 &
           node qa/authentic-abilities-smoke.cjs
+          node qa/authentic-functionality-qa.cjs
       - name: Upload real browser screenshots
         if: always()
         uses: actions/upload-artifact@v4
