@@ -570,6 +570,13 @@
 
   // =====================================================================================================
   function boot() {
+    // iPhone has no Android app drawer. Keep the genuine clock, remarks and ability beckon.
+    if (root.EYES_IOS_ABILITIES) {
+      clock($('clock')?.textContent || '');
+      watchSatellite();
+      watchOptic();
+      return;
+    }
     watchDrawer();
     watchSatellite();
     watchOptic();
