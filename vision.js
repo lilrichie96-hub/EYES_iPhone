@@ -975,7 +975,7 @@
   });
 
   function available() {
-    if (window.EYES_WEB) return false;
+    if (window.EYES_WEB && !window.EYES_IOS_ABILITIES) return false;
     if (window.EyesVisionNative) return true;
     try { return localStorage.getItem('eyes.vision.preview') === '1'; } catch { return false; }
   }
