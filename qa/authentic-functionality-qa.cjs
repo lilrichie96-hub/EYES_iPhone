@@ -45,9 +45,9 @@ const fs=require('node:fs');
   const pick=page.locator('input[type=file][accept="image/*"]');
   await pick.setInputFiles({name:'sample.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMBAfWlX3sAAAAASUVORK5CYII=','base64')});
   await page.waitForFunction(()=>window.EyesPocketStore && window.EyesIOSPocketFiles && EyesIOSPocketFiles.all().then(a=>a.length>=1),{timeout:10000});
-  await page.waitForFunction(()=>EyesPocketStore.all().then(a=>a.some(r=>r.kind==='image')),{timeout:10000});
+  await page.waitForFunction(()=>EyesPocketStore.all().then(a=>a.some(r=>r.kind==='image')&&a.some(r=>r.kind==='thought')),{timeout:15000}).catch(async e=>{ const rows=await page.evaluate(()=>EyesPocketStore.all()); throw new Error(label+' Pocket persistence missing: '+JSON.stringify(rows.map(x=>({id:x.id,kind:x.kind,title:x.title})))+' / '+e.message); });
   const rows=await page.evaluate(()=>EyesPocketStore.all());
-  assert(rows.some(x=>x.kind==='image')&&rows.some(x=>x.kind==='thought'),'Original Pocket did not retain image and thought');
+  assert(rows.some(x=>x.kind==='image')&&rows.some(x=>x.kind==='thought'),'Original Pocket did not retain image and thought: '+JSON.stringify(rows.map(x=>({id:x.id,kind:x.kind}))));
   await page.screenshot({path:'verification/'+label+'-pocket-original.png'});
   await close();
   // Weather: original atmosphere/forecast stage, no fake live reading.
