@@ -34,7 +34,7 @@
         let frame=0,last=0;
         function tick(t){
           if(!surface?.isConnected)return;
-          if(t-last>=65){eye.step(t,Math.min(.07,(t-last)/1000||.033));eye.draw(t);last=t}
+          if(t-last>=65){eye.step(t/1000,Math.min(.07,(t-last)/1000||.033));eye.draw(t/1000);last=t}
           frame=requestAnimationFrame(tick);
         }
         frame=requestAnimationFrame(tick);
