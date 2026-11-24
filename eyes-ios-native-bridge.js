@@ -64,7 +64,8 @@
    try{
      // Save the actual file BEFORE image decoding. Safari's createImageBitmap can stall
      // on unusual images or headless inputs; it must never block the keepsake itself.
-     await txn('readwrite','put',{id:nid,blob:file,name:file.name,mime:file.type,size:file.size,created:Date.now()});
+     const bytes=new Uint8Array(await file.arrayBuffer());
+     await txn('readwrite','put',{id:nid,bytes,name:file.name,mime:file.type,size:file.size,created:Date.now()});
      mark('file-committed',{id:nid});
      const tiny=kind==='image' ? await Promise.race([thumb(file),new Promise(resolve=>setTimeout(()=>resolve(null),900))]) : null;
      const rid=id().replace(/^ios_/,'');
@@ -84,7 +85,8 @@
    mark('picker-click',kind);
    input.click();return 'ok';
  }
- const urlFor=async nid=>{const row=await txn('readonly','get',nid);if(!row?.blob)throw Error('File not found');return {row,url:URL.createObjectURL(row.blob)}};
+ const storedBlob=row=>row?.blob || (row?.bytes ? new Blob([row.bytes],{type:row.mime||'application/octet-stream'}) : null);
+ const urlFor=async nid=>{const record=await txn('readonly','get',nid);const blob=storedBlob(record);if(!blob)throw Error('File not found');const row={...record,blob};return {row,url:URL.createObjectURL(blob)}};
  const download=(url,name)=>{const a=document.createElement('a');a.href=url;a.download=name||'EYES-pocket';a.rel='noopener';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),15000)};
  async function fileAction(action,nid,mime,name){
    try{
@@ -106,8 +108,9 @@
    ack:(ids)=>{for(const id of parseIDs(ids))PENDING.delete(String(id));saveQueue();return 'ok'},
    thumb:nid=>[...PENDING.values()].find(r=>r.nid===nid)?.b64||'',
    preview:(req,nid)=>{txn('readonly','get',nid).then(async row=>{
-     if(!row?.blob?.type.startsWith('image/'))return tell({type:'preview',req,ok:false});
-     const tiny=await thumb(row.blob);
+     const blob=storedBlob(row);
+     if(!blob?.type.startsWith('image/'))return tell({type:'preview',req,ok:false});
+     const tiny=await thumb(blob);
      tell({type:'preview',req,ok:!!tiny,data:tiny?.b64||''});
    }).catch(()=>tell({type:'preview',req,ok:false}));return 'ok'},
    copy:(text)=>{navigator.clipboard?.writeText(String(text)).catch(()=>{});return 'ok'},
@@ -122,5 +125,8 @@
  };
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{if(PENDING.size)deliver()},300),{once:true});
  else setTimeout(()=>{if(PENDING.size)deliver()},300);
- root.EyesIOSPocketFiles={all:async()=>{const d=await open();return request(d.transaction(STORE,'readonly').objectStore(STORE).getAll())},put:row=>txn('readwrite','put',row)};
+ root.EyesIOSPocketFiles={
+  all:async()=>{const d=await open(),rows=await request(d.transaction(STORE,'readonly').objectStore(STORE).getAll());return rows.map(row=>({...row,blob:storedBlob(row)}))},
+  put:async row=>{const blob=storedBlob(row);if(!blob)throw Error('Missing archived file');const bytes=new Uint8Array(await blob.arrayBuffer());const {blob:discard,...rest}=row;return txn('readwrite','put',{...rest,bytes})}
+ };
 })(window);
