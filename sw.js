@@ -1,7 +1,7 @@
 /* EYES for iPhone: offline after the first visit, and notifications from the EYES push relay.
    Eye Contact itself (ntfy.sh) and the relay are never cached. */
-const CACHE = 'eyes-web-2.5.4-hangout', NAMES = 'eyes-push-names';
-self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(["./","index.html","ability-wheel.js","ability-wheel.css","vision.js","vision.css","vision-qr.js","arcade.js","arcade.css","tunnelbug.js","tunnelbug-render.js","tunnelbug-audio.js","pocket.js","pocket.css","pocket-store.js","weather.js","weather.css","weather-data.js","weather-sky.js","eyes-ios-native-bridge.js","eyes-ios-pocket-backup.js","eyes-polish.js","eyes-polish.css","eyes-ios-tapfix.js","eyes-ios-tapfix.css","launcher.js","eye-render.js","eyes-hangout.js","eyes-hangout.css","eyes-contact.js","eyes-friends.js","eyes-visits.js"])).then(() => self.skipWaiting())); });
+const CACHE = 'eyes-web-2.6.0-firebase', NAMES = 'eyes-push-names';
+self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(["./","index.html","ability-wheel.js","ability-wheel.css","vision.js","vision.css","vision-qr.js","arcade.js","arcade.css","tunnelbug.js","tunnelbug-render.js","tunnelbug-audio.js","pocket.js","pocket.css","pocket-store.js","weather.js","weather.css","weather-data.js","weather-sky.js","eyes-ios-native-bridge.js","eyes-ios-pocket-backup.js","eyes-polish.js","eyes-polish.css","eyes-ios-tapfix.js","eyes-ios-tapfix.css","launcher.js","eye-render.js","eyes-hangout.js","eyes-hangout.css","eyes-contact.js","eyes-firebase.js","eyes-friends.js","eyes-visits.js"])).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE && k !== NAMES).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {
   const u = new URL(e.request.url);
@@ -24,3 +24,4 @@ self.addEventListener('notificationclick', (e) => {
   e.notification.close();
   e.waitUntil(clients.matchAll({ type: 'window', includeUncontrolled: true }).then((cs) => { for (const c of cs) if ('focus' in c) return c.focus(); return clients.openWindow('./'); }));
 });
+
