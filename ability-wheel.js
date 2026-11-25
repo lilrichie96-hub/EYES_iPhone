@@ -227,6 +227,16 @@
     // Escape closes the wheel wherever focus is (the satellite itself, or nothing)
     addEventListener('keydown', (e) => { if (e.key === 'Escape' && machine.state === 'WHEEL_OPEN' && !e.defaultPrevented) { e.preventDefault(); closeWheel('escape'); } });
     addEventListener('pointerdown', () => (keyboardUsed = false), true);
+    // On iPhone, dismiss the wheel without consuming touches meant for Eye Contact,
+    // Eye Dex, Play, or the Eye. The old full-screen catcher stole these taps.
+    if (window.EYES_IOS_ABILITIES) {
+      document.addEventListener('pointerdown', (event) => {
+        if (machine.state !== 'WHEEL_OPEN') return;
+        const target = event.target;
+        if (target && (target.closest?.('#abilityWheel') || target.closest?.('#abilitySatellite'))) return;
+        closeWheel('outside-pass-through');
+      }, true);
+    }
   }
   function buildWheelDom() {
     const menu = $('abilityWheel');
