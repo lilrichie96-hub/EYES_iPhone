@@ -103,7 +103,7 @@
   function stateOf(b) {
     if (b.native) {
       if (!b.paired) return { id: 'waiting', label: 'Waiting for their Eye', sub: 'your first Eye Contact' };
-      if (b.connection === 'offline') return { id: 'reconnecting', label: 'Trying to reconnect', sub: '' };
+      if (b.connection === 'offline') return { id: 'reconnecting', label: 'Reconnecting to Eye Contact…', sub: '' };
       if (!b.profile) return { id: 'introducing', label: 'Introducing itself', sub: '' };
       const up = F().nativeUpgrade && F().nativeUpgrade();
       if (up && up.peer) { const pr = F().presence(up); if (pr.state !== 'unknown') return presenceState(pr, up.lastSeen); }
@@ -111,7 +111,7 @@
     }
     const f = b.f, conn = F().connection(f);
     if (!f.peer) return { id: 'waiting', label: 'Waiting for their Eye', sub: f.joined ? 'your invitation is out' : 'invite not opened yet' };
-    if (conn === 'offline') return { id: 'reconnecting', label: 'Trying to reconnect', sub: f.lastSeen ? 'last here ' + ago(f.lastSeen) : '' };
+    if (conn === 'offline') return { id: 'reconnecting', label: 'Reconnecting to Eye Contact…', sub: '', lastContact: f.lastSeen ? 'Last heard from ' + nameOf(b) + ' ' + ago(f.lastSeen) : '' };
     if (!f.profile) return { id: 'introducing', label: 'Introducing itself', sub: '' };
     if (madeAt.has(f.code) && Date.now() - madeAt.get(f.code) < 90000) return { id: 'made', label: 'Eye Contact made', sub: '' };
     return presenceState(F().presence(f), f.lastSeen);
@@ -288,8 +288,9 @@
       return;
     }
     const nm = nameOf(n.b); b.textContent = n.b.pending ? (n.b.native ? 'Your first Eye Contact' : n.b.f.joined ? 'Joining…' : 'Invite') : nm;
-    s.textContent = n.state.label;
-    n.el.setAttribute('aria-label', `${n.b.pending ? 'Pending invitation' : nm}, ${n.state.label}${n.state.sub ? ', ' + n.state.sub : ''}. ${n.b.pending ? 'Show invitation' : 'Open Meeting Space'}`);
+    s.textContent = n.state.lastContact || n.state.label;
+    n.el.dataset.lastContact = n.state.lastContact ? 'yes' : 'no';
+    n.el.setAttribute('aria-label', `${n.b.pending ? 'Pending invitation' : nm}, ${n.state.label}${(n.state.lastContact || n.state.sub) ? ', ' + (n.state.lastContact || n.state.sub) : ''}. ${n.b.pending ? 'Show invitation' : 'Open Meeting Space'}`);
   }
   function setBase(n, size) {
     size = Math.max(24, Math.round(size));
