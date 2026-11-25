@@ -30,7 +30,21 @@ const assert=require('node:assert/strict');
    await page.reload({waitUntil:'domcontentloaded'});
   }
   const sat=page.locator('#abilitySatellite');console.log(label+' sat state '+JSON.stringify(await sat.evaluate(e=>({hidden:e.hidden,rect:e.getBoundingClientRect().toJSON(),elementAtCenter:(r=>document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)?.outerHTML?.slice(0,250))(e.getBoundingClientRect())}))));
-  if(!await sat.isHidden())await sat.tap({timeout:8000}).catch(e=>console.log(label+' ability satellite tap fails '+e.message));
+  if(!await sat.isHidden()){
+   await sat.tap({timeout:8000}).catch(e=>console.log(label+' ability satellite tap fails '+e.message));
+   await page.waitForTimeout(600);
+   console.log(label+' abilities before choosing '+JSON.stringify(await status()));
+   const vision=page.locator('.ability-item[data-ability="pocket"]');
+   console.log(label+' pocket rect '+JSON.stringify(await vision.evaluate(e=>{
+     const r=e.getBoundingClientRect();
+     return {html:e.outerHTML,rect:r.toJSON(),cover:document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)?.outerHTML?.slice(0,300)};
+   })));
+   try{
+    await vision.tap({timeout:8000});
+    await page.waitForTimeout(350);
+    console.log(label+' after pocket tap '+JSON.stringify({ability:await page.evaluate(()=>EyesAbility.diagnostics()),pocket:await page.evaluate(()=>EyesPocket.diagnostics())}));
+   }catch(e){console.log(label+' POCKET TAP FAILED '+e.message)}
+  }
   console.log(label+' wheel state '+JSON.stringify(await status()));
   console.log(label+' page errors '+JSON.stringify(errors));
   await browser.close();
