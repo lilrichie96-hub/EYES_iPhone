@@ -97,4 +97,4 @@ body:has(#eyesPlay) #eyesDock { opacity: 0; pointer-events: none; }
 /* The wheel must not swallow taps intended for existing iPhone navigation buttons. */
 html #abilityCatcher { pointer-events: none; }
 /* Original Android abilities own the whole screen. The iPhone companion dock must step aside. */
-html[data-ability]:not([data-ability=""]) #eyesDock {opacity:0!important;visibility:hidden!important;pointer-events:none!important}
+html[data-ability]:not([data-ability=""]):not([data-ability="wheel"]) #eyesDock {opacity:0!important;visibility:hidden!important;pointer-events:none!important}
