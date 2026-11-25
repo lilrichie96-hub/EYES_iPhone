@@ -481,7 +481,11 @@
     const pauseBtn = el('button', { id: 'arcadePause', type: 'button', 'aria-label': 'Pause' });
     const rim = el('div', { id: 'arcadeRim' }, stick, pulseBtn, pauseBtn);
     const note = el('p', { id: 'arcadeNote', role: 'status', 'aria-live': 'polite' });
-    const stage = el('section', { id: 'arcade', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Pocket Arcade', tabindex: '-1', hidden: true }, screen, rim, note);
+    const escape = el('button', { id: 'arcadeReturnToEye', type: 'button', 'aria-label': 'Return to your Eye' }, '✕');
+    const stage = el('section', { id: 'arcade', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Pocket Arcade', tabindex: '-1', hidden: true }, screen, rim, note, escape);
+    // This button stays visible from the first opening frame, even if a game script
+    // fails to load. The stage captures all touches, so it must have an escape hatch.
+    escape.addEventListener('click', (e) => { e.stopPropagation(); if (owned()) closeNow('manual-return'); });
     // nothing behind the Arcade hears a touch while it owns the iris
     for (const type of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel', 'touchstart', 'touchmove', 'touchend', 'click', 'contextmenu', 'wheel'])
       stage.addEventListener(type, (e) => { e.stopPropagation(); if (type === 'contextmenu') e.preventDefault(); }, type.startsWith('touch') || type === 'wheel' ? { passive: true } : false);
@@ -898,6 +902,15 @@
     syncRimButtons();
     const d = planOpening();
     const loading = prepareGame(A.entry, gen);
+    // A stalled web asset request must NEVER trap the iPhone behind the arcade's
+    // full-screen touch-capturing stage. Give a slow network room, then restore EYES.
+    const openTimer = setTimeout(() => {
+      if (gen !== A.gen || A.state !== 'ARCADE_OPENING') return;
+      console.warn('[EYES Arcade] loading took too long; safely returning to Eye');
+      closeNow('open-timeout');
+      const h = host();
+      if (h && h.toast) h.toast('Arcade could not open. Check your connection and try again.');
+    }, 10000);
     const ready = new Promise((r) => setTimeout(r, Math.max(0, d - 380 * speed())));
     Promise.all([loading, ready]).then(([game]) => {
       if (gen !== A.gen || !owned() || !game) { if (game) try { game.stop(); } catch {} return; }
@@ -907,7 +920,13 @@
       showPanel('title');
       if (A.musicAtOpen && !A.prefs.soundWithMusic) note('Game sound is off while your music plays.', 3200);
       kick();
-    }).catch(() => { if (gen === A.gen && owned()) fail(); });
+    }).catch((error) => {
+      if (gen !== A.gen || !owned()) return;
+      console.warn('[EYES Arcade] startup failed', error);
+      closeNow('load-error');
+      const h = host();
+      if (h && h.toast) h.toast('Arcade could not open. Check your connection and try again.');
+    }).finally(() => clearTimeout(openTimer));
   }
   function fail() {
     stopLoop();

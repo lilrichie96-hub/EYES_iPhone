@@ -1,0 +1,21 @@
+name: EYES iPhone arcade tap reproduction
+on:
+  push:
+    branches: [hotfix/arcade-wheel-recovery-253]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps webkit chromium
+      - run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/eyes-static.log 2>&1 &
+          node qa/ios-arcade-tap-repro.cjs
