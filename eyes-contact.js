@@ -671,11 +671,13 @@
   const site = () => { try { return root.EyesDex && EyesDex.site ? EyesDex.site() : ''; } catch (e) { return ''; } };
   const inviteLink = (code) => (site() ? site().replace(/#.*$/, '') + '#join=' + code : '');
   // 4.4.1: the steps match the buttons the other person sees first: Eye Contact → I have an invite → Paste → Join
-  const inviteText = (code) => `Let our Eyes meet.\nCopy this whole message, then in EYES: Eye Contact → I have an invite → Paste → Join.\n\n${code}${inviteLink(code) ? `\n\nOn iPhone, you can open this link instead:\n${inviteLink(code)}` : ''}`;
+  const inviteText = (code) => `Let our Eyes meet. Both phones need the Firebase Eye Contact update.\nCopy this whole message, then in EYES: Eye Contact → I have an invite → Paste → Join.\n\n${code}${inviteLink(code) ? `\n\nOn iPhone, you can open this link instead:\n${inviteLink(code)}` : ''}`;
   async function newInvite() {
     const pend = F().list().find((f) => !f.peer && !f.joined && Date.now() - (f.addedAt || 0) < 7 * 86400000);
-    const f = pend || (await F().invite());
-    showInvite(f);
+    try {
+      const f = pend || (await F().invite());
+      showInvite(f);
+    } catch (e) { say('Could not create a Firebase invite. Check your connection and that Eye Contact is enabled.'); }
   }
   function showInvite(f) {
     pendingInvite = f; focusKey = f.code;
@@ -919,6 +921,7 @@
     const nm = e._nm || 'Their Eye', lbl = e._lbl || SIG[e.k].label.toLowerCase();
     if (e.felt === 'live') return `${nm}'s Eye felt your ${lbl}.`;
     if (e.felt === 'later') return `${nm}'s Eye felt your ${lbl} when they came back.`;
+    if (e.st === 'failed' && e.reason) return e.reason;
     if (e.st === 'failed') return `Your ${lbl} couldn't leave this phone. Check your connection and try again.`;
     if (e.st === 'relayed') {
       if (e.native) return `Sent through your first Eye Contact.`;
@@ -1347,3 +1350,4 @@
     _debug: { nodes, fx: () => fx, mode: () => mode, motion: () => motion, interactions: INTERACTIONS }
   };
 })(window);
+
