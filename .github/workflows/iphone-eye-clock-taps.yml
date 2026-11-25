@@ -1,0 +1,33 @@
+name: EYES iPhone 2.5.2 Eye and clock physical taps
+on:
+  push:
+    branches: [hotfix/iphone-eye-clock-taps]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  touch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Syntax and cache assets
+        run: |
+          node --check eyes-ios-tapfix.js
+          python3 - <<'PY'
+          from pathlib import Path
+          html=Path('index.html').read_text()
+          sw=Path('sw.js').read_text()
+          for f in ['eyes-ios-tapfix.js','eyes-ios-tapfix.css']:
+            assert f in html and f in sw
+          assert 'eyes-web-2.5.2-eye-clock' in sw
+          PY
+      - run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps webkit chromium
+      - name: Test clock, real Eye and dock taps in Safari and Chromium
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/eyes-http.log 2>&1 &
+          node qa/iphone-eye-clock-taps.cjs
