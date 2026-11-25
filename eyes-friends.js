@@ -46,7 +46,24 @@
      through the upgraded companion. eyes-mirror.js owns everything inside `m`. */
 'use strict';
 (function (root) {
-  const RELAY = 'https://ntfy.sh/';
+  let relayBlockedUntil = 0;
+  function fail(kind, status = 0, until = 0) { return { ok: false, kind, status, until }; }
+  function messageFor(issue) {
+    if (!issue) return 'The relay did not accept this challenge. Try again.';
+    if (issue.kind === 'rate-limit') {
+      const wait = Math.max(1, Math.ceil((issue.until - Date.now()) / 60000));
+      return `The messaging relay is limiting sends. Try again in about ${wait} minute${wait === 1 ? '' : 's'}.`;
+    }
+    if (issue.status === 401 || issue.status === 403) return 'Firebase could not authorize this room. Check the pilot setup or ask for a fresh invite.';
+    if (issue.kind === 'offline') return 'This phone appears to be offline. Check Wi-Fi or mobile data, then try again.';
+    if (issue.kind === 'timeout') return 'The messaging relay took too long to answer. Try another connection or try again shortly.';
+    if (issue.kind === 'network') return 'This phone could not reach the messaging relay. Try switching Wi-Fi or mobile data.';
+    if (issue.kind === 'route') return 'The secure duel connection is not ready. Reconnect in Eye Contact; your pairing is safe.';
+    if (issue.kind === 'rejected') return `The messaging relay rejected this request (HTTP ${issue.status}). Try again later.`;
+    return 'The messaging relay is temporarily unavailable. Try again shortly.';
+  }
+  const duelIssues = new Map();   // only a short, local diagnosis; never save/send secret codes or messages
+
   const KEY = 'eyes.friends.v1';
   const SIGNALS = ['pulse', 'spark', 'calm', 'resonance', 'hello'];
   // 4.5: 'mirror' is no longer advertised (Mirror became Hangout); 'hangout' is.
@@ -108,13 +125,14 @@
   const channels = new Map();          // code -> Channel
   class Channel {
     constructor(f) { this.f = f; this.key = null; this.topic = null; this.active = false; this.gen = 0; this.abort = null; this.retry = 0; this.connection = 'off'; this.seen = []; this.lastSend = 0; this.lastSentPulse = 0; this.lastIncomingPulse = 0; this.lastResonance = 0; this.lastProfile = 0; this.lastHello = 0;
-      this.onlineSince = 0; this.probeAt = 0; this.lastAnswer = 0; this.engagedUntil = 0; this.wakeWait = null; }
+      this.onlineSince = 0; this.probeAt = 0; this.probePending = false; this.lastAnswer = 0; this.engagedUntil = 0; this.wakeWait = null; }
     engage() { this.engagedUntil = Date.now() + ENGAGED_MS; }
     async init() {
       const raw = unb64u(this.f.code.slice(4));
       if (raw.length !== 32) throw new Error('Invalid code');
       const h = await sha(enc.encode('HAVEN-LINK-TOPIC-1'), raw);
       this.topic = 'haven_link_' + hex(h, 22);
+      this.transport = EyesFirebase.channel(this.topic, !!this.f.joined);
       this.mailbox = hex(await sha(enc.encode('EYES-PUSH-1'), raw), 16);                     // the pair's push mailbox
       this.tag = hex(await sha(enc.encode('EYES-PUSH-TAG-1'), raw, enc.encode(st.myId)), 16);  // "this phone" within it
       this.key = await crypto.subtle.importKey('raw', raw, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
@@ -129,39 +147,29 @@
       if (b.length < 29) return null;
       try { return JSON.parse(dec.decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b.slice(0, 12), tagLength: 128 }, this.key, b.slice(12)))); } catch (e) { return null; }
     }
-    // 2.5.0: respect relay throttling instead of repeatedly trying and displaying misleading delivery.
-    retryAfter(response) {
-      const v = response.headers?.get('Retry-After');
-      if (!v) return 30000;
-      const seconds = Number(v);
-      const delay = Number.isFinite(seconds) ? seconds * 1000 : Date.parse(v) - Date.now();
-      return Number.isFinite(delay) ? Math.max(5000, Math.min(300000, delay)) : 30000;
-    }
+    // Preserve the old boolean API for pulses, profiles, and Mirror. Duels use the
+    // richer result to show the *actual* failure without changing the wire protocol.
     async publish(obj, silent, keepalive) {
-      if (!this.key) return false;
-      if ((this.relayBlockedUntil || 0) > Date.now()) {
-        if (!silent) emit('error','Eye Contact relay is cooling down. Try again shortly.');
-        return false;
-      }
-      const ctl = typeof AbortController === 'function' ? new AbortController() : null, stall = ctl ? setTimeout(() => ctl.abort(), 15000) : 0;
-      try {
-        const r = await fetch(RELAY + this.topic + '?priority=min&firebase=no', {
-          method:'POST',body:await this.encrypt(obj),
-          headers:{'Content-Type':'text/plain; charset=utf-8'},
-          cache:'no-store',keepalive:!!keepalive,signal:ctl ? ctl.signal : undefined
-        });
-        if(r.status===429) {
-          this.relayBlockedUntil=Date.now()+this.retryAfter(r);
-          if(!silent) emit('error','Eye Contact relay is rate-limiting. Your signal was not sent. Retry later.');
-          return false;
+      return (await this.publishOutcome(obj, silent, keepalive, false)).ok;
+    }
+    async publishOutcome(obj, silent, keepalive, retryOnce) {
+      if (!this.key) return fail('route');
+      if (Date.now() < relayBlockedUntil) return fail('rate-limit', 429, relayBlockedUntil);
+      let last;
+      for (let i = 0; i < (retryOnce ? 2 : 1); i++) {
+        try {
+          await this.transport.publish(await this.encrypt(obj), obj.n);
+          return { ok: true };
+        } catch (e) {
+          if (e.status === 429) relayBlockedUntil = Date.now() + 60000;
+          const kind = e.status === 429 ? 'rate-limit' : e.status ? 'rejected' :
+            navigator.onLine === false ? 'offline' : e.name === 'AbortError' ? 'timeout' : 'network';
+          last = fail(kind, e.status || 0, relayBlockedUntil);
+          if (e.status || kind === 'offline') break;
         }
-        if(!r.ok) throw new Error('Relay HTTP '+r.status);
-        this.relayBlockedUntil=0;
-        return true;
-      } catch(e) {
-        if(!silent)emit('error','Your signal could not reach the relay');
-        return false;
-      } finally { clearTimeout(stall); }
+      }
+      if (!silent) emit('error', messageFor(last));
+      return last;
     }
     msg(kind) { return { v: 1, s: st.myId, k: kind, t: Date.now(), n: randomId(12) }; }
     since() { return this.f.cursor && Date.now() - (this.f.cursorAt || 0) < 11 * 3600000 ? this.f.cursor : '12h'; }
@@ -169,11 +177,12 @@
       if (!this.key || this.active) return;
       this.active = true; const g = ++this.gen; this.setConn('connecting');
       this.listen(g);
-      this.hello(true);
+      // Repeated screen unlocks must not exhaust ntfy's daily publish limit.
+      this.hello(false);
       // Re-announce on reopening: a first introduction can be lost while either phone sleeps.
       if (this.f.peer) sendProfile(this.f, false);
     }
-    stop() { this.active = false; this.gen++; clearTimeout(this.profileT); if (this.abort) { try { this.abort.abort(); } catch (e) {} this.abort = null; } this.wakeNow(); this.setConn('sleeping'); }
+    stop() { this.active = false; this.gen++; clearTimeout(this.profileT); this.probePending = false; this.probeAt = 0; if (this.abort) { try { this.abort.abort(); } catch (e) {} this.abort = null; } this.wakeNow(); this.setConn('sleeping'); }
     setConn(c) {
       if (this.connection === c) return;
       this.connection = c;
@@ -186,15 +195,22 @@
       const now = Date.now();
       if (!force && now - this.lastHello < 120000) return;
       this.lastHello = now;
-      this.announce();
+      return this.announce().then((ok) => { if (!ok) this.lastHello = 0; return ok; });
     }
     // 4.2.2 presence: "are you there?" Only a peer that advertised 'presence' answers, so for older
     // EYES this is just an ordinary hello and presence stays 'unknown' rather than guessing.
     probe() {
       const now = Date.now();
-      if (!this.f.peer || now - this.probeAt < 30000) return false;
-      this.probeAt = now; this.lastHello = now; this.engage();
-      this.publish({ ...this.msg('hello'), c: CAPS, q: 1 }, true);
+      if (!this.f.peer || this.probePending || now - this.probeAt < 30000) return false;
+      this.probePending = true; this.engage();
+      // A failed POST is NOT evidence that the other Eye is offline. Record the
+      // probe only after the relay accepted it, and re-notify the presence UI.
+      this.publish({ ...this.msg('hello'), c: CAPS, q: 1 }, true).then((ok) => {
+        this.probePending = false;
+        if (ok) { this.probeAt = Date.now(); this.lastHello = this.probeAt; }
+        else this.probeAt = 0;
+        emitFor(this.f, 'change');
+      }, () => { this.probePending = false; this.probeAt = 0; emitFor(this.f, 'change'); });
       return true;
     }
     away() {
@@ -215,26 +231,19 @@
     async listen(g) {
       while (this.active && g === this.gen) {
         const ctl = new AbortController(); this.abort = ctl;
-        let idle; const kick = () => { clearTimeout(idle); idle = setTimeout(() => ctl.abort(), 75000); };
         try {
-          kick();
-          const r = await fetch(RELAY + this.topic + '/json?since=' + encodeURIComponent(this.since()), { signal: ctl.signal, cache: 'no-store', headers: { Accept: 'application/x-ndjson' } });
-          if (r.status === 429) this.relayBlockedUntil = Date.now() + this.retryAfter(r);
-          if (!r.ok || !r.body) throw new Error('unavailable');
-          if (g !== this.gen) return;
-          this.retry = 0; this.setConn('online');
-          const reader = r.body.getReader(); let buf = '';
-          while (this.active && g === this.gen) {
-            const { value, done } = await reader.read();
-            if (done) break;
-            kick(); buf += dec.decode(value, { stream: true });
-            let i; while ((i = buf.indexOf('\n')) >= 0) { const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1); if (line && line.length <= 4000) await this.line(line); }
-          }
-        } catch (e) { if (!this.active || g !== this.gen) return; this.setConn('offline'); }
-        finally { clearTimeout(idle); }
+          await this.transport.listen(ctl.signal, () => {
+            if (this.active && g === this.gen) { this.retry = 0; this.setConn('online'); }
+          }, (id, message) => this.line(JSON.stringify({ event: 'message', id, message })));
+        } catch (e) {
+          if (!this.active || g !== this.gen) return;
+        } finally {
+          if (this.abort === ctl) this.abort = null;
+          if (this.active && g === this.gen) this.setConn('offline');
+        }
         if (!this.active || g !== this.gen) return;
         this.retry = Math.min(6, this.retry + 1);
-        await new Promise((res) => { const t = setTimeout(() => { this.wakeWait = null; res(); }, Math.max(Math.min(30000, 800 * 2 ** this.retry), Math.max(0, (this.relayBlockedUntil || 0) - Date.now()))); this.wakeWait = () => { clearTimeout(t); res(); }; });
+        await new Promise((res) => { const t = setTimeout(() => { this.wakeWait = null; res(); }, Math.min(30000, 800 * 2 ** this.retry)); this.wakeWait = () => { clearTimeout(t); res(); }; });
       }
     }
     async line(text) {
@@ -370,8 +379,8 @@
   function syncCompanions() { syncing = syncing.then(syncNow, syncNow); return syncing; }
   async function syncNow() {
     const want = [];
-    if (nativeCode) want.push({ parent: 'native', code: nativeCode });
-    st.friends.filter(wantsCompanion).forEach((f) => want.push({ parent: f.code, code: f.code }));
+    // Native-only links remain available for explicit removal in the old management sheet.
+    
     let changed = false;
     // a parent that no longer needs one (gone, or now understands duels itself) lets its companion rest
     for (const c of st.upgrades.slice()) {
@@ -544,9 +553,27 @@
     // 4.2.2 upgraded friendships
     upgradeFor: (f) => (f && !f.companion ? companionFor(f.code) : null),
     nativeUpgrade: () => companionFor('native'),
-    async upgradeNative(code) {                        // the launcher told us the native link's secret (never stored here)
-      if (typeof code !== 'string' || !CODE_RE.test(code) || code.length !== 47) { nativeCode = null; return syncCompanions(); }
-      nativeCode = code; return syncCompanions();
+    async upgradeNative(code) {
+      if (!code || !CODE_RE.test(code) || code.length !== 47) return false;
+      let f = st.friends.find((entry) => entry.code === code);
+      if (!f) {
+        f = { code, peer: null, cursor: null, nonces: [], missed: [], profile: null,
+          addedAt: Date.now(), stats: {}, firsts: {}, joined: false };
+        async function claim() {
+          const ch = new Channel(f); await ch.init(); await ch.transport.ready();
+        }
+        try { await claim(); }
+        catch (e) {
+          if (e.status !== 401 && e.status !== 403) throw e;
+          f.joined = true; await claim();
+        }
+        if (!st.friends.some((entry) => entry.code === code)) st.friends.push(f);
+      }
+      // Only retire the old native connection after the new record is durable.
+      save(true);
+      const stored = JSON.parse(localStorage.getItem(KEY) || '{}');
+      if (!stored.friends?.some((entry) => entry.code === code)) return false;
+      await open(f); emit('change'); return true;
     },
     upgradeState(f) {                                  // plain-words status of an upgrade, for the UI
       const c = f === 'native' ? companionFor('native') : f && !f.companion ? companionFor(f.code) : null;
@@ -569,6 +596,7 @@
     async invite() {                                   // a new code waiting for someone to open it
       const code = 'HL1-' + b64u(randomBytes(32));
       const f = { code, peer: null, cursor: null, cursorAt: 0, nonces: [], missed: [], profile: null, addedAt: Date.now(), stats: {}, firsts: {} };
+      const channel = new Channel(f); await channel.init(); await channel.transport.ready();
       st.friends.push(f); save(true); await open(f); emit('change', f); return f;
     },
     async join(text) {
@@ -577,6 +605,7 @@
       if (st.friends.some((f) => f.code === code)) throw new Error("You're already linked with that code");
       if (root.EYES_NATIVE_CODE && root.EYES_NATIVE_CODE === code) throw new Error("That's your existing Eye Contact");
       const f = { code, peer: null, cursor: null, cursorAt: 0, nonces: [], missed: [], profile: null, addedAt: Date.now(), stats: {}, firsts: {}, joined: true };
+      const channel = new Channel(f); await channel.init(); await channel.transport.ready();
       st.friends.push(f); save(true); await open(f); emit('change', f); return f;
     },
     send(f, kind) {
@@ -586,8 +615,11 @@
       if (kind === 'pulse') ch.lastSentPulse = now;
       const m = ch.msg(kind), e = { n: m.n, k: kind, t: now, st: 'sending', awake: online(f), canFeel: supports(f, 'ack') };
       f.outbox = (f.outbox || []).concat(e).slice(-8);
-      ch.publish(m).then((ok) => { e.st = ok ? 'relayed' : 'failed'; save(); emit('delivery', f, e); });
-      count(f, 'sent');
+      ch.publishOutcome(m, false, false, false).then((result) => {
+        if (e.st === 'sending') e.st = result.ok ? 'relayed' : 'failed';
+        if (result.ok) count(f, 'sent'); else e.reason = messageFor(result);
+        save(); emit('delivery', f, e);
+      });
       emit('outgoing', f, kind, e);
       const window = online(f) ? 30000 : 9000;
       if (kind === 'pulse' && now - ch.lastIncomingPulse < window && now - ch.lastResonance > 6000) {
@@ -596,17 +628,25 @@
       if (!online(f) && root.EyesPush) root.EyesPush.nudge(ch.mailbox, ch.tag, kind);
       return e;
     },
-    // 4.2 Battle Lite: a duel message, only to a peer that understands it. Resolves true when the relay took it.
-    // 4.2.2: goes through the upgraded companion when the friendship itself can't carry duels.
+    // 4.4.7: duel sends report why the relay didn't accept them. Only the
+    // initial invitation gets one transient retry; moves never replay blindly.
     duel(f, d) {
       if (!f || !d || typeof d !== 'object' || JSON.stringify(d).length > 600) return Promise.resolve(false);
       const via = supportsDirect(f, 'duel') ? f : !f.companion ? companionFor(f.code) : null;
       const ch = via && channels.get(via.code);
-      if (!ch || !via.peer || !supportsDirect(via, 'duel')) return Promise.resolve(false);
+      if (!ch || !via.peer || !supportsDirect(via, 'duel')) {
+        if (f && f.code) duelIssues.set(f.code, fail('route'));
+        return Promise.resolve(false);
+      }
       if (!ch.active && document.visibilityState === 'visible') ch.start();
       ch.engage();
-      return ch.publish({ ...ch.msg('duel'), d }, true);
+      return ch.publishOutcome({ ...ch.msg('duel'), d }, true, false, d.o === 'ask').then((result) => {
+        duelIssues.set(f.code, result.ok ? null : result);
+        return result.ok;
+      });
     },
+    duelProblem: (f) => messageFor(f && duelIssues.get(f.code)),
+    relayStatus: () => ({ limitedUntil: relayBlockedUntil > Date.now() ? relayBlockedUntil : 0 }),
     // 4.4 Mirror: same routing as duels (direct, or through the upgraded companion). Resolves true when the relay took it.
     mirror(f, m) {
       if (!f || !m || typeof m !== 'object' || JSON.stringify(m).length > 600) return Promise.resolve(false);
