@@ -378,3 +378,18 @@
 #arcade.still .arcade-pulse-face {
   transition: none;
 }
+
+
+/* iPhone web-app recovery: the Android arcade owns the entire touch layer.
+ * Keep one independently visible exit, even during a stalled opening animation. */
+#arcade:not([hidden]) #arcadeReturnToEye {
+  display:grid;place-items:center;position:fixed;
+  right:calc(env(safe-area-inset-right,0px) + 13px);
+  top:calc(env(safe-area-inset-top,0px) + 52px);
+  z-index:60;width:44px;height:44px;
+  border-radius:50%;border:1px solid rgba(175,225,232,.5);
+  background:rgba(7,23,31,.85);color:#ddf6f7;
+  font:22px/1 -apple-system,system-ui,sans-serif;
+  pointer-events:auto;touch-action:manipulation;
+}
+#arcade[hidden] #arcadeReturnToEye { display:none }
