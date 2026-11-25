@@ -30,12 +30,15 @@
       const k = localStorage.key(i);
       if (k && k.startsWith(PREFIX)) data[k] = localStorage.getItem(k);
     }
-    return JSON.stringify({
+    const text = JSON.stringify({
       format: FORMAT,
       version: 1,
       exportedAt: new Date().toISOString(),
       data
     });
+    const check = parseBackup(text);
+    if (!check.ok) throw Error(check.reason);
+    return text;
   }
   function parseBackup(text) {
     let parsed;
@@ -48,10 +51,19 @@
     }
     if (!parsed || parsed.format !== FORMAT || typeof parsed.data !== 'object' || !parsed.data)
       return { ok: false, reason: "That doesn't look like an EYES backup." };
-    const entries = Object.entries(parsed.data).filter(
-      ([k, v]) =>
-        typeof k === 'string' && k.startsWith(PREFIX) && typeof v === 'string' && v.length < 500000
-    );
+    const entries = Object.entries(parsed.data);
+    if ((parsed.version !== undefined && parsed.version !== 1) || Array.isArray(parsed.data) ||
+        entries.some(([k, v]) => !k.startsWith(PREFIX) || typeof v !== 'string')) {
+      return { ok: false, reason: 'This home backup contains unreadable settings. Restore stopped.' };
+    }
+    for (const [key, value] of entries) {
+      if (!['haven.dna.v1','haven.growth.v1','haven.personality.v1'].includes(key)) continue;
+      try {
+        const obj = JSON.parse(value);
+        if (!obj || typeof obj !== 'object' || Array.isArray(obj) ||
+            (key === 'haven.dna.v1' && !Number.isFinite(obj.seed))) throw Error();
+      } catch { return { ok: false, reason: 'This backup contains unreadable Eye data. Restore stopped.' }; }
+    }
     if (!entries.length) return { ok: false, reason: 'That backup is empty.' };
     return { ok: true, entries, exportedAt: parsed.exportedAt };
   }
@@ -128,7 +140,8 @@
       const backup = el('button', null, 'Copy my backup');
       backup.type = 'button';
       backup.onclick = async () => {
-        backup.textContent = (await copy(backupText())) ? 'Backup copied' : 'Copy failed';
+        try { backup.textContent = (await copy(backupText())) ? 'Backup copied' : 'Copy failed'; }
+        catch (err) { backup.textContent = err.message; }
       };
       const other = el('button', null, 'Use another home app');
       other.type = 'button';
@@ -273,7 +286,8 @@
         }, 5000);
     };
     copyBtn.onclick = async () => {
-      const text = backupText();
+      let text;
+      try { text = backupText(); } catch (err) { say(err.message, true); return; }
       if (await copy(text)) {
         paste.hidden = true;
         say('Copied. Paste it somewhere safe, like Notes or a message to yourself.');
@@ -326,3 +340,4 @@
     }
   };
 })();
+
