@@ -36,7 +36,7 @@
 /* the Meeting Space: names a little larger, the rest is the Eyes */
 #eyesContact[data-mode=meet] .ec-label { top: 89%; }
 #eyesContact[data-mode=meet] .ec-label b { font-size: 16px; font-weight: 400; letter-spacing: 0.05em; }
-#eyesContact[data-mode=meet] .ec-node.ec-focus .ec-label small { display: none; }
+#eyesContact[data-mode=meet] .ec-node.ec-focus:not([data-last-contact=yes]) .ec-label small { display: none; }
 #eyesContact[data-mode=meet] .ec-node.ec-focus, #eyesContact[data-mode=meet] .ec-me { cursor: default; }
 #eyesContact[data-mode=invite] .ec-label small, #eyesContact[data-mode=join] .ec-label small { display: none; }
 
@@ -217,3 +217,4 @@ html #eyesContact .ec-top, html[data-skin] #eyesContact .ec-top { position: rela
 #eyesContact[data-motion=off] .ec-guide-in { animation: none; }
 @media (max-height: 680px) { #eyesContact .ec-guide-in { max-height: 50vh; padding-top: 14px; } #eyesContact .ec-guide-list { font-size: 13px; } #eyesContact .ec-guide-list dt { margin-top: 7px; } }
 @media (max-width: 340px) { #eyesContact .ec-top { gap: 2px; padding-left: 6px; padding-right: 6px; } #eyesContact .ec-icon { width: 40px; height: 40px; } }
+
