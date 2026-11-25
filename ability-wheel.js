@@ -127,7 +127,7 @@
   }
   function openWheel() {
     const t = ms();
-    if (machine.state !== 'IDLE' || t - wheel.lastToggle < 250 || !geo || !satShown) return;
+    if (machine.state !== 'IDLE' || (wheel.lastToggle && t - wheel.lastToggle < 250) || !geo || !satShown) return;
     const list = availableAbilities();
     if (!list.length) return;
     wheel.items = list.map((a) => ({ ability: a, x: 0, y: 0, a: 0 }));
