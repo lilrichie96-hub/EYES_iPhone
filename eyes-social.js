@@ -478,12 +478,12 @@
         if (data.event === 'status' || data.event === 'paired' || data.event === 'profile') setTimeout(() => { try { dispatchEvent(new CustomEvent('haven:friend')); } catch (e) {} }, 50);
         if (data.event === 'outgoing') { F().countNative('sent', data.kind); if (root.EYES_NATIVE_MAILBOX && root.EyesPush) EyesPush.nudge(root.EYES_NATIVE_MAILBOX, '0'.repeat(32), data.kind); }
         if (data.event === 'status' && data.linked && !root.EYES_NATIVE_CODE) { wantCode = true; native('linkShowCode'); }
-        if (data.event === 'paired' && root.EYES_NATIVE_CODE) setTimeout(() => F().upgradeNative(root.EYES_NATIVE_CODE), 100);
+        if (data.event === 'paired' && root.EYES_NATIVE_CODE) setNativeCode(root.EYES_NATIVE_CODE);
         // 4.2.2: the native link ended: its upgraded companion rests too (the friendship history stays)
         if (data.event === 'status' && !data.linked && root.EYES_NATIVE_CODE) { root.EYES_NATIVE_CODE = null; root.EYES_NATIVE_MAILBOX = null; F().upgradeNative(null); }
         if (data.event === 'invite') {                     // a friend's invite link while the native link is taken: a new friend
           const d = Haven.diagnostics().link;
-          if (d && d.linked && F().findCode(data.code)) { F().join(data.code).then((nf) => { if (root.EyesContact) EyesContact.joining(nf.code); else { views.friends(); caption('Connecting with your new friend…'); } }, (e) => caption(e.message)); return true; }
+          if (F().findCode(data.code)) { F().join(data.code).then((nf) => { if (root.EyesContact) EyesContact.joining(nf.code); else { views.friends(); caption('Connecting with your new friend…'); } }, (e) => caption(e.message)); return true; }
         }
       }
       return orig(data);
@@ -497,7 +497,11 @@
       root.EYES_NATIVE_MAILBOX = Array.from(h.slice(0, 16), (b) => b.toString(16).padStart(2, '0')).join('');
       // 4.2.2: a secure upgrade path for the original link, derived from the secret both phones already share
       const d = Haven.diagnostics().link;
-      if (d && d.paired) F().upgradeNative(code);
+      if (d && d.linked) {
+        try {
+          if (await F().upgradeNative(code)) native('linkUnlink');
+        } catch (e) { caption('Your earlier link is still on this phone. You can make a new Firebase invitation in Eye Contact.'); }
+      }
     }
     setTimeout(() => { const d = Haven.diagnostics().link; if (d && d.linked && !root.EYES_NATIVE_CODE) { wantCode = true; native('linkShowCode'); } }, 2500);
   }
@@ -508,3 +512,4 @@
     shareEyes: () => views.shareEyes(), report: () => views.report(), deliveryNote: () => DELIVERY_NOTE(), _report: { reportText, deviceFacts, SHARE_EYES_TEXT, GET_URL, SUPPORT_EMAIL },
     list: () => { closeSheet(); views.friends(true); } };
 })(window);
+
