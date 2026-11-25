@@ -23,7 +23,10 @@
    4.4: one slot for Mirror (eyes-mirror.js). While a Mirror is live it attaches a controller (attach(ctrl)):
    it drives both Eyes in behave(), adds a small body transform per node in place() (n.mx, n.my, n.rot, n.ms),
    paints in the sky after the threads, owns the panel, and asks for the side-by-side layout. Without a
-   controller nothing here behaves any differently. */
+   controller nothing here behaves any differently.
+   4.5: Mirror became Hangout (eyes-hangout.js). The same slot and controller, plus: a per-node squash
+   (n.sq: wider and shorter when > 0, taller and thinner when < 0) applied to the Eye's canvas, and an optional
+   ctrl.back() so Back can say goodbye before leaving the Meeting Space. */
 'use strict';
 (function (root) {
   const TAU = Math.PI * 2;
@@ -130,7 +133,7 @@
   let timers = [], fx = [], parts = [], motes = [], twinkles = [], nodes = new Map(), myColor = [111, 193, 202];
   let pendingInvite = null, joinCode = '', joinedKey = null, liveText = '', toastT = 0, missedPlayed = new Set();
   let ctrl = null;                     // 4.4: an interaction that drives the Meeting Space for a while (Mirror)
-  const detach = (why) => { const c = ctrl; ctrl = null; nodes.forEach((n) => { n.mx = n.my = n.rot = 0; n.ms = 1; }); if (c && c.onClose) { try { c.onClose(why); } catch (e) { console.error(e); } } };
+  const detach = (why) => { const c = ctrl; ctrl = null; nodes.forEach((n) => { n.mx = n.my = n.rot = n.sq = 0; n.ms = 1; }); if (c && c.onClose) { try { c.onClose(why); } catch (e) { console.error(e); } } };
   const later = (fn, ms) => { const id = setTimeout(() => { timers = timers.filter((x) => x !== id); if (el) fn(); }, ms); timers.push(id); return id; };
 
   function eyeColor(dna) { try { return D().mapColor(111, 193, 202, dna); } catch (e) { return [111, 193, 202]; } }
@@ -195,6 +198,7 @@
     if (!el) return false;
     const dr = el.querySelector('.ec-drawer'); if (!dr.hidden) { toggleDrawer(false); return true; }
     if (!el.querySelector('.ec-guide').hidden) { hideGuide(); return true; }
+    if (ctrl && ctrl.back) { try { if (ctrl.back()) return true; } catch (e) { console.error(e); } }
     if (mode === 'sky') { close(); return true; }
     setMode('sky'); return true;
   }
@@ -429,7 +433,8 @@
       const s = (n.size / n.base) * (1 + beat) * (n.ms || 1), mx = n.mx || 0, my = n.my || 0;
       n.el.style.transform = `translate3d(${(n.x + n.dx + mx - n.base / 2).toFixed(1)}px,${(n.y + n.dy + my - n.base / 2).toFixed(1)}px,0) scale(${s.toFixed(4)})`;
       // 4.4: a lean of the head turns the Eye itself, never its name label
-      const rv = n.rot && Math.abs(n.rot) > 0.0005 ? `rotate(${n.rot.toFixed(4)}rad)` : '';
+      // 4.5: squash and stretch (Hangout) also belongs to the Eye, not its label
+      const rv = (n.rot && Math.abs(n.rot) > 0.0005 ? `rotate(${n.rot.toFixed(4)}rad)` : '') + (n.sq && Math.abs(n.sq) > 0.002 ? ` scale(${(1 + n.sq).toFixed(4)},${(1 - n.sq).toFixed(4)})` : '');
       if (n.cv.style.transform !== rv) n.cv.style.transform = rv;
       n.el.style.opacity = n.op.toFixed(3);
     });
@@ -542,12 +547,12 @@
     else if (st.id === 'unsure') note = `<p class="ec-hint">Can't tell if ${esc(nameOf(n.b))}'s Eye is open. If it isn't, signals wait up to 12 hours.</p>`;
     else if (st.id === 'linked') note = `<p class="ec-hint">Signals travel through your first Eye Contact.</p>`;
     p.innerHTML = `${note}<div class="ec-sigs" role="group" aria-label="Signals">${sigs.map(([k, d]) => `<button type="button" class="ec-sig ec-sig-${k}" data-sig="${k}" aria-label="Send a ${esc(d.label)}: ${esc(d.hint)}"><span class="ec-orb" aria-hidden="true"><i class="ec-g ec-g-${k}"></i></span><b>${esc(d.label)}</b><small>${esc(d.hint)}</small></button>`).join('')}</div>
-      <p class="ec-hint ec-gesture">${motion === 'off' ? 'Tap to send' : 'Tap to send, or drag one to their Eye'}</p><div class="ec-together"><div class="ec-mirror-slot"></div><div class="ec-duel-slot"></div></div>`;
+      <p class="ec-hint ec-gesture">${motion === 'off' ? 'Tap to send' : 'Tap to send, or drag one to their Eye'}</p><div class="ec-together"><div class="ec-hangout-slot"></div><div class="ec-duel-slot"></div></div>`;
     p.querySelectorAll('[data-sig]').forEach((b) => bindSig(b, b.dataset.sig));
     // 4.2 Battle Lite (eyes-duel.js): a small Battle button, only live for friends whose EYES understands duels
     if (root.EyesDuel && EyesDuel.slot) { try { EyesDuel.slot(p.querySelector('.ec-duel-slot'), n.b, { say }); } catch (e) { console.error(e); } }
-    // 4.4 Mirror (eyes-mirror.js): only offered to an Eye that advertised it (or a muted button that says why)
-    if (root.EyesMirror && EyesMirror.slot) { try { EyesMirror.slot(p.querySelector('.ec-mirror-slot'), n.b, { say }); } catch (e) { console.error(e); } }
+    // 4.5 Hangout (eyes-hangout.js, was Mirror): only offered to an Eye that advertised it (or a muted button that says why)
+    if (root.EyesHangout && EyesHangout.slot) { try { EyesHangout.slot(p.querySelector('.ec-hangout-slot'), n.b, { say }); } catch (e) { console.error(e); } }
     const a = p.querySelector('[data-a]');
     if (a) a.onclick = () => {
       if (a.dataset.a === 'retry') { F().refreshProfile(n.b.f); say('Asking their Eye to introduce itself…'); a.disabled = true; later(() => { a.disabled = false; }, 20000); later(() => { if (!n.b.f.profile) say('Still nothing. Ask them to open EYES too. It arrives as soon as both phones are open.'); }, 26000); }
@@ -626,7 +631,7 @@
   const markGuide = () => { try { localStorage.setItem(GUIDE_KEY, '1'); } catch (e) {} };
   function busyElsewhere() {
     try { if (root.EyesDuel && EyesDuel.isOpen && EyesDuel.isOpen()) return true; } catch (e) {}
-    try { if (root.EyesMirror && EyesMirror.busy && EyesMirror.busy()) return true; } catch (e) {}
+    try { if (root.EyesHangout && EyesHangout.busy && EyesHangout.busy()) return true; } catch (e) {}
     return false;
   }
   function maybeGuide(key) {
@@ -640,13 +645,13 @@
     if (!el || (!asked && (ctrl || busyElsewhere()))) return;
     markGuide();
     const g = el.querySelector('.ec-guide');
-    const mirror = !!root.EyesMirror, battle = !!root.EyesDuel;
+    const hangout = !!root.EyesHangout, battle = !!root.EyesDuel;
     g.innerHTML = `<div class="ec-guide-in"><h3 id="ecGuideTitle">What the signals do</h3>
       <dl class="ec-guide-list">
         <dt><i class="ec-g ec-g-pulse" aria-hidden="true"></i>Pulse</dt><dd>A warm little beat for their Eye. Answer their Pulse with one of your own within about half a minute, while you\u2019re both in EYES, and your Eyes resonate.</dd>
         <dt><i class="ec-g ec-g-spark" aria-hidden="true"></i>Spark</dt><dd>A bright, playful flash.</dd>
         <dt><i class="ec-g ec-g-calm" aria-hidden="true"></i>Calm</dt><dd>A slow, gentle tide.</dd>
-        ${mirror ? '<dt>Mirror</dt><dd>Invite their Eye for about twenty seconds of copying each other’s looks and little gestures. Both of you need EYES open, and they choose whether to join.</dd>' : ''}
+        ${hangout ? '<dt>Hangout</dt><dd>Invite their Eye over to hang out. They play catch, chase fireflies, goof around or just keep each other company, for as long as you both like. Both of you need EYES open, and they choose whether to join.</dd>' : ''}
         ${battle ? '<dt>Battle</dt><dd>A short, friendly staring duel. Nothing about either Eye changes.</dd>' : ''}
       </dl>
       <p class="ec-fine">Their Eye feels a signal the next time they open EYES, for up to 12 hours. Delivery isn’t guaranteed, and iPhone alerts while EYES is closed aren’t available yet.</p>
@@ -1328,9 +1333,9 @@
     nativeEvent,
     inviteText: (code) => inviteText(code),
     guide: () => { if (el) showGuide(true); },
-    // 4.4: for interactions that happen inside the Meeting Space (Mirror)
+    // 4.4: for interactions that happen inside the Meeting Space (Hangout, formerly Mirror)
     attach(c) { if (!el || mode !== 'meet' || !c) return false; if (ctrl && ctrl !== c) detach('replaced'); ctrl = c; hideGuide(); relayout(); renderPanel(); kick(); return true; },
-    detach(c) { if (c && ctrl !== c) return; if (!ctrl) return; ctrl = null; nodes.forEach((n) => { n.mx = n.my = n.rot = 0; n.ms = 1; }); if (el) { relayout(); renderPanel(); resetControllers(); kick(); } },
+    detach(c) { if (c && ctrl !== c) return; if (!ctrl) return; ctrl = null; nodes.forEach((n) => { n.mx = n.my = n.rot = n.sq = 0; n.ms = 1; }); if (el) { relayout(); renderPanel(); resetControllers(); kick(); } },
     focus: () => (el && mode === 'meet' ? focusKey : null),
     node: (key) => nodes.get(key) || null,
     panelRefresh: () => { if (el) renderPanel(); },

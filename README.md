@@ -1,4 +1,6 @@
-# EYES for iPhone 2.5.0 — Original Android 4.4.9 abilities
+# EYES for iPhone · 2.5.4 · Hangout
+
+**2.5.4 — Hangout:** Mirror is replaced by autonomous social visits with catch, fireflies, playful reactions, companionship and goodbye gestures. Compatible with Android EYES 4.5.0 build 113. This release retains the 2.5.3 Arcade touch/exit recovery, original Android ability ports, live configuration, and Eye Contact relay cooldown. Existing users should close and reopen EYES online; no reinstall or reset is required.
 
 This update uses the **actual Android 4.4.9 ability modules** and their existing animations, not substitute web games or simplified UI. The original Ability Wheel, Vision iris opening, Tunnelbug Pocket Arcade gameplay/pixel renderer/audio, Pocket Dimension swallowing and storage, Weather Organ atmosphere, and illustrated clock/temperament polish were ported into the existing iPhone living Eye and DNA renderer.
 

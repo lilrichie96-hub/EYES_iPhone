@@ -1,0 +1,56 @@
+/* EYES 4.5 · Hangout (was Mirror). Scoped under #eyesContact (.ec-hangout…, .eh-…) and #eyesHangoutCall.
+   No inline styles: CSP is style-src 'self'. */
+
+/* Hangout and Battle sit together under the signals */
+#eyesContact .ec-together { display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+#eyesContact .ec-together .ec-duel-slot { margin-top: 0; }
+#eyesContact .ec-hangout-slot:empty, #eyesContact .ec-duel-slot:empty { display: none; }
+#eyesContact .ec-hangout { display: inline-flex; align-items: center; gap: 9px; min-height: 40px; padding: 8px 18px 8px 12px; border-radius: 999px;
+  background: rgba(228, 241, 243, 0.04); border: 1px solid rgba(var(--me, 111, 193, 202), 0.3); color: var(--ink); font-size: 14px; letter-spacing: 0.08em;
+  box-shadow: 0 0 18px rgba(var(--me, 111, 193, 202), 0.08); transition: transform 0.15s, background 0.2s, opacity 0.2s; }
+#eyesContact .ec-hangout:active { transform: scale(0.96); background: rgba(var(--me, 111, 193, 202), 0.12); }
+#eyesContact .ec-hangout.ec-hangout-off { opacity: 0.42; border-color: var(--line); box-shadow: none; }
+/* the glyph: two little Eyes side by side, a small light hopping between them */
+#eyesContact .ec-hangout-g { position: relative; width: 24px; height: 16px; display: block; }
+#eyesContact .ec-hangout-g::before, #eyesContact .ec-hangout-g::after { content: ''; position: absolute; bottom: 0; width: 9px; height: 9px; border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px rgba(228, 241, 243, 0.85); }
+#eyesContact .ec-hangout-g::before { left: 0; background: radial-gradient(circle at 70% 38%, rgba(228, 241, 243, 0.95) 0 1.6px, transparent 2px); }
+#eyesContact .ec-hangout-g::after { right: 0; background: radial-gradient(circle at 30% 38%, rgba(228, 241, 243, 0.95) 0 1.6px, transparent 2px); }
+#eyesContact .ec-hangout-g > i { position: absolute; left: 10px; top: 0; width: 4px; height: 4px; border-radius: 50%; background: rgba(var(--me, 111, 193, 202), 1);
+  box-shadow: 0 0 6px rgba(var(--me, 111, 193, 202), 0.9); animation: eh-hop 2.6s ease-in-out infinite; }
+#eyesContact .ec-hangout-off .ec-hangout-g > i { animation: none; opacity: 0.4; }
+@keyframes eh-hop { 0%, 100% { transform: translate(-7px, 6px); } 25% { transform: translate(-2px, -1px); } 50% { transform: translate(7px, 6px); } 75% { transform: translate(2px, -1px); } }
+
+/* the effects layer (ball, fireflies) sits above the Eyes and never takes a touch */
+#eyesContact .eh-fx { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
+#eyesContact[data-hangout] .ec-sky, #eyesContact[data-hangout] .ec-node { touch-action: none; }
+
+/* while it runs, the panel is a quiet line, a passing tip and a way out */
+#eyesContact .eh-live { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 6px 0 4px; }
+#eyesContact .eh-live .ec-hint { margin: 0; letter-spacing: 0.04em; }
+#eyesContact .eh-over .ec-hint { opacity: 0; }
+#eyesContact .eh-tip { margin: 0; max-width: 300px; text-align: center; font-size: 12.5px; line-height: 1.45; color: rgba(228, 241, 243, 0.55); transition: opacity 1.2s; }
+#eyesContact .eh-tip.eh-tip-out { opacity: 0; }
+#eyesContact .eh-ask { text-align: center; }
+#eyesContact .eh-ask p { margin: 4px 0 2px; }
+#eyesContact .eh-ask b { font-weight: 600; }
+
+/* an invitation when you're elsewhere: a quiet card at the top, never modal */
+#eyesHangoutCall { position: fixed; left: 0; right: 0; top: calc(max(env(safe-area-inset-top, 0px), var(--native-inset-top, 0px)) + 10px); z-index: 59;
+  display: flex; justify-content: center; pointer-events: none; padding: 0 12px;
+  font: 15px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; color: #e4f1f3; animation: ehc-in 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.1) both; }
+@keyframes ehc-in { from { opacity: 0; transform: translateY(-18px); } }
+#eyesHangoutCall .ehc-card { pointer-events: auto; position: relative; width: min(420px, 100%); box-sizing: border-box; display: grid; grid-template-columns: 56px 1fr; gap: 4px 14px; align-items: center;
+  padding: 13px 14px 13px 12px; border-radius: 24px; overflow: hidden; background: rgba(6, 12, 15, 0.95); border: 1px solid rgba(var(--c, 145, 210, 213), 0.3);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(var(--c, 145, 210, 213), 0.14); }
+#eyesHangoutCall .ehc-eye { width: 56px; height: 56px; grid-row: span 2; }
+#eyesHangoutCall .ehc-eye.ehc-hop { animation: ehc-bob 0.7s cubic-bezier(0.3, 1.6, 0.5, 1); }
+@keyframes ehc-bob { 0% { transform: translateY(0) scale(1.06, 0.94); } 35% { transform: translateY(-5px) scale(0.96, 1.05); } 70% { transform: translateY(0) scale(1.04, 0.96); } 100% { transform: none; } }
+#eyesHangoutCall .ehc-k { margin: 0; font-size: 11px; letter-spacing: 0.24em; color: rgba(228, 241, 243, 0.5); }
+#eyesHangoutCall .ehc-l { margin: 1px 0 0; font-size: 15px; } #eyesHangoutCall .ehc-l b { font-weight: 600; }
+#eyesHangoutCall .ehc-row { display: flex; gap: 8px; margin-top: 8px; }
+#eyesHangoutCall button { flex: 1; min-height: 42px; border-radius: 999px; font: inherit; font-size: 14.5px; color: #e4f1f3; background: rgba(228, 241, 243, 0.06); border: 1px solid rgba(228, 241, 243, 0.14); }
+#eyesHangoutCall .ehc-yes { background: #e4f1f3; color: #061014; font-weight: 600; border-color: transparent; }
+#eyesHangoutCall .ehc-time { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: rgba(var(--c, 145, 210, 213), 0.7); transform-origin: 0 50%; }
+@media (prefers-reduced-motion: reduce) { #eyesHangoutCall { animation: none; } #eyesHangoutCall .ehc-eye.ehc-hop { animation: none; } #eyesContact .ec-hangout-g > i { animation: none; } }
+html[data-motion=off] #eyesHangoutCall, html[data-motion=off] #eyesContact .ec-hangout-g > i { animation: none; }

@@ -49,10 +49,11 @@
   const RELAY = 'https://ntfy.sh/';
   const KEY = 'eyes.friends.v1';
   const SIGNALS = ['pulse', 'spark', 'calm', 'resonance', 'hello'];
-  const CAPS = ['ack', 'duel', 'presence', 'duel2', 'mirror'];   // what this phone understands beyond the original protocol
-  const EXTRA = ['ack', 'duel', 'away', 'mirror'];               // kinds that only go to peers that advertised them
+  // 4.5: 'mirror' is no longer advertised (Mirror became Hangout); 'hangout' is.
+  const CAPS = ['ack', 'duel', 'presence', 'duel2', 'hangout'];   // what this phone understands beyond the original protocol
+  const EXTRA = ['ack', 'duel', 'away', 'mirror', 'hangout'];               // kinds that only go to peers that advertised them
   const PRESENCE_MS = 180000, PROBE_WAIT_MS = 12000, ENGAGED_MS = 600000, MAX_COMPANIONS = 6;
-  const COMPANION_KINDS = ['hello', 'profile', 'ack', 'duel', 'away', 'mirror'];
+  const COMPANION_KINDS = ['hello', 'profile', 'ack', 'duel', 'away', 'mirror', 'hangout'];
   const LIVE_MS = 90000, CONFIRMED_MS = 90000, RECENT_MS = 30 * 60000, HERE_MS = 60000;
   const capOk = (x) => typeof x === 'string' && /^[a-z0-9]{1,12}$/.test(x);
   const CODE_RE = /HL1-[A-Za-z0-9_-]{43}/;
@@ -290,7 +291,11 @@
         if (age <= 90000 && p.d && typeof p.d === 'object' && !Array.isArray(p.d)) { this.engage(); emitFor(f, 'duel', p.d, Number(p.t) || now); }
         return;
       }
-      if (k === 'mirror') {                            // 4.4 Mirror: live only, never a signal
+      if (k === 'hangout') {                           // 4.5 Hangout: live only, never a signal
+        if (age <= 90000 && p.h && typeof p.h === 'object' && !Array.isArray(p.h)) { this.engage(); emitFor(f, 'hangout', p.h, Number(p.t) || now); }
+        return;
+      }
+      if (k === 'mirror') {                            // 4.4 Mirror (older phones): still heard, so it can be answered politely
         if (age <= 90000 && p.m && typeof p.m === 'object' && !Array.isArray(p.m)) { this.engage(); emitFor(f, 'mirror', p.m, Number(p.t) || now); }
         return;
       }
@@ -612,6 +617,17 @@
       ch.engage();
       return ch.publish({ ...ch.msg('mirror'), m }, true, m.o === 'bye');
     },
+    // 4.5 Hangout: same routing as Mirror had (direct, or through the upgraded companion). Resolves true when the relay took it.
+    hangout(f, h) {
+      if (!f || !h || typeof h !== 'object' || JSON.stringify(h).length > 600) return Promise.resolve(false);
+      const via = supportsDirect(f, 'hangout') ? f : !f.companion ? companionFor(f.code) : null;
+      const ch = via && channels.get(via.code);
+      if (!ch || !via.peer || !supportsDirect(via, 'hangout')) return Promise.resolve(false);
+      if (!ch.active && document.visibilityState === 'visible') ch.start();
+      ch.engage();
+      return ch.publish({ ...ch.msg('hangout'), h }, true, h.o === 'bye' || h.o === 'away');
+    },
+    hangoutVia: (f) => (supportsDirect(f, 'hangout') ? f : f && !f.companion && supportsDirect(companionFor(f.code), 'hangout') ? companionFor(f.code) : null),
     mirrorVia: (f) => (supportsDirect(f, 'mirror') ? f : f && !f.companion && supportsDirect(companionFor(f.code), 'mirror') ? companionFor(f.code) : null),
     // 4.4: the owner has now actually seen these waiting signals: tell the sender ('later' ack, newer phones only)
     felt(f, nonces) {

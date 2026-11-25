@@ -186,7 +186,7 @@
     if (root.EyesContact && EyesContact.isOpen && EyesContact.isOpen()) return 'contact';
     if (root.EyesDuel && EyesDuel.isOpen && EyesDuel.isOpen()) return 'duel';
     if (root.EyesDuel && EyesDuel._debug && EyesDuel._debug.call && EyesDuel._debug.call()) return 'duel-call';
-    if (root.EyesMirror && EyesMirror.busy && EyesMirror.busy()) return 'mirror';
+    if (root.EyesHangout && EyesHangout.busy && EyesHangout.busy()) return 'hangout';
     if (document.getElementById('eyesSheet')) return 'sheet';
     if (root.HavenDNA && !HavenDNA.has()) return 'unborn';
     return '';
