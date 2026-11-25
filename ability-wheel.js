@@ -151,7 +151,7 @@
     return true;
   }
   function select(ability) {
-    if (machine.state !== 'WHEEL_OPEN' || !wheel.open || wheelU(ms()) < 0.6) return;
+    if (machine.state !== 'WHEEL_OPEN' || !wheel.open) return; // accept the first real tap, even while icons finish unfolding
     // the wheel retracts while the ability's transformation begins
     const t = ms();
     wheel.from = wheelU(t); wheel.open = false; wheel.at = t; wheel.lastToggle = t;
@@ -282,7 +282,7 @@
       it.button.style.left = it.x + 'px';
       it.button.style.top = it.y + 'px';
       it.button.style.opacity = String(clamp((u - 0.55) / 0.45));
-      it.button.disabled = !vis || !wheel.open;
+      it.button.disabled = !wheel.open; // never silently discard a tap during the unfold animation
       const below = it.y > (geo ? geo.cy : 0);
       it.button.classList.toggle('above-eye', !below);
     }
