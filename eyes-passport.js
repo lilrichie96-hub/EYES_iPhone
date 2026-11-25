@@ -27,7 +27,7 @@
   // launcher layout that only means something on the phone it came from (kept when moving between platforms)
   const LAUNCHER_ONLY = /^haven\.(fresh|iris|music)\./;
   const CODE_RE = /^HL1-[A-Za-z0-9_-]{43}$/;
-  const MAX_VALUE = 500000, MAX_TOTAL = 4000000;
+  const MAX_TOTAL = 4000000;
   const enc = new TextEncoder(), dec = new TextDecoder();
   const b64u = (bytes) => { let s = ''; for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
   const unb64u = (str) => { let s = String(str).replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; const bin = atob(s), out = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i); return out; };
@@ -64,6 +64,9 @@
   }
   async function create(pass, data = collect()) {
     if (typeof pass !== 'string' || pass.length < MIN_PASS) throw new Error(`Choose a passphrase of at least ${MIN_PASS} characters.`);
+    const checked = validate(data);
+    if (!checked.ok) throw Error(checked.reason);
+    data = checked.data;
     const sum = summarize(data);
     if (!sum.eye) throw new Error('There is no Eye on this phone to pack yet.');
     const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
@@ -104,13 +107,25 @@
     const data = {}; let total = 0;
     for (const [k, v] of Object.entries(raw)) {
       if (!ours(k)) continue;                                        // unknown or phone-only keys are ignored
-      if (typeof v !== 'string' || v.length > MAX_VALUE) return { ok: false, reason: 'That passport holds something EYES does not accept.' };
+      if (typeof v !== 'string') return { ok: false, reason: 'That passport holds something EYES does not accept.' };
       total += k.length + v.length; data[k] = v;
     }
-    if (total > MAX_TOTAL) return { ok: false, reason: 'That passport is too large for this phone.' };
+    if (total > MAX_TOTAL) return { ok: false, reason: 'This Eye exceeds the Passport size limit. A Passport can hold four million characters.' };
     const dna = parse(data['haven.dna.v1']);
     if (!dna || typeof dna.seed !== 'number') return { ok: false, reason: "That passport doesn't hold an Eye." };
     if (data['haven.growth.v1'] !== undefined && parse(data['haven.growth.v1']) === undefined) return { ok: false, reason: 'That passport is damaged (growth).' };
+    if (data['eyes.legacy.v1'] !== undefined) {
+      const collection = parse(data['eyes.legacy.v1']);
+      const problem = { ok: false, reason: 'The Legacy collection is unreadable. Restore stopped.' };
+      if (collection?.v !== 1 || !collection.eyes || typeof collection.eyes !== 'object' || Array.isArray(collection.eyes)) return problem;
+      for (const [id, record] of Object.entries(collection.eyes)) {
+        const snap = record?.snap, dna = parse(snap?.['haven.dna.v1']);
+        if (!Number.isFinite(dna?.seed)) return problem;
+        const expected = 'e' + (dna.seed >>> 0).toString(16).padStart(8, '0') + '-' + Math.max(0, Math.floor(Number(dna.born) || 0)).toString(36);
+        if (id !== expected || Object.values(snap).some(v => typeof v !== 'string' || parse(v) === undefined)) return problem;
+      }
+      if (collection.active != null && !Object.prototype.hasOwnProperty.call(collection.eyes, collection.active)) return problem;
+    }
     if (data['eyes.friends.v1'] !== undefined) {
       const fr = parse(data['eyes.friends.v1']);
       if (!fr || !Array.isArray(fr.friends) || typeof fr.myId !== 'string' || fr.myId.length < 15) return { ok: false, reason: 'That passport is damaged (friends).' };
@@ -178,12 +193,18 @@
       if (crossPlatform && LAUNCHER_ONLY.test(k)) return false;
       return true;
     });
-    try { localStorage.setItem(UNDO, JSON.stringify({ at: Date.now(), data: before })); } catch (e) { /* no room for an undo copy: restore still safe below */ }
+    const previousUndo = localStorage.getItem(UNDO);
+    try { localStorage.setItem(UNDO, JSON.stringify({ at: Date.now(), data: before })); } catch (e) { return { ok: false, reason: 'Free some storage and try again. EYES needs room for the undo copy before restoring.' }; }
     try {
       removals.forEach((k) => localStorage.removeItem(k));
-      for (const [k, v] of Object.entries(r.data)) localStorage.setItem(k, v);
+      for (const [k, v] of Object.entries(r.data)) {
+        if (crossPlatform && LAUNCHER_ONLY.test(k)) continue;
+        localStorage.setItem(k, v);
+      }
     } catch (e) {
+      localStorage.removeItem(UNDO);
       rollback(before);
+      if (previousUndo !== null) localStorage.setItem(UNDO, previousUndo);
       return { ok: false, reason: "This phone couldn't store the whole thing, so nothing was changed." };
     }
     return { ok: true };
@@ -239,7 +260,7 @@
     box.hidden = false;
     box.innerHTML = `<label class="passport-field">Passphrase<input id="ppPass" type="password" autocomplete="new-password" minlength="${MIN_PASS}" placeholder="At least ${MIN_PASS} characters"></label>
       <label class="passport-field">Again<input id="ppPass2" type="password" autocomplete="new-password"></label>
-      <p class="passport-note">Nobody can open the passport without this passphrase, not even FRAY. Write it down somewhere safe. It holds your friendships' secrets, so share the passport only with yourself.</p>
+      <p class="passport-note">Pocket items stay on this phone. Use Export Pocket backup in Pocket to keep a separate copy.</p><p class="passport-note">Nobody can open the passport without this passphrase, not even FRAY. Write it down somewhere safe. It holds your friendships' secrets, so share the passport only with yourself.</p>
       <span class="backup-actions"><button id="ppCancel" type="button">Cancel</button><button id="ppGo" type="button">Create passport</button></span>`;
     $('ppCancel').onclick = () => { box.hidden = true; box.innerHTML = ''; say(); };
     $('ppGo').onclick = async () => {
@@ -300,3 +321,4 @@
 
   root.EyesPassport = { VERSION, create, detect, open, read, plan, apply, undo, undoInfo, collect, summarize, mount, _validate: validate };
 })(window);
+
