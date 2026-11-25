@@ -34,6 +34,17 @@ const assert=require('node:assert/strict');
    await sat.tap({timeout:8000}).catch(e=>console.log(label+' ability satellite tap fails '+e.message));
    await page.waitForTimeout(600);
    console.log(label+' abilities before choosing '+JSON.stringify(await status()));
+   // This used to fail: a transparent full-screen wheel catcher swallowed the
+   // first tap on Eye Contact. One real tap must open it and dismiss the wheel.
+   await page.locator('#eyesDock button[data-v="friends"]').tap({timeout:8000});
+   await page.waitForSelector('#eyesContact',{state:'visible',timeout:5000});
+   assert.equal(await page.evaluate(()=>EyesAbility.state()),'IDLE','Ability wheel did not pass-through the Eye Contact tap');
+   console.log(label+' wheel pass-through to Eye Contact worked');
+   await page.reload({waitUntil:'domcontentloaded'});
+   const satAgain=page.locator('#abilitySatellite');
+   await satAgain.waitFor({state:'visible',timeout:8000});
+   await satAgain.tap({timeout:8000});
+   await page.waitForTimeout(550);
    const vision=page.locator('.ability-item[data-ability="pocket"]');
    console.log(label+' pocket rect '+JSON.stringify(await vision.evaluate(e=>{
      const r=e.getBoundingClientRect();
