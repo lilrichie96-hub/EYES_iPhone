@@ -1,0 +1,22 @@
+name: Diagnose real iPhone taps
+on:
+  push:
+    branches: [hotfix/iphone-tap-reliability]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  webkit-taps:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps webkit chromium
+      - name: Tap real iPhone UI buttons and capture hit-test overlays
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/eyes-http.log 2>&1 &
+          node qa/iphone-real-taps.cjs
