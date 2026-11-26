@@ -178,6 +178,10 @@
   }
   function release(reason) {
     machine.owner = null;
+    if(window.EYES_IOS_ABILITIES){
+      getHost()?.resetInput?.();
+      wheel.open=false; wheel.u=0; wheel.from=0; wheel.dur=0; wheel.lastToggle=0;
+    }
     machine.state = 'SAFE_CLEANUP';
     go('IDLE', reason);
     if (keyboardUsed) setTimeout(() => { const s = $('abilitySatellite'); if (s && !s.hidden) s.focus({ preventScroll: true }); }, 60);
@@ -188,6 +192,7 @@
     if (owner) { try { owner.interrupt && owner.interrupt('cleanup'); } catch {} }
     machine.owner = null;
     wheel.open = false; wheel.u = 0; wheel.from = 0;
+    if(window.EYES_IOS_ABILITIES){getHost()?.resetInput?.();wheel.dur=0;wheel.lastToggle=0;}
     go('IDLE', reason);
   }
 
@@ -384,7 +389,7 @@
     // In iOS Safari pointerdown and click can span several paint frames. The host's
     // transient 'touch' block must not retract a wheel under the user's finger.
     // The capture listener still dismisses the wheel immediately for outside taps.
-    const wheelTouch = window.EYES_WEB && blocked === 'touch' && machine.state === 'WHEEL_OPEN';
+    const wheelTouch = window.EYES_WEB && blocked === 'touch' && (machine.state === 'WHEEL_OPEN' || (machine.state === 'IDLE' && satShown));
     if (blocked && !wheelTouch && machine.state === 'WHEEL_OPEN') closeWheel('blocked', true);
     const list = machine.owner ? [] : availableAbilities();
     const showSat = (!blocked || wheelTouch) && !machine.owner && list.length > 0;

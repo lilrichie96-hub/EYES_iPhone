@@ -501,7 +501,9 @@
   function bindStick(zone, base, knob) {
     const dead = () => ({ small: 7, medium: 13, large: 20 }[A.prefs.dead] || 13);
     const release = () => {
+      const id = A.stick?.id;
       A.stick = null;
+      if (id != null) try { if (zone.hasPointerCapture(id)) zone.releasePointerCapture(id); } catch {}
       base.classList.remove('held');
       base.style.transform = '';
       knob.style.transform = '';
@@ -593,6 +595,7 @@
   function showStage(on) {
     ensureDom();
     const stage = $('arcade');
+    if (!on && stage.contains(document.activeElement)) document.activeElement.blur();
     stage.hidden = !on;
     $('home').classList.toggle('arcade-owned', on);
     document.documentElement.classList.toggle('arcade-open', on);

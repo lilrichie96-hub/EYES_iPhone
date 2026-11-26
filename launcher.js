@@ -50,9 +50,23 @@
     }
     el.textContent += ' · Mood: ' + (words.join(', ') || 'easygoing');
   }
-  addEventListener('pointerdown', () => (pointerActive = true), true);
-  addEventListener('pointerup', () => (pointerActive = false), true);
-  addEventListener('pointercancel', () => (pointerActive = false), true);
+  // Browser ability controls own their touches, not the home gesture tracker.
+  // Safari may cancel a pointer when an overlay is hidden; never retain that touch.
+  const isWebAbilityTouch = e => window.EYES_IOS_ABILITIES && (
+    !!window.EyesAbility?.owner?.() ||
+    !!e.target?.closest?.('#abilitySatellite,#abilityWheel,#arcade,#pocket,#vision,#weather,#wxPlace,#eyesDock'));
+  const clearHomePointer = () => { pointerActive = false; };
+  addEventListener('pointerdown', e => { pointerActive = !isWebAbilityTouch(e); }, true);
+  addEventListener('pointerup', clearHomePointer, true);
+  addEventListener('pointercancel', clearHomePointer, true);
+  if (window.EYES_IOS_ABILITIES) {
+    addEventListener('lostpointercapture', clearHomePointer, true);
+    addEventListener('touchend', clearHomePointer, true);
+    addEventListener('touchcancel', clearHomePointer, true);
+    addEventListener('blur', clearHomePointer);
+    addEventListener('pagehide', clearHomePointer);
+    document.addEventListener('visibilitychange', clearHomePointer);
+  }
   let motion = read('haven.fresh.motion', 'auto'),
     systemMotion = true,
     visibility = true,
@@ -1924,6 +1938,7 @@
     // full-screen scene, game, eye dive, or a reaction that matters more than an idle habit.
     abilityHost() {
       return {core,now,schedule,toast,draw:()=>draw(now()),motion:()=>!!core.motion,
+        resetInput:()=>{if(window.EYES_IOS_ABILITIES){clearHomePointer();touchStart=null;iris.cancel();}},
         gentle:()=>!!core.gentle,lowPower:()=>!!(core.state.saver||core.state.battery<=20),
         look:(point)=>livingEvent('inspect',{...point,id:'ability'}),
         blocked(){if(!visibility||document.hidden)return 'hidden';if(homeHeld)return 'scene';
