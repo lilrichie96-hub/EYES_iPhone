@@ -9,6 +9,7 @@ const {webkit,chromium}=require('playwright'),assert=require('node:assert/strict
  await page.reload({waitUntil:'domcontentloaded'});
  const ready=()=>page.waitForFunction(()=>EyesAbility.diagnostics().satellite&&EyesAbility.state()==='IDLE');
  await ready();
+ assert.deepEqual(await page.locator('#eyesDock button').allTextContents(),['Eye Dex']);
  assert.deepEqual(await page.evaluate(()=>EyesAbility.diagnostics().available),['vision','arcade','pocket','weather','contact','play']);
  const open=async id=>{await ready();await page.locator('#abilitySatellite').tap();await page.waitForFunction(()=>EyesAbility.state()==='WHEEL_OPEN');await page.waitForTimeout(600);assert(await page.evaluate(()=>EyesAbility.diagnostics().wheel.fit),name+' six-ability layout');await page.locator('.ability-item[data-ability="'+id+'"]').tap()};
  for(let i=0;i<5;i++){await open('play');await page.waitForSelector('#eyesPlaytime');for(const id of ['firefly','catch','peekaboo','company']){await page.locator('.pt-chip[data-act="'+id+'"]').tap();await page.waitForFunction(id=>EyesPlaytime.active()===id,id);await page.mouse.move(195,420);await page.mouse.down();await page.mouse.move(230,380,{steps:6});await page.mouse.up();await page.locator('.pt-back').tap();await page.waitForFunction(()=>EyesPlaytime.active()==='pick')}await page.locator('.pt-close').tap();await ready();assert.equal(await page.locator('#eyesPlaytime').count(),0)}

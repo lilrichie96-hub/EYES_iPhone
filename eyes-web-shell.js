@@ -124,11 +124,11 @@
       if (!navigator.share) $('keepShare').style.display = 'none';
     }
   }
-  // ---------- iPhone dock: Friends · Eye Dex · Play (the launcher's app dock is hidden here) ----------
+  // ---------- iPhone dock: Eye Dex only (the launcher's app dock is hidden here) ----------
   function dock() {
     if ($('eyesDock') || !window.EyesSocial) return;
     const d = document.createElement('nav'); d.id = 'eyesDock';
-    d.innerHTML = '<button type="button" data-v="friends"><i class="dk-friends"></i>Eye Contact</button><button type="button" data-v="dex"><i class="dk-dex"></i>Eye Dex</button><button type="button" data-v="play"><i class="dk-play"></i>Play</button>';
+    d.innerHTML = '<button type="button" data-v="dex"><i class="dk-dex"></i>Eye Dex</button>';
     d.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) EyesSocial[b.dataset.v](); });
     document.body.appendChild(d);
   }

@@ -1,0 +1,24 @@
+name: iPhone clean home 2.6.7
+on:
+  push:
+    branches: [hotfix/iphone-clean-home-267]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: |
+          node --check eyes-web-shell.js
+          node --check sw.js
+          npm install --no-save playwright
+          npx playwright install --with-deps webkit chromium
+      - run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/eyes-static.log 2>&1 &
+          node qa/iphone-reopen-263.cjs
+          node qa/iphone-play-266.cjs

@@ -72,9 +72,11 @@ const assert=require('node:assert/strict');
    }
    await page.locator('#abilitySatellite').tap();
    await page.waitForFunction(()=>EyesAbility.state()==='WHEEL_OPEN');
-   await page.locator('#eyesDock button[data-v="friends"]').tap();
+   await page.waitForTimeout(600);
+   await page.locator('.ability-item[data-ability="contact"]').tap();
    await page.waitForSelector('#eyesContact',{state:'visible'});
-   assert.equal(await page.evaluate(()=>EyesAbility.state()),'IDLE');
+   await page.evaluate(()=>EyesContact.close());
+   await page.waitForFunction(()=>EyesAbility.state()==='IDLE'&&EyesAbility.owner()===null);
    assert.equal(await page.evaluate(()=>HavenDNA.profile().name),'QA-eye');
    assert.deepEqual(errors,[]);
   } finally {await browser.close()}
