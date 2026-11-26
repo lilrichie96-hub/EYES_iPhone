@@ -1,0 +1,34 @@
+name: iPhone 2.7.0 Playdate
+on:
+  push:
+    branches: [hotfix/iphone-playdate-270]
+    paths: ['qa/iphone-270-input.zip','qa/merge-270.py','qa/hangout-270.cjs','.github/workflows/iphone-playdate-270.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Merge shared Playdate code and preserve iPhone fixes
+        run: python3 qa/merge-270.py
+      - run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps webkit chromium
+      - name: Browser regression and live Hangout in two independent sessions
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/eyes-static.log 2>&1 &
+          node qa/iphone-reopen-263.cjs
+          node qa/iphone-play-266.cjs
+          node qa/hangout-270.cjs
+      - name: Archive verified candidate
+        run: |
+          git config user.name "EYES QA"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add eyes-hangout.js eyes-hangout.css eyes-contact.js index.html sw.js
+          git commit -m "Verified shared Hangout 2.0 on iPhone 2.7.0"
+          git push origin HEAD:hotfix/iphone-playdate-270
