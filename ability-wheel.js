@@ -96,30 +96,131 @@
     // music/shortcut switch lower-left, so the three never meet
     return g.screen(-g.size * 0.935, -g.size * 0.935);
   }
+  // 4.6.6: six abilities. The arc is searched, not fixed: radius, spacing, a gentle horizontal stretch (landscape,
+  // foldables), start angle, direction and where each label sits are scored together, and the first layout with
+  // nothing overlapping, nothing outside the safe area and nothing on the Eye wins. Touch targets stay 52 px.
+  const ITEM_R = 26, MIN_GAP = 56, LABEL_H = 13, LABEL_MAX = 78;
+  let measureCtx = null;
+  function labelBox(text) {
+    const key = String(text || '');
+    if (labelBox.cache.has(key)) return labelBox.cache.get(key);
+    const up = key.toUpperCase();
+    const widthOf = (str) => {
+      try {
+        if (!measureCtx) measureCtx = document.createElement('canvas').getContext('2d');
+        measureCtx.font = '10px ' + (getComputedStyle(document.body).fontFamily || 'sans-serif');
+        return measureCtx.measureText(str).width + str.length * 1.6;   // + 0.16em letter spacing
+      } catch { return str.length * 7.8; }
+    };
+    let lines = [up], w = widthOf(up);
+    if (w > LABEL_MAX && up.includes(' ')) {
+      // two balanced lines ("Pocket / Dimension", "Eye / Contact")
+      const words = up.split(' ');
+      let best = null;
+      for (let i = 1; i < words.length; i++) {
+        const a = words.slice(0, i).join(' '), b = words.slice(i).join(' ');
+        const m = Math.max(widthOf(a), widthOf(b));
+        if (!best || m < best.m) best = { a, b, m };
+      }
+      lines = [best.a, best.b]; w = best.m;
+    }
+    const box = { w: Math.ceil(w) + 4, h: LABEL_H * lines.length + 1, lines: lines.length };
+    labelBox.cache.set(key, box);
+    return box;
+  }
+  labelBox.cache = new Map();
+  const rectsOverlap = (a, b, pad = 0) => a.x - pad < b.x + b.w && a.x + a.w + pad > b.x && a.y - pad < b.y + b.h && a.y + a.h + pad > b.y;
+  function labelRect(p, box, mode, cx, cy) {
+    // 'radial': outward from the Eye along the item's own direction (spreads labels apart on a tight arc);
+    // 'vertical': straight above (items above the Eye) or below (items below it), the 4.4.3 behaviour
+    let ux, uy;
+    if (mode === 'radial') { const d = Math.hypot(p.x - cx, p.y - cy) || 1; ux = (p.x - cx) / d; uy = (p.y - cy) / d; }
+    else { ux = 0; uy = p.y > cy ? 1 : -1; }
+    // distance from the item centre to the label centre along (ux, uy), so the label just clears the target
+    const along = Math.abs(ux) * box.w / 2 + Math.abs(uy) * box.h / 2;
+    const reach = ITEM_R - 2 + along;
+    const lx = p.x + ux * reach, ly = p.y + uy * reach;
+    return { x: lx - box.w / 2, y: ly - box.h / 2, w: box.w, h: box.h, cx: lx, cy: ly };
+  }
   function layoutWheel(g) {
     const items = wheel.items, n = items.length;
+    if (!n) return;
     const sat = satellitePoint(g);
     const cx = g.cx, cy = g.cy;
     const base = Math.atan2(sat.y - cy, sat.x - cx);
     const satR = Math.hypot(sat.x - cx, sat.y - cy);
-    const inset = g.insets || { top: 0, bottom: 0 };
-    const margin = 30;
-    const fits = (pts) => pts.every((p) => p.x > margin && p.x < g.w - margin && p.y > inset.top + margin && p.y < g.h - inset.bottom - margin);
-    const spacing = 0.56;   // radians between abilities (about 34°)
-    // first try the roomy arc clockwise, then the other way, then tighter arcs, until every ability is on screen
-    const place = (radius, dir) => items.map((_, i) => {
-      const a = base + dir * (0.5 + i * spacing);
-      return { x: cx + Math.cos(a) * radius, y: cy + Math.sin(a) * radius, a };
-    });
+    const inset = g.insets || {};
+    const safe = { l: (inset.left || 0) + 6, r: g.w - (inset.right || 0) - 6, t: (inset.top || 0) + 6, b: g.h - (inset.bottom || 0) - 6 };
+    const eyeR = Math.max(g.rx || g.size, g.ry || g.size) * 1.06 + 4;
+    const boxes = items.map((it) => labelBox(it.ability.label));
+    // the Eye breathes and glances; search again only when the screen, the Eye's size or where it sits really change
+    const key = [Math.round(g.w), Math.round(g.h), Math.round((cx - g.w / 2) / 16), Math.round((cy - g.h * 0.49) / 16), Math.round(satR / 4), n, Math.round(safe.l), Math.round(safe.r), Math.round(safe.t), Math.round(safe.b)].join(',');
+    if (wheel.layoutKey === key && wheel.layout) return applyLayout(wheel.layout, base, satR);
     let best = null;
-    search: for (const radius of [satR * 1.28, satR * 1.16, satR * 1.06])
-      for (const dir of [1, -1]) {
-        const pts = place(radius, dir);
-        if (fits(pts)) { best = { pts, radius, dir }; break search; }
+    const tryOne = (rK, sx, off, dir, extra, mode) => {
+      const R = satR * rK;
+      // spacing from the needed chord (touch targets never overlap), widened a little for long labels
+      const chord = MIN_GAP + extra;
+      const sp = 2 * Math.asin(Math.min(0.99, chord / (2 * R)));
+      if ((n - 1) * sp + off > 4.6) return;            // never wrap more than ~3/4 of the way round
+      const pts = [];
+      for (let i = 0; i < n; i++) {
+        const a = base + dir * (off + i * sp);
+        pts.push({ x: cx + Math.cos(a) * R * sx, y: cy + Math.sin(a) * R, a });
       }
-    if (!best) best = { pts: place(satR * 1.06, 1), radius: satR * 1.06, dir: 1 };
-    wheel.angle = base; wheel.radius = best.radius; wheel.dir = best.dir; wheel.satR = satR;
-    items.forEach((it, i) => { it.x = best.pts[i].x; it.y = best.pts[i].y; it.a = best.pts[i].a; });
+      let hard = 0, soft = 0;
+      const rects = pts.map((p, i) => labelRect(p, boxes[i], mode, cx, cy));
+      for (let i = 0; i < n; i++) {
+        const p = pts[i], L = rects[i];
+        if (p.x - ITEM_R < safe.l || p.x + ITEM_R > safe.r || p.y - ITEM_R < safe.t || p.y + ITEM_R > safe.b) hard += 10;
+        if (L.x < safe.l || L.x + L.w > safe.r || L.y < safe.t || L.y + L.h > safe.b) hard += 4;
+        if (Math.hypot(p.x - cx, p.y - cy) < eyeR + ITEM_R) hard += 6;
+        // a label must not sit on the Eye
+        const nx = Math.max(L.x, Math.min(cx, L.x + L.w)), ny = Math.max(L.y, Math.min(cy, L.y + L.h));
+        if (Math.hypot(nx - cx, ny - cy) < eyeR) hard += 3;
+        if (Math.hypot(p.x - sat.x, p.y - sat.y) < ITEM_R + 14) hard += 2;          // keep the satellite itself free
+        for (let j = i + 1; j < n; j++) {
+          const q = pts[j];
+          if (Math.hypot(p.x - q.x, p.y - q.y) < MIN_GAP - 0.5) hard += 8;
+          if (rectsOverlap(L, rects[j], 3)) hard += 3;
+        }
+        for (let j = 0; j < n; j++) {
+          if (j === i) continue;
+          const q = pts[j];
+          const qr = { x: q.x - ITEM_R + 4, y: q.y - ITEM_R + 4, w: (ITEM_R - 4) * 2, h: (ITEM_R - 4) * 2 };
+          if (rectsOverlap(L, qr, 1)) hard += 3;
+        }
+      }
+      // preferences: close to the classic look (radius ≈ 1.28, round, starting just past the satellite, clockwise)
+      soft += Math.abs(rK - 1.28) * 6 + (sx - 1) * 5 + Math.abs(off - 0.5) * 2 + (dir < 0 ? 0.6 : 0) + extra * 0.02 + (mode === 'radial' ? 0 : 0.3);
+      const score = hard * 100 + soft;
+      if (!best || score < best.score) best = { score, hard, pts, R, sx, dir, rects, mode };
+    };
+    search: for (const sx of [1, 1.18, 1.4, 1.7, 2.1])
+      for (const rK of [1.28, 1.2, 1.38, 1.12, 1.5, 1.65, 1.06, 1.85])
+        for (const extra of [8, 0, 18, 30])
+          for (const off of [0.5, 0.36, 0.66, 0.24, 0.85])
+            for (const dir of [1, -1])
+              for (const mode of ['radial', 'vertical']) {
+                tryOne(rK, sx, off, dir, extra, mode);
+                if (best && best.hard === 0 && best.score < 1.2) break search;
+              }
+    if (!best) return;
+    wheel.layoutKey = key;
+    wheel.layout = { R: best.R / satR, sx: best.sx, dir: best.dir, mode: best.mode, rel: best.pts.map((p) => p.a - base), hard: best.hard };
+    applyLayout(wheel.layout, base, satR);
+  }
+  function applyLayout(L, base, satR) {
+    const g = geo;
+    wheel.angle = base; wheel.radius = L.R * satR; wheel.dir = L.dir; wheel.satR = satR; wheel.sx = L.sx; wheel.labelMode = L.mode; wheel.fit = L.hard === 0;
+    wheel.items.forEach((it, i) => {
+      const a = base + L.rel[i];
+      it.a = a;
+      it.x = g.cx + Math.cos(a) * wheel.radius * L.sx;
+      it.y = g.cy + Math.sin(a) * wheel.radius;
+      const box = labelBox(it.ability.label), r = labelRect(it, box, L.mode, g.cx, g.cy);
+      it.label = { dx: r.cx - it.x, dy: r.cy - it.y, w: box.w, h: box.h, lines: box.lines, x: r.x, y: r.y };
+    });
   }
   function wheelU(t) {
     const e = clamp((t - wheel.at) / wheel.dur);
@@ -131,6 +232,7 @@
     const list = availableAbilities();
     if (!list.length) return;
     wheel.items = list.map((a) => ({ ability: a, x: 0, y: 0, a: 0 }));
+    wheel.layoutKey = "";
     layoutWheel(geo);
     if (!go('WHEEL_OPEN', 'satellite')) return;
     wheel.from = wheelU(t); wheel.open = true; wheel.at = t; wheel.lastToggle = t;
@@ -258,6 +360,7 @@
       label.className = 'ability-label';
       label.textContent = it.ability.label;
       b.append(label);
+      it.labelEl = label;
       b.addEventListener('click', (e) => { e.stopPropagation(); select(it.ability); });
       it.button = b;
       menu.append(b);
@@ -290,6 +393,16 @@
       it.button.disabled = !wheel.open; // never silently discard a tap during the unfold animation
       const below = it.y > (geo ? geo.cy : 0);
       it.button.classList.toggle('above-eye', !below);
+      // 4.6.6: the label sits where the layout search put it (outward from the Eye), possibly on two lines
+      const lab = it.labelEl, L = it.label;
+      if (lab && L) {
+        lab.style.left = (ITEM_R + L.dx) + 'px';
+        lab.style.top = (ITEM_R + L.dy) + 'px';
+        lab.style.bottom = 'auto';
+        lab.style.width = L.w + 'px';
+        lab.classList.toggle('two-line', L.lines > 1);
+      }
+
     }
   }
   function syncDom() {
@@ -348,7 +461,7 @@
     for (let i = 0; i <= steps * grow; i++) {
       const s = i / steps;
       const a = mix(a0, a1, s), rr = mix(wheel.satR, R, Math.sin(Math.min(1, s * 1.6) * Math.PI / 2));
-      const x = cx + Math.cos(a) * rr, y = cy + Math.sin(a) * rr;
+      const sxk = mix(1, wheel.sx || 1, Math.sin(Math.min(1, s * 1.6) * Math.PI / 2)), x = cx + Math.cos(a) * rr * sxk, y = cy + Math.sin(a) * rr;
       if (i === 0) ctx.moveTo(sat.x, sat.y); else ctx.lineTo(x, y);
     }
     ctx.strokeStyle = g.tint(0.95, 0.32 * u);
@@ -514,7 +627,7 @@
       ambients: ambients.map((a) => a.id || '?'),
       available: availableAbilities().map((a) => a.id),
       satellite: satShown,
-      wheel: { open: wheel.open, u: Math.round(wheel.u * 100) / 100, items: wheel.items.map((i) => ({ id: i.ability.id, x: Math.round(i.x), y: Math.round(i.y) })) },
+      wheel: { open: wheel.open, u: Math.round(wheel.u * 100) / 100, items: wheel.items.map((i) => ({ id: i.ability.id, x: Math.round(i.x), y: Math.round(i.y), label: i.label ? { x: Math.round(i.label.x), y: Math.round(i.label.y), w: i.label.w, h: i.label.h } : null })), fit: !!wheel.fit, labelMode: wheel.labelMode || null, sx: wheel.sx || 1 },
       transitions: machine.transitions,
       refused: machine.refused,
       history: machine.history.slice(-12)

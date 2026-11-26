@@ -300,7 +300,9 @@
   }
 
   // ---------- Play ----------
-  views.play = function () {
+  views.play = function (sheetOnly) {
+    // 4.6.6: Play lives on the Ability Satellite now; The Optic's row opens that same Play. The old sheet stays as a fallback.
+    if (!sheetOnly && root.EyesPlaytime) { closeSheet(); if (EyesPlaytime.open('optic')) return; }
     openSheet('Play', (b) => {
       const r = play() ? play().record() : { wins: 0, losses: 0, best: 0 };
       b.insertAdjacentHTML('beforeend', `<button type="button" class="es-game" id="esLight"><b>Chase the light</b><span>Drag a little light around and flick it. Your Eye can't help itself.</span></button>
@@ -319,7 +321,7 @@
     link.addEventListener('click', (e) => { if (link.dataset.eyesPass) { delete link.dataset.eyesPass; return; } e.stopImmediatePropagation(); e.preventDefault(); views.friends(); }, true);
     const mk = (id, title, small, fn) => { const b = document.createElement('button'); b.id = id; b.type = 'button'; b.className = 'setting'; b.innerHTML = `<span>${title}<small>${small}</small></span><span aria-hidden="true">›</span>`; b.onclick = fn; return b; };
     const dex = mk('dexOpen', 'Eye Dex', 'Every Eye you’ve met, and the traits you’ve seen', () => views.dex());
-    const pl = mk('playOpen', 'Play', 'Chase the light · staring contest', () => views.play());
+    const pl = mk('playOpen', 'Play', 'Staring contest · firefly · catch · peekaboo · company', () => views.play());
     link.insertAdjacentElement('afterend', dex); dex.insertAdjacentElement('afterend', pl);
     mountExtras();
   }

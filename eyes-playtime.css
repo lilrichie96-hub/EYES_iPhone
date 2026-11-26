@@ -1,0 +1,140 @@
+/* EYES 4.6.6 · Play (eyes-playtime.js). The Eye itself is the home canvas; this is only the touch layer,
+   the choices and a quiet caption. */
+#eyesPlaytime {
+  --pt-top: max(env(safe-area-inset-top, 0px), var(--native-inset-top, 0px));
+  --pt-bottom: max(env(safe-area-inset-bottom, 0px), var(--native-inset-bottom, 0px));
+  position: fixed;
+  inset: 0;
+  z-index: 44;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  color: #dfeff1;
+  font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  opacity: 0;
+  transition: opacity 0.28s ease;
+}
+#eyesPlaytime.pt-in { opacity: 1; }
+#eyesPlaytime.pt-out { opacity: 0; pointer-events: none; }
+#eyesPlaytime.pt-gentle { transition-duration: 0.4s; }
+#eyesPlaytime [hidden] { display: none !important; }
+.pt-top {
+  position: absolute;
+  left: max(10px, env(safe-area-inset-left, 0px));
+  right: max(10px, env(safe-area-inset-right, 0px));
+  top: calc(var(--pt-top) + 8px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: none;
+}
+.pt-top > * { pointer-events: auto; }
+.pt-icon {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(223, 239, 241, 0.13);
+  background: rgba(6, 14, 18, 0.38);
+  color: rgba(223, 239, 241, 0.82);
+  font-size: 24px;
+  line-height: 1;
+  touch-action: manipulation;
+}
+.pt-back[hidden] + .pt-title { margin-left: 44px; }
+.pt-icon:focus-visible, .pt-chip:focus-visible { outline: 1.5px solid rgba(190, 230, 232, 0.85); outline-offset: 2px; }
+.pt-title {
+  flex: 1;
+  margin: 0;
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(159, 196, 202, 0.72);
+  pointer-events: none !important;
+}
+.pt-line {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  top: calc(var(--pt-top) + 66px);
+  margin: 0;
+  text-align: center;
+  color: rgba(223, 239, 241, 0.74);
+  letter-spacing: 0.03em;
+  line-height: 1.4;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  pointer-events: none;
+}
+.pt-line.show { opacity: 1; }
+.pt-pick {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--pt-bottom) + 20px);
+  transform: translateX(-50%);
+  width: min(calc(100vw - 28px), 420px);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.pt-chip {
+  min-height: 48px;
+  padding: 10px 13px;
+  border-radius: 16px;
+  border: 1px solid rgba(223, 239, 241, 0.12);
+  background: rgba(8, 18, 22, 0.64);
+  color: #dfeff1;
+  text-align: left;
+  font: inherit;
+  touch-action: manipulation;
+  opacity: 0;
+  transform: translateY(8px);
+  animation: ptChip 0.42s ease forwards;
+  animation-delay: calc(var(--i, 0) * 45ms + 110ms);
+}
+.pt-chip:first-child { grid-column: 1 / -1; }
+.pt-chip:active { background: rgba(20, 38, 44, 0.8); }
+.pt-chip b { display: block; font-size: 14px; font-weight: 600; letter-spacing: 0.01em; }
+.pt-chip span { display: block; margin-top: 3px; font-size: 11.5px; line-height: 1.3; color: rgba(223, 239, 241, 0.56); }
+.pt-gentle .pt-chip { animation-duration: 0.6s; }
+.pt-note { grid-column: 1 / -1; margin: 0 0 8px; text-align: center; color: rgba(223, 239, 241, 0.7); line-height: 1.45; }
+@keyframes ptChip { to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .pt-chip { animation: none; opacity: 1; transform: none; } }
+/* short screens: the choices lose their descriptions so they never reach the Eye */
+@media (max-height: 640px) and (orientation: portrait) {
+  .pt-chip span { display: none; }
+  .pt-chip { min-height: 44px; padding: 9px 12px; }
+}
+/* landscape phones and wide folds: the choices stand to the right of the Eye */
+@media (orientation: landscape) and (max-height: 560px) {
+  .pt-pick {
+    left: auto;
+    right: max(14px, env(safe-area-inset-right, 0px));
+    top: calc(var(--pt-top) + 60px);
+    bottom: auto;
+    transform: none;
+    width: min(32vw, 280px);
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  .pt-chip { min-height: 44px; padding: 8px 12px; }
+  .pt-chip:first-child { grid-column: auto; }
+  .pt-chip span { display: none; }
+  .pt-line { top: auto; bottom: calc(var(--pt-bottom) + 14px); }
+}
+/* while Play is open the home rows step aside (as they do for the staring contest) */
+body:has(#eyesPlaytime) #homeApps,
+body:has(#eyesPlaytime) #dock,
+body:has(#eyesPlaytime) #home footer,
+body:has(#eyesPlaytime) #home header,
+body:has(#eyesPlaytime) #settingsOpen,
+body:has(#eyesPlaytime) #notice,
+body:has(#eyesPlaytime) #home #timeBlock,
+body:has(#eyesPlaytime) .weather-chip {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}

@@ -72,3 +72,30 @@
   top: auto;
   bottom: calc(100% + 1px);
 }
+
+/* 4.6.6: ability-wheel.js places each label (left/top/width inline) where the layout search put it */
+.ability-item .ability-label {
+  transform: translate(-50%, -50%);
+  text-align: center;
+  line-height: 13px;
+}
+.ability-item .ability-label.two-line {
+  white-space: normal;
+}
+/* 4.6.6: while the wheel is unfolded, the home rows behind it recede so six labels never collide with the
+   clock, the weather chip or the app rows on compact phones and in landscape. They return as it folds away. */
+#home #timeBlock,
+#home #homeApps,
+#home #dock,
+#home footer,
+#home .weather-chip {
+  transition: opacity 0.26s ease;
+}
+html[data-ability='wheel'] #home #timeBlock,
+html[data-ability='wheel'] #home #homeApps,
+html[data-ability='wheel'] #home #dock,
+html[data-ability='wheel'] #home footer,
+html[data-ability='wheel'] #home .weather-chip {
+  opacity: 0.12;
+  pointer-events: none;
+}

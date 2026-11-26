@@ -54,7 +54,7 @@
   // Safari may cancel a pointer when an overlay is hidden; never retain that touch.
   const isWebAbilityTouch = e => window.EYES_IOS_ABILITIES && (
     !!window.EyesAbility?.owner?.() ||
-    !!e.target?.closest?.('#abilitySatellite,#abilityWheel,#arcade,#pocket,#vision,#weather,#wxPlace,#eyesDock'));
+    !!e.target?.closest?.('#abilitySatellite,#abilityWheel,#arcade,#pocket,#vision,#weather,#wxPlace,#eyesDock,#eyesPlaytime,#eyesPlay,#eyesContact'));
   const clearHomePointer = () => { pointerActive = false; };
   addEventListener('pointerdown', e => { pointerActive = !isWebAbilityTouch(e); }, true);
   addEventListener('pointerup', clearHomePointer, true);
@@ -388,6 +388,7 @@
       model.gaze={x:mix(model.gaze.x,ab.gaze.x,ab.look),y:mix(model.gaze.y,ab.gaze.y,ab.look)};
       model.lift=mix(model.lift||0,0,n);
       if(ab.bodySx)p0.sx*=ab.bodySx;if(ab.bodySy)p0.sy*=ab.bodySy;if(ab.glow)p0.glow*=ab.glow;
+      if(ab.dx)p0.x+=ab.dx;if(ab.dy)p0.y+=ab.dy;if(ab.tilt)p0.tilt+=ab.tilt;
     }
     const diveHome = { x: w * 0.5, y: h * 0.49 },
       diveSize = Math.min(w * 0.235, 101, h * 0.125),
@@ -414,7 +415,7 @@
     const size =
         Math.min(w * 0.235, 101, h * 0.125) *
         (1 + focusAmount * 0.115) *
-        (1 + (liveAudio?.bass || 0) * 0.06),
+        (1 + (liveAudio?.bass || 0) * 0.06) * (ab && ab.scale ? ab.scale : 1),
       rx = mix(size, size * 1.18, m) * (1 + breathing * 0.014 + v.lift * 0.025),
       ry = mix(size * 1.055, size * 1.015, m) * (1 + breathing * 0.021 + v.lift * 0.035);
     ctx.clearRect(0, 0, w, h);
@@ -450,7 +451,7 @@
     // One renderer for every eye (eye-render.js): the home screen adds its music and skin layers.
     const drawn = HavenRender.paintEye(ctx, {
       cx, cy, size, rx, ry, pose: p, gaze: v.gaze, lids, t, music: m,
-      pupilScale: ab ? mix(pupilScale,ab.pupil,ab.k) : pupilScale,
+      pupilScale: (ab ? mix(pupilScale,ab.pupil,ab.k) : pupilScale) * (ab && ab.pupilK ? ab.pupilK : 1),
       pupilAlpha: ab ? 1-ab.lens : 1,
       light: v.light, breathing, sleepDim: v.eye?.sleep || 0, energy: v.energy,
       color: tintNow, material, own: ownColours, motion: core.motion, lowPower,
@@ -634,7 +635,7 @@
     syncIrisMode(screen(-size * 0.9, size * 0.9));
     if(window.EyesAbility)EyesAbility.frame(ctx,{
       t,cx,cy,size,rx:rx*p.sx,ry:ry*p.sy,pose:p,screen,drawn,w,h,
-      insets:{top:0,bottom:0},lids,
+      insets:safeAreaProbe(),lids,
       tint:(intensity,alpha)=>color(v,intensity,alpha),motion:core.motion,lowPower
     });
     if (v.music > 0.001 || !$('music').hidden) {
@@ -1389,6 +1390,24 @@
     if (window.EYES_WEB || tips.seen('inboxEdge')) return;
     tips.offer('inboxEdge', 'Swipe down from the top edge for notifications', { x: w * 0.5, y: inboxEdge() + 6 }, 'below');
   }
+  let safeProbe = null, safeCache = null, safeKey = '';
+  function safeAreaProbe() {
+    const key = innerWidth + 'x' + innerHeight;
+    if (safeCache && safeKey === key) return safeCache;
+    try {
+      if (!safeProbe) {
+        safeProbe = document.createElement('div');
+        safeProbe.setAttribute('aria-hidden', 'true');
+        safeProbe.style.cssText = 'position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;' +
+          'padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)';
+        document.body.appendChild(safeProbe);
+      }
+      const cs = getComputedStyle(safeProbe);
+      safeCache = { top: parseFloat(cs.paddingTop) || 0, right: parseFloat(cs.paddingRight) || 0, bottom: parseFloat(cs.paddingBottom) || 0, left: parseFloat(cs.paddingLeft) || 0 };
+    } catch { safeCache = { top: 0, right: 0, bottom: 0, left: 0 }; }
+    safeKey = key;
+    return safeCache;
+  }
   function goHome() {
     eyeDive.emerge(now());
     touchStart = null;
@@ -1830,7 +1849,7 @@
   document.addEventListener(
     'pointerdown',
     (e) => {
-      if (panel || appManager.overlayOpen() || appManager.dragActive()) return;
+      if (panel || appManager.overlayOpen() || appManager.dragActive() || e.target.closest?.('#eyesPlay,#eyesPlaytime')) return;
       const gesture = iris.begin(e);
       if (gesture && gesture !== 'reach') {
         touchStart = null;
@@ -1969,6 +1988,11 @@
           return '';
         }
       };
+    },
+    playtime(reason) {
+      if (!window.EyesAbility) return false;
+      if (panel) closePanel();
+      return EyesAbility.launch('play', reason || 'optic');
     },
     holdHome(on) {
       if(on&&window.EyesAbility)EyesAbility.interrupt('scene');
