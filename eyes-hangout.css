@@ -1,4 +1,4 @@
-/* EYES 4.5 · Hangout (was Mirror). Scoped under #eyesContact (.ec-hangout…, .eh-…) and #eyesHangoutCall.
+/* EYES 4.5.1 · Hangout (was Mirror). Scoped under #eyesContact (.ec-hangout…, .eh-…) and #eyesHangoutCall.
    No inline styles: CSP is style-src 'self'. */
 
 /* Hangout and Battle sit together under the signals */
@@ -20,6 +20,23 @@
   box-shadow: 0 0 6px rgba(var(--me, 111, 193, 202), 0.9); animation: eh-hop 2.6s ease-in-out infinite; }
 #eyesContact .ec-hangout-off .ec-hangout-g > i { animation: none; opacity: 0.4; }
 @keyframes eh-hop { 0%, 100% { transform: translate(-7px, 6px); } 25% { transform: translate(-2px, -1px); } 50% { transform: translate(7px, 6px); } 75% { transform: translate(2px, -1px); } }
+
+/* 4.5.1: "new" once, and "awake now" when their Eye was heard in the last 90 s */
+#eyesContact .ec-hangout small { font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(var(--me, 111, 193, 202), 0.95); margin-left: -2px; }
+#eyesContact .ec-hangout-new, #eyesContact .ec-hangout-awake { border-color: rgba(var(--me, 111, 193, 202), 0.6); animation: eh-call 2.8s ease-in-out infinite; }
+@keyframes eh-call { 0%, 100% { box-shadow: 0 0 14px rgba(var(--me, 111, 193, 202), 0.1); } 50% { box-shadow: 0 0 26px rgba(var(--me, 111, 193, 202), 0.38); } }
+@media (prefers-reduced-motion: reduce) { #eyesContact .ec-hangout-new, #eyesContact .ec-hangout-awake { animation: none; box-shadow: 0 0 20px rgba(var(--me, 111, 193, 202), 0.25); } }
+html[data-motion=off] #eyesContact .ec-hangout-new, html[data-motion=off] #eyesContact .ec-hangout-awake { animation: none; }
+
+/* goodbye and the sound switch side by side */
+#eyesContact .eh-row { display: flex; gap: 8px; align-items: center; justify-content: center; }
+#eyesContact .eh-snd { width: 40px; min-width: 40px; padding: 0; display: inline-grid; place-items: center; }
+#eyesContact .eh-snd svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+#eyesContact .eh-snd .spk { fill: currentColor; stroke: none; opacity: 0.9; }
+#eyesContact .eh-snd .off { display: none; }
+#eyesContact .eh-snd.eh-snd-off .on { display: none; }
+#eyesContact .eh-snd.eh-snd-off .off { display: inline; }
+#eyesContact .eh-snd.eh-snd-off { opacity: 0.6; }
 
 /* the effects layer (ball, fireflies) sits above the Eyes and never takes a touch */
 #eyesContact .eh-fx { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
@@ -54,3 +71,19 @@
 #eyesHangoutCall .ehc-time { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: rgba(var(--c, 145, 210, 213), 0.7); transform-origin: 0 50%; }
 @media (prefers-reduced-motion: reduce) { #eyesHangoutCall { animation: none; } #eyesHangoutCall .ehc-eye.ehc-hop { animation: none; } #eyesContact .ec-hangout-g > i { animation: none; } }
 html[data-motion=off] #eyesHangoutCall, html[data-motion=off] #eyesContact .ec-hangout-g > i { animation: none; }
+
+/* 4.7 · Hangout 2.0: three understated nudges under the Meeting Space (Play · Tease · Surprise) */
+#eyesContact .eh-nudge { display: flex; gap: 6px; justify-content: center; align-items: center; margin: 2px 0 2px; }
+#eyesContact .eh-n { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; min-width: 44px; padding: 0 13px 0 10px; border-radius: 999px;
+  background: transparent; border: 1px solid rgba(var(--me, 111, 193, 202), 0.18); color: rgba(228, 241, 243, 0.72); font: inherit; font-size: 12.5px; letter-spacing: 0.08em;
+  transition: opacity 0.35s, border-color 0.25s, background 0.2s, transform 0.15s; -webkit-tap-highlight-color: transparent; }
+#eyesContact .eh-n svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; opacity: 0.85; }
+#eyesContact .eh-n:active { transform: scale(0.95); background: rgba(var(--me, 111, 193, 202), 0.1); }
+#eyesContact .eh-nudge-off .eh-n { opacity: 0.38; border-color: rgba(228, 241, 243, 0.08); }
+#eyesContact .eh-n.eh-n-go { border-color: rgba(var(--me, 111, 193, 202), 0.55); box-shadow: 0 0 16px rgba(var(--me, 111, 193, 202), 0.22); }
+#eyesContact .eh-n.eh-n-no { animation: eh-no 0.32s ease-in-out; }
+@keyframes eh-no { 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+@media (max-width: 340px) { #eyesContact .eh-n span { display: none; } #eyesContact .eh-n { padding: 0 12px; } }
+@media (max-height: 460px) and (orientation: landscape) { #eyesContact .eh-nudge { margin: 0; } #eyesContact .eh-n { min-height: 40px; } #eyesContact .eh-tip { display: none; } }
+@media (prefers-reduced-motion: reduce) { #eyesContact .eh-n.eh-n-no { animation: none; } }
+html[data-motion=off] #eyesContact .eh-n.eh-n-no { animation: none; }

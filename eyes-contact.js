@@ -387,7 +387,7 @@
     if (!el) return;
     let L;
     if (mode === 'sky') L = layoutSky();
-    else if (mode === 'meet') L = layoutPair(focusKey, !!(ctrl && ctrl.layout));
+    else if (mode === 'meet') L = ctrl && ctrl.pairLayout ? ctrl.pairLayout(focusKey, bounds(), W, H) : layoutPair(focusKey, !!(ctrl && ctrl.layout));
     else L = layoutPair(focusKey || '__ghost', true);
     nodes.forEach((n, k) => {
       const p = L.get(k);
@@ -1041,7 +1041,8 @@
     if (!el || document.visibilityState !== 'visible') return;
     const t = ms / 1000;
     const busy = !!tween || fx.length > 0 || !!dragOrb || resK > 0.01 || [...nodes.values()].some((n) => n.forming) || !!(ctrl && ctrl.busy && ctrl.busy());
-    const step = motion === 'gentle' || !busy ? 1 / 30 : 1 / 60;
+    let calm = false; if (!busy && ctrl && ctrl.quiet) { try { calm = !!ctrl.quiet(); } catch (e) {} }
+    const step = calm ? 1 / 20 : motion === 'gentle' || !busy ? 1 / 30 : 1 / 60;
     if (t - lastDraw < step * 0.92) { raf = requestAnimationFrame(frame); return; }
     const dt = Math.min(0.05, lastDraw ? t - lastDraw : step);
     lastDraw = t;
