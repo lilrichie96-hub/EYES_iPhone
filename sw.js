@@ -1,13 +1,13 @@
 /* EYES for iPhone: offline after the first visit, and notifications from the EYES push relay.
    Eye Contact itself (ntfy.sh) and the relay are never cached. */
-const CACHE = 'eyes-web-2.6.1-recovery', NAMES = 'eyes-push-names';
-self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(["./","index.html","ability-wheel.js","ability-wheel.css","vision.js","vision.css","vision-qr.js","arcade.js","arcade.css","tunnelbug.js","tunnelbug-render.js","tunnelbug-audio.js","pocket.js","pocket.css","pocket-store.js","weather.js","weather.css","weather-data.js","weather-sky.js","eyes-ios-native-bridge.js","eyes-ios-pocket-backup.js","eyes-polish.js","eyes-polish.css","eyes-ios-tapfix.js","eyes-ios-tapfix.css","launcher.js","eye-render.js","eyes-hangout.js","eyes-hangout.css","eyes-contact.js","eyes-firebase.js","eyes-friends.js","eyes-visits.js"])).then(() => self.skipWaiting())); });
+const CACHE = 'eyes-web-2.6.2-wheel', NAMES = 'eyes-push-names';
+self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(["./","index.html","ability-wheel.js?v=262","ability-wheel.css","vision.js","vision.css","vision-qr.js","arcade.js","arcade.css","tunnelbug.js","tunnelbug-render.js","tunnelbug-audio.js","pocket.js","pocket.css","pocket-store.js","weather.js","weather.css","weather-data.js","weather-sky.js","eyes-ios-native-bridge.js","eyes-ios-pocket-backup.js","eyes-polish.js","eyes-polish.css","eyes-ios-tapfix.js","eyes-ios-tapfix.css","launcher.js","eye-render.js","eyes-hangout.js","eyes-hangout.css","eyes-contact.js","eyes-firebase.js","eyes-friends.js","eyes-visits.js"])).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE && k !== NAMES).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {
   const u = new URL(e.request.url);
   if (u.origin !== location.origin || e.request.method !== 'GET' || u.pathname.endsWith('/__names')) return;
   // network first so updates arrive; the cache is the fallback when offline
-  e.respondWith(fetch(e.request).then((r) => { const copy = r.clone(); caches.open(CACHE).then((c) => c.put(e.request, copy)); return r; }).catch(() => caches.match(e.request, { ignoreSearch: true })));
+  e.respondWith(fetch(e.request).then((r) => { if (!r.ok) throw Error('Network response unavailable'); const copy = r.clone(); caches.open(CACHE).then((c) => c.put(e.request, copy)); return r; }).catch(() => caches.open(CACHE).then(c => c.match(e.request, { ignoreSearch: !u.searchParams.has('v') })).then(r => r || Response.error())));
 });
 // a friend reached for you: { m: mailbox, k: kind } (names were left in the cache by the app)
 self.addEventListener('push', (e) => {

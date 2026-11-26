@@ -381,9 +381,13 @@
     const h = getHost();
     const blocked = !h ? 'nohost' : h.blocked();
     // a panel, scene, game or anything exclusive took over: put the wheel away at once
-    if (blocked && machine.state === 'WHEEL_OPEN') closeWheel('blocked', true);
+    // In iOS Safari pointerdown and click can span several paint frames. The host's
+    // transient 'touch' block must not retract a wheel under the user's finger.
+    // The capture listener still dismisses the wheel immediately for outside taps.
+    const wheelTouch = window.EYES_WEB && blocked === 'touch' && machine.state === 'WHEEL_OPEN';
+    if (blocked && !wheelTouch && machine.state === 'WHEEL_OPEN') closeWheel('blocked', true);
     const list = machine.owner ? [] : availableAbilities();
-    const showSat = !blocked && !machine.owner && list.length > 0;
+    const showSat = (!blocked || wheelTouch) && !machine.owner && list.length > 0;
     const u = wheelU(t);
     wheel.u = u;
     if (machine.state === 'WHEEL_OPEN' && wheel.items.length) layoutWheel(g);
