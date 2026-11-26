@@ -1,0 +1,33 @@
+name: iPhone 2.6.6 merge and regression
+on:
+  push:
+    branches: [hotfix/iphone-play-266]
+    paths: ['qa/iphone-266-input.zip','qa/merge-266.py','qa/iphone-play-266.cjs','.github/workflows/iphone-play-266.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Merge onto actual 2.6.3 source
+        run: python3 qa/merge-266.py
+      - run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps webkit chromium
+      - name: Existing real Arcade reopen regression and new Play tests
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/eyes-static.log 2>&1 &
+          node qa/iphone-reopen-263.cjs
+          node qa/iphone-play-266.cjs
+      - name: Commit only tested merge to candidate branch
+        run: |
+          git config user.name "EYES QA"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ability-wheel.js ability-wheel.css launcher.js eyes-play.js eyes-social.js eyes-playtime.js eyes-playtime.css index.html sw.js
+          git commit -m "Verified iPhone 2.6.6 Play and Eye Contact merge"
+          git push origin HEAD:hotfix/iphone-play-266
