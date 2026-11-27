@@ -186,7 +186,7 @@
     const s = S;
     send(f, ask).then((ok) => {
       if (S !== s || S.phase !== 'asking') return;
-      if (!ok) { Scene.askFailed(); return; }
+      if (!ok) { Scene.askFailed(F().duelProblem ? F().duelProblem(f) : null); return; }
       S.askedAt = Date.now();
       Scene.askSent(); Sfx.play('look');
       if (S.window === ASK2_MS) {
@@ -374,6 +374,8 @@
     S.result = { res, why };
     Scene.over(res, why);
     emit('end', { friend: S.f, result: res, why, rounds: S.state.r, mySpecial: RULES.SPECIAL[S.wMine], theirSpecial: RULES.SPECIAL[S.wTheirs] });
+    // 5.0: a real result (not a dropped connection) lingers in the Living Eye afterwards
+    if (res === 'win' || res === 'loss' || res === 'draw') { try { if (root.EyesFeel) EyesFeel.report('battle-' + res, { rounds: S.state.r }); } catch (e) {} }
   }
   function finish(returnTo) {
     clearTimers();
@@ -737,7 +739,7 @@
       if (S) S.phase = 'over';
       relaxAll();
     }
-    function askFailed() { outcome("Your challenge couldn't leave this phone.", 'Check your connection and try again.'); }
+    function askFailed(detail) { outcome("Your challenge couldn't leave this phone.", detail || 'Check your connection and try again.'); }
     function askTimeout() { outcome('No answer.', `${S.nmTheirs}'s Eye might be resting. Try again when they're awake.`); them.aGoal = 0.5; if (them.eye) them.eye.closeK = 0.5; }
     function declined(busy) {
       outcome(busy ? `${S.nmTheirs}'s Eye is busy with another duel.` : `${S.nmTheirs}'s Eye looked away.`, busy ? 'Try again in a minute.' : 'Not today. No hard feelings.');
@@ -752,7 +754,7 @@
       glare(me, them, 0.45, 2);
       tags();
     }
-    function answerFailed() { outcome("Your answer couldn't leave this phone.", 'Check your connection. Nothing was lost.'); }
+    function answerFailed() { outcome("Your answer couldn't leave this phone.", F() && F().duelProblem ? F().duelProblem(S && S.f) : 'Check your connection. Nothing was lost.'); }
     function intro(done) {
       them.word = S.wTheirs; me.word = S.wMine;
       them.aGoal = 1; if (them.eye) them.eye.closeK = 0;

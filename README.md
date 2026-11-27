@@ -1,3 +1,17 @@
+# EYES for iPhone · 3.0.0 RC1 · Security, Stability & Release Candidate
+
+**3.0.0 RC1** (pairs with Android EYES 5.0.0 build 129). Cache: `eyes-web-3.0.0-rc1`. Not deployed — upload when you're ready, keeping the live `eyes-config.js`, `icons/`, `manifest.webmanifest` and `.nojekyll`.
+
+- **Friendship history** (new): a friend's Meeting Space drawer → "Shared history". Kept only on this phone (`eyes.friendship.v1`), keyed by creature IDs, so renames don't affect it. Older friendships show "before this update" rather than an invented date.
+- **Messaging fix parity with Android build 126:**
+  - Eye Contact writes refresh an expired sign-in once and retry temporary failures at most 3 times.
+  - No retries while offline or after a permission refusal.
+  - Errors are clearer, and Meeting Space paces itself to the display (vsync).
+- **Offline:** every file the page loads is now precached on the first visit, so EYES opens offline even if you never visited a second time. Arcade cartridges were already precached under the exact URLs they load from.
+- **Slow networks no longer stall startup:** if a file takes longer than 4 s, the cached copy is served. For the next 30 s the cache answers first, so a weak signal or captive portal doesn't leave a blank screen. In a test where the server never replied, EYES started in 4.5 s; 2.9.0 has no such timeout.
+- **Updates arrive promptly:** the service worker revalidates with the server (`cache: 'no-cache'`) and installs with `cache: 'reload'`, so a fresh upload isn't hidden behind the HTTP cache.
+- **Storage keys unchanged;** `eyes.friendship.v1` is added. Tested upgrades from 2.8.0 and 2.9.0 in Chromium emulation (not Safari): DNA, friends, nicknames, Arcade records, exchange keys and Pocket items survive, and old caches are removed.
+
 # EYES for iPhone · 2.5.4 · Hangout
 
 **2.5.4 — Hangout:** Mirror is replaced by autonomous social visits with catch, fireflies, playful reactions, companionship and goodbye gestures. Compatible with Android EYES 4.5.0 build 113. This release retains the 2.5.3 Arcade touch/exit recovery, original Android ability ports, live configuration, and Eye Contact relay cooldown. Existing users should close and reopen EYES online; no reinstall or reset is required.

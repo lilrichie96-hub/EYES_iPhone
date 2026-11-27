@@ -59,3 +59,15 @@
 /* 3.1: where it came from, under its temperament */
 #awaken .borigin { text-align: center; color: rgba(223,239,241,0.5); font-size: 12px; font-style: italic; margin: -8px 0 14px; min-height: 1px; }
 #awaken .borigin:empty { display: none; }
+/* 5.0: Rename your Eye (eyes-rename.js): a small pencil beside the name on the Eye.D. card, and a simple editor */
+#awaken .bname-edit { display: block; margin: 4px auto 0; width: 36px; height: 36px; padding: 8px; border-radius: 50%; border: 1px solid rgba(220, 240, 245, 0.18); background: rgba(255, 255, 255, 0.04); color: rgba(220, 240, 245, 0.72); }
+#awaken .bname-edit[hidden] { display: none; }
+#awaken .bname-edit svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; }
+#awaken .bname-edit:focus-visible { outline: 1.5px solid rgba(220, 240, 245, 0.8); outline-offset: 2px; }
+#awaken .bname[hidden] { display: none; }
+#awaken .bname-editor { display: flex; flex-direction: column; align-items: center; gap: 6px; margin: 2px 0 4px; }
+#awaken .bname-editor input { width: min(240px, 70vw); font: inherit; font-size: 22px; font-weight: 300; text-align: center; color: #eef8fa; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(220, 240, 245, 0.28); border-radius: 12px; padding: 6px 10px; }
+#awaken .bname-editor input:focus { outline: none; border-color: rgba(220, 240, 245, 0.7); }
+#awaken .bname-msg { margin: 0; min-height: 1.2em; font-size: 12px; color: #ffb3a6; text-align: center; }
+#awaken .bname-row { display: flex; gap: 8px; }
+#awaken .bname-row button { min-width: 88px; min-height: 40px; }

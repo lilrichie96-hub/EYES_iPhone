@@ -129,11 +129,11 @@
   // ---------- scene state ----------
   let el = null, sky = null, sx = null, stageEl = null, ui = null;
   let W = 0, H = 0, dpr = 1, mode = 'sky', focusKey = null, motion = 'on';
-  let raf = 0, lastT = 0, lastDraw = 0, tween = null, staticSky = null, resK = 0, dragOrb = null;
+  let raf = 0, lastT = 0, lastDraw = 0, lastTs = 0, vsync = 1 / 60, tween = null, staticSky = null, resK = 0, dragOrb = null;
   let timers = [], fx = [], parts = [], motes = [], twinkles = [], nodes = new Map(), myColor = [111, 193, 202];
   let pendingInvite = null, joinCode = '', joinedKey = null, liveText = '', toastT = 0, missedPlayed = new Set();
   let ctrl = null;                     // 4.4: an interaction that drives the Meeting Space for a while (Mirror)
-  const detach = (why) => { const c = ctrl; ctrl = null; nodes.forEach((n) => { n.mx = n.my = n.rot = n.sq = 0; n.ms = 1; }); if (c && c.onClose) { try { c.onClose(why); } catch (e) { console.error(e); } } };
+  const detach = (why) => { const c = ctrl; ctrl = null; nodes.forEach((n) => { n.mx = n.my = n.rot = n.sq = 0; n.ms = 1; n.el.style.clipPath = ''; }); if (c && c.onClose) { try { c.onClose(why); } catch (e) { console.error(e); } } };
   const later = (fn, ms) => { const id = setTimeout(() => { timers = timers.filter((x) => x !== id); if (el) fn(); }, ms); timers.push(id); return id; };
 
   function eyeColor(dna) { try { return D().mapColor(111, 193, 202, dna); } catch (e) { return [111, 193, 202]; } }
@@ -548,12 +548,14 @@
     else if (st.id === 'unsure') note = `<p class="ec-hint">Can't tell if ${esc(nameOf(n.b))}'s Eye is open. If it isn't, signals wait up to 12 hours.</p>`;
     else if (st.id === 'linked') note = `<p class="ec-hint">Signals travel through your first Eye Contact.</p>`;
     p.innerHTML = `${note}<div class="ec-sigs" role="group" aria-label="Signals">${sigs.map(([k, d]) => `<button type="button" class="ec-sig ec-sig-${k}" data-sig="${k}" aria-label="Send a ${esc(d.label)}: ${esc(d.hint)}"><span class="ec-orb" aria-hidden="true"><i class="ec-g ec-g-${k}"></i></span><b>${esc(d.label)}</b><small>${esc(d.hint)}</small></button>`).join('')}</div>
-      <p class="ec-hint ec-gesture">${motion === 'off' ? 'Tap to send' : 'Tap to send, or drag one to their Eye'}</p><div class="ec-together"><div class="ec-hangout-slot"></div><div class="ec-duel-slot"></div></div>`;
+      <p class="ec-hint ec-gesture">${motion === 'off' ? 'Tap to send' : 'Tap to send, or drag one to their Eye'}</p><div class="ec-together"><div class="ec-hangout-slot"></div><div class="ec-duel-slot"></div><div class="ec-trade-slot"></div></div>`;
     p.querySelectorAll('[data-sig]').forEach((b) => bindSig(b, b.dataset.sig));
     // 4.2 Battle Lite (eyes-duel.js): a small Battle button, only live for friends whose EYES understands duels
     if (root.EyesDuel && EyesDuel.slot) { try { EyesDuel.slot(p.querySelector('.ec-duel-slot'), n.b, { say }); } catch (e) { console.error(e); } }
     // 4.5 Hangout (eyes-hangout.js, was Mirror): only offered to an Eye that advertised it (or a muted button that says why)
     if (root.EyesHangout && EyesHangout.slot) { try { EyesHangout.slot(p.querySelector('.ec-hangout-slot'), n.b, { say }); } catch (e) { console.error(e); } }
+    // 4.9 Eye Exchange (eyes-exchange.js): trade Eyes with this friend, permanently, after both of you look
+    if (root.EyesExchange && EyesExchange.slot) { try { EyesExchange.slot(p.querySelector('.ec-trade-slot'), n.b, { say }); } catch (e) { console.error(e); } }
     const a = p.querySelector('[data-a]');
     if (a) a.onclick = () => {
       if (a.dataset.a === 'retry') { F().refreshProfile(n.b.f); say('Asking their Eye to introduce itself…'); a.disabled = true; later(() => { a.disabled = false; }, 20000); later(() => { if (!n.b.f.profile) say('Still nothing. Ask them to open EYES too. It arrives as soon as both phones are open.'); }, 26000); }
@@ -593,6 +595,7 @@
       ['Battles', upgradeText(b)]
     ].filter((x) => x[1]);
     box.insertAdjacentHTML('beforeend', `<h3>${esc(nameOf(b))}</h3><dl class="ec-facts">${facts.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>`);
+    if (root.EyesFriendship) EyesFriendship.renderInto(box, b.native ? 'native' : b.f);   // 5.0: shared history (local, by creature id)
     if (b.native) {
       box.insertAdjacentHTML('beforeend', '<div class="ec-actions"><button type="button" class="ec-btn" data-a="manage">Manage this link</button></div>');
       box.querySelector('[data-a=manage]').onclick = manageNative;
@@ -652,6 +655,7 @@
         <dt><i class="ec-g ec-g-pulse" aria-hidden="true"></i>Pulse</dt><dd>A warm little beat for their Eye. Answer their Pulse with one of your own within about half a minute, while you\u2019re both in EYES, and your Eyes resonate.</dd>
         <dt><i class="ec-g ec-g-spark" aria-hidden="true"></i>Spark</dt><dd>A bright, playful flash.</dd>
         <dt><i class="ec-g ec-g-calm" aria-hidden="true"></i>Calm</dt><dd>A slow, gentle tide.</dd>
+        ${root.EyesExchange ? '<dt>Trade Eyes</dt><dd>Offer your Eye for theirs. Both of you see both Eyes first, and nothing happens until you both confirm. The trade is permanent: each Eye goes to live with its new person, with its name, looks, personality and journal, until you both choose to trade again.</dd>' : ''}
         ${hangout ? '<dt>Hangout</dt><dd>Invite their Eye over to hang out. They play catch, chase fireflies, goof around or just keep each other company, for as long as you both like. Both of you need EYES open, and they choose whether to join.</dd>' : ''}
         ${battle ? '<dt>Battle</dt><dd>A short, friendly staring duel. Nothing about either Eye changes.</dd>' : ''}
       </dl>
@@ -1043,7 +1047,11 @@
     const busy = !!tween || fx.length > 0 || !!dragOrb || resK > 0.01 || [...nodes.values()].some((n) => n.forming) || !!(ctrl && ctrl.busy && ctrl.busy());
     let calm = false; if (!busy && ctrl && ctrl.quiet) { try { calm = !!ctrl.quiet(); } catch (e) {} }
     const step = calm ? 1 / 20 : motion === 'gentle' || !busy ? 1 / 30 : 1 / 60;
-    if (t - lastDraw < step * 0.92) { raf = requestAnimationFrame(frame); return; }
+    // 4.5.1 (ported to iPhone in 3.0.0 RC): draw on every n-th display refresh, evenly spaced on 60/90/120 Hz screens
+    const gap = t - lastTs; lastTs = t;
+    if (gap > 0.004 && gap < 0.045) vsync += (Math.min(gap, 0.034) - vsync) * 0.08;
+    const every = Math.max(1, Math.round(step / vsync)) * vsync;
+    if (t - lastDraw < every - vsync * 0.5) { raf = requestAnimationFrame(frame); return; }
     const dt = Math.min(0.05, lastDraw ? t - lastDraw : step);
     lastDraw = t;
     const tt = now();
@@ -1340,7 +1348,9 @@
     guide: () => { if (el) showGuide(true); },
     // 4.4: for interactions that happen inside the Meeting Space (Hangout, formerly Mirror)
     attach(c) { if (!el || mode !== 'meet' || !c) return false; if (ctrl && ctrl !== c) detach('replaced'); ctrl = c; hideGuide(); relayout(); renderPanel(); kick(); return true; },
-    detach(c) { if (c && ctrl !== c) return; if (!ctrl) return; ctrl = null; nodes.forEach((n) => { n.mx = n.my = n.rot = n.sq = 0; n.ms = 1; }); if (el) { relayout(); renderPanel(); resetControllers(); kick(); } },
+    detach(c) { if (c && ctrl !== c) return; if (!ctrl) return; ctrl = null; nodes.forEach((n) => { n.mx = n.my = n.rot = n.sq = 0; n.ms = 1; n.el.style.clipPath = ''; }); if (el) { relayout(); renderPanel(); resetControllers(); kick(); } },
+    bounds: () => (el ? bounds() : null),            // 4.5.1: Hangout's own layout
+    scale: (n) => (n && n.base ? (n.size / n.base) * (n.ms || 1) : 1),
     focus: () => (el && mode === 'meet' ? focusKey : null),
     node: (key) => nodes.get(key) || null,
     panelRefresh: () => { if (el) renderPanel(); },

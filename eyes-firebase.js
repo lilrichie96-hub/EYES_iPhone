@@ -13,7 +13,11 @@
     const timeout = setTimeout(() => controller.abort(), 15000);
     try {
       const response = await fetch(url, { ...options, signal: controller.signal, cache: 'no-store' });
-      if (!response.ok) throw error('Eye Contact service returned ' + response.status, response.status);
+      if (!response.ok) {
+        let detail = '';
+        try { const body = await response.json(); detail = body.error?.message || body.error || ''; } catch (_) {}
+        throw error('Eye Contact service returned ' + response.status + (detail ? ': ' + String(detail).slice(0, 80) : ''), response.status);
+      }
       return await response.json();
     } finally { clearTimeout(timeout); }
   }
@@ -33,6 +37,9 @@
     identity = { uid, token, until: Date.now() + Number(data.expires_in || data.expiresIn || 3600) * 1000 };
     return identity;
   }
+  // A rejected access token may be refreshed without changing the device UID.
+  // Never silently create a replacement anonymous account: doing so loses room ownership.
+  function invalidateAccessToken() { identity = null; }
   function session() {
     if (identity && identity.until > Date.now() + 120000) return Promise.resolve(identity);
     if (!pendingAuth) pendingAuth = authenticate().finally(() => { pendingAuth = null; });
@@ -46,10 +53,29 @@
     let claimed = null, claiming = null;
     const endpoint = (path, user) => base + path + '.json?auth=' + encodeURIComponent(user.token);
     const put = (path, user, value) => request(endpoint(path, user), { method: 'PUT', body: JSON.stringify(value) });
+    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+    async function writeWithRecovery(path, value, suppliedUser) {
+      let user = suppliedUser;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try { await put(path, user, value); return user; }
+        catch (e) {
+          if (e.status === 401 && attempt === 0) {
+            invalidateAccessToken();
+            user = await session();
+            continue;
+          }
+          // 403 means a rules/ownership problem, not a connectivity problem.
+          if (e.status === 403 || (e.status >= 400 && e.status < 500 && e.status !== 408 && e.status !== 429)) throw e;
+          if (attempt === 2 || navigator.onLine === false) throw e;
+          await delay(350 * (attempt + 1));
+        }
+      }
+      return user;
+    }
     async function ready() {
       const user = await session();
       if (claimed !== user.uid) {
-        if (!claiming) claiming = put(side, user, user.uid).then(() => { claimed = user.uid; }).finally(() => { claiming = null; });
+        if (!claiming) claiming = writeWithRecovery(side, user.uid, user).then((current) => { claimed = current.uid; }).finally(() => { claiming = null; });
         await claiming;
       }
       return user;
@@ -61,7 +87,7 @@
       const key = 'fray.firebase.slot.' + room + '.' + side;
       const slot = (Number(localStorage.getItem(key) || 0) + 1) % 64;
       localStorage.setItem(key, String(slot));
-      await put('mail/' + side + '/' + slot, user, { id: nonce, body: payload, at: { '.sv': 'timestamp' } });
+      await writeWithRecovery('mail/' + side + '/' + slot, { id: nonce, body: payload, at: { '.sv': 'timestamp' } }, user);
     }
     async function listen(signal, onReady, onMessage) {
       const user = await ready();
@@ -79,7 +105,7 @@
         signal.addEventListener('abort', stop, { once: true });
         source.onerror = () => finish(error('Connection interrupted', 0));
         source.addEventListener('cancel', () => finish(error('Room access denied', 403)));
-        source.addEventListener('auth_revoked', () => { if (identity === user) identity = null; finish(error('Device sign-in expired', 401)); });
+        source.addEventListener('auth_revoked', () => { if (identity === user) invalidateAccessToken(); finish(error('Device sign-in expired', 401)); });
         function receive(event) {
           chain = chain.then(async () => {
             if (closed) return;
@@ -98,5 +124,6 @@
     }
     return { publish, listen, ready };
   }
-  root.EyesFirebase = { channel };
+  // 4.9 Eye Exchange uses the same project and the same anonymous device session
+  root.EyesFirebase = { channel, session, project };
 })(window);

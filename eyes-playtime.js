@@ -1,6 +1,9 @@
 /* EYES 4.6.6 · Eye Contact and Play on the Ability Satellite. Shared by Android and iPhone.
-   Loads after ability-wheel.js and weather.js, so the wheel reads: Vision, Arcade, Pocket Dimension, Weather,
-   Eye Contact, Play.
+   Loads after ability-wheel.js and weather.js. Since 5.0 the wheel's order is declared in ability-wheel.js:
+   Vision, Weather, Pocket Dimension, Arcade, Eye Contact, Play.
+   5.0: Surprise me lets the Eye choose an activity (temperament, mood, time of day, what it just did), with a
+   short visible decision first; every activity stays one tap away. When Play closes, what you did together
+   lingers in the Living Eye (EyesFeel: 'play', or 'company' after mostly Company). Nothing new is stored.
 
    Eye Contact  The satellite opens the complete existing Eye Contact scene (eyes-contact.js), exactly as The
                 Optic and the iPhone dock do. Nothing about friendships, battles, visits, Hangouts or invites is
@@ -98,6 +101,80 @@
     { id: 'company', title: 'Company', sub: 'Nothing to do. Just spend some time together.' }
   ];
   let S = null;            // the running Play session, null when Play doesn't own the iris
+  const recentActs = [];   // 5.0: the last few activities (this run of EYES only), so Surprise me doesn't repeat itself
+
+  // ---------- 5.0: Surprise me ----------
+  function livingEmotion() { try { return (root.EyesLiving && EyesLiving.emotion && EyesLiving.emotion()) || 'content'; } catch (e) { return 'content'; } }
+  function surpriseWeights() {
+    const T = temper(), emo = livingEmotion(), hour = new Date().getHours(), night = hour >= 22 || hour < 6;
+    const w = {
+      stare: (0.35 + 0.6 * T.grump + 0.3 * T.drama) * 0.6,            // it leaves Play for the home screen, so a little rarer
+      firefly: 0.5 + 0.8 * T.curiosity + 0.3 * T.energy,
+      catch: 0.4 + 1.0 * T.energy,
+      peekaboo: 0.3 + 0.7 * T.shyness + 0.3 * (1 - T.grump),
+      company: 0.3 + 0.8 * (1 - T.energy)
+    };
+    const boost = {
+      playful: { catch: 1.5, firefly: 1.2 }, excited: { catch: 1.5, firefly: 1.3, company: 0.6 }, sleepy: { company: 2.2, catch: 0.5, firefly: 0.8 },
+      curious: { firefly: 1.5, peekaboo: 1.1 }, mischievous: { peekaboo: 1.6, stare: 1.3 }, shy: { peekaboo: 1.4, company: 1.2, stare: 0.7 },
+      bored: { catch: 1.3, firefly: 1.2, company: 0.6 }, content: { company: 1.3 }, thoughtful: { company: 1.3, stare: 0.8 }
+    }[emo] || {};
+    for (const k in boost) w[k] *= boost[k];
+    if (night) { w.company *= 1.5; w.catch *= 0.7; }
+    // what it just did is the least likely; the one before that, less likely
+    const n = recentActs.length;
+    if (n) w[recentActs[n - 1]] *= 0;
+    if (n > 1) w[recentActs[n - 2]] *= 0.35;
+    if (n > 2) w[recentActs[n - 3]] *= 0.6;
+    return w;
+  }
+  function surprisePick() {
+    const w = surpriseWeights(), ids = Object.keys(w).filter((k) => w[k] > 0);
+    if (!ids.length) return ACTS[0].id;
+    let r = Math.random() * ids.reduce((a, k) => a + w[k], 0);
+    for (const k of ids) if ((r -= w[k]) <= 0) return k;
+    return ids[ids.length - 1];
+  }
+  function rememberAct(id) { recentActs.push(id); while (recentActs.length > 4) recentActs.shift(); }
+  function cancelSurprise() {
+    if (!S || !S.surprise) return;
+    S.surprise = null;
+    if (S.el) { S.el.classList.remove('pt-choosing'); S.el.querySelectorAll('.pt-chip.pt-chosen, .pt-chip.pt-considered').forEach((b) => b.classList.remove('pt-chosen', 'pt-considered')); }
+  }
+  // the Eye decides where you can see it: it glances over a couple of choices, settles on one, perks up, goes
+  function surprise() {
+    if (!S || S.closing || !S.motion || S.act || S.surprise) return;
+    const pick = surprisePick(), tok = {};
+    S.surprise = tok;
+    const chips = [...S.el.querySelectorAll('.pt-chip[data-act]')].filter((b) => b.dataset.act !== 'surprise');
+    const target = chips.find((b) => b.dataset.act === pick);
+    const others = chips.filter((b) => b !== target).sort(() => Math.random() - 0.5).slice(0, 2);
+    const k = S.gentle ? 1.3 : 1, B = S.B;
+    S.el.classList.add('pt-choosing');
+    const look = (b, cls) => {
+      if (!S || S.surprise !== tok || !b) return;
+      S.el.querySelectorAll('.pt-considered').forEach((x) => x.classList.remove('pt-considered'));
+      if (cls) b.classList.add(cls);
+      if (S.g) { const r = b.getBoundingClientRect(); gazeAt(B, S.g, r.left + r.width / 2, r.top + r.height / 2, 1); }
+    };
+    // thinking: the pupil narrows a little while it weighs them
+    B.pupil.to = 0.9; B.tilt.to = 0.05 * (Math.random() < 0.5 ? -1 : 1);
+    let at = 120 * k;
+    for (const b of others) { later(() => look(b, 'pt-considered'), at); at += 260 * k; }
+    later(() => {
+      if (!S || S.surprise !== tok) return;
+      look(target, 'pt-chosen');
+      B.tilt.to = 0; B.pupil.to = 1.28; B.glow.to = 1.14; B.sq.vel += 2.4 * ampK();
+      react('anticipate');
+    }, at);
+    later(() => {
+      if (!S || S.surprise !== tok) return;
+      S.surprise = null;
+      S.el.classList.remove('pt-choosing');
+      choose(pick, 'surprise');
+    }, at + 560 * k);
+    S.api.redraw();
+  }
 
   // ---------- the body: a few springs that become the pose launcher.js applies ----------
   function makeBody() {
@@ -777,24 +854,40 @@
       pick.innerHTML = '<p class="pt-note">Play needs motion to come alive. You can turn Motion on in The Optic.</p>';
       return;
     }
-    pick.innerHTML = ACTS.map((a, i) => `<button type="button" class="pt-chip" role="menuitem" data-act="${a.id}"><b>${a.title}</b><span>${a.sub}</span></button>`).join('');
+    pick.innerHTML = ACTS.map((a, i) => `<button type="button" class="pt-chip" role="menuitem" data-act="${a.id}"><b>${a.title}</b><span>${a.sub}</span></button>`).join('') +
+      '<button type="button" class="pt-chip pt-surprise" role="menuitem" data-act="surprise"><b>Surprise me</b><span>Let your Eye choose.</span></button>';
     pick.querySelectorAll('.pt-chip').forEach((b, i) => {
       b.style.setProperty('--i', String(i));     // set through the CSSOM: the page's CSP forbids inline style attributes
-      b.addEventListener('click', (e) => { e.stopPropagation(); choose(b.dataset.act); });
+      b.addEventListener('click', (e) => { e.stopPropagation(); if (b.dataset.act === 'surprise') surprise(); else { cancelSurprise(); choose(b.dataset.act); } });
       b.addEventListener('pointerenter', () => { if (S && S.g) { const r = b.getBoundingClientRect(); gazeAt(S.B, S.g, r.left + r.width / 2, r.top + r.height / 2, 1); } });
       b.addEventListener('focus', () => { if (S && S.g) { const r = b.getBoundingClientRect(); gazeAt(S.B, S.g, r.left + r.width / 2, r.top + r.height / 2, 1); } });
     });
     pick.hidden = false;
+    fitPicker();
     if (S.api.keyboard && S.api.keyboard()) setTimeout(() => { const f = pick.querySelector('.pt-chip'); if (f) f.focus({ preventScroll: true }); }, 60);
   }
-  function choose(id) {
+  // 5.0: the choices must never cover the Eye. If they would (short or narrow screens, large text), they go
+  // compact: no descriptions, three rows of two, Surprise me in the last cell.
+  function fitPicker() {
+    if (!S || !S.el) return;
+    const pick = S.el.querySelector('.pt-pick');
+    if (!pick || pick.hidden) return;
+    S.el.classList.remove('pt-compact');
+    const g = S.g, cx = g ? g.cx : innerWidth / 2, cy = g ? g.cy : innerHeight * 0.49, size = g ? g.size : Math.min(innerWidth * 0.235, 101, innerHeight * 0.125);
+    const r = pick.getBoundingClientRect(), reach = size * 1.15 + 8;
+    const covers = (rr) => rr.top < cy + reach && rr.bottom > cy - reach && rr.left < cx + reach && rr.right > cx - reach;
+    if (covers(r)) S.el.classList.add('pt-compact');
+  }
+  function choose(id, via) {
     if (!S || S.closing || !S.motion) return;
+    if (S.surprise && via !== 'surprise') cancelSurprise();
+    if (ACTS.some((a) => a.id === id)) rememberAct(id);
     if (id === 'stare') return startStare();
     const make = { firefly: Firefly, catch: Catch, peekaboo: Peekaboo, company: Company }[id];
     if (!make) return;
     if (S.api.state() === 'PLAY_PICK' && !S.api.go('PLAY_ACTIVE', id)) return;
     resetBody();
-    S.actId = id; S.act = make();
+    S.actId = id; S.act = make(); S.actAt = ms();
     S.el.dataset.mode = id;
     S.el.querySelector('.pt-pick').hidden = true;
     S.el.querySelector('.pt-back').hidden = false;
@@ -808,9 +901,16 @@
     for (const k of ['dx', 'dy', 'sq', 'tilt', 'lid']) B[k].to = 0;
     B.scale.to = 1; B.pupil.to = 1; B.glow.to = 1; B.breathAmp = 0.008; B.breathPeriod = 4200; S.baseLid = 0;
   }
+  function settleTime() {   // 5.0: how long each activity was really played this session
+    if (!S || !S.actId || !S.actAt) return;
+    S.played = S.played || {};
+    S.played[S.actId] = (S.played[S.actId] || 0) + (ms() - S.actAt);
+    S.actAt = 0;
+  }
   function backToPicker() {
     if (!S || !S.act) return false;
     endPointer();
+    settleTime();
     S.act = null; S.actId = null; S.pendingEnter = false;
     S.api.go('PLAY_PICK', 'back');
     resetBody();
@@ -885,8 +985,12 @@
   }
   function teardown(why) {
     if (!S) return;
+    settleTime();
     const s = S;
     S = null;
+    // 5.0: what you did together lingers once the home screen is the Eye's again
+    const played = s.played || {}, total = Object.values(played).reduce((a, b) => a + b, 0), comp = played.company || 0;
+    if (total >= 12000) { try { if (root.EyesFeel) EyesFeel.report(comp >= 20000 && comp >= total * 0.6 ? 'company' : 'play', { seconds: Math.round(total / 1000), acts: Object.keys(played) }); } catch (e) {} }
     if (s.pointer != null) { try { s.el && s.el.releasePointerCapture(s.pointer); } catch (e) {} }
     s.timers.forEach(clearTimeout); s.timers.clear();
     clearTimeout(s.lineT);
@@ -901,7 +1005,7 @@
     if (S.g) {
       if (S.pendingEnter && S.act) { S.pendingEnter = false; try { S.act.enter(S.g); } catch (e) { console.error(e); } }
       if (S.act && !S.closing) { try { S.act.step(dt, S.g); } catch (e) { console.error(e); backToPicker(); } }
-      else if (!S.act && !S.closing && S.motion) {
+      else if (!S.act && !S.closing && S.motion && !S.surprise) {
         // in the picker it keeps glancing between the choices and you
         if (!S.nextGlance || t > S.nextGlance) { S.nextGlance = t + rnd(1400, 2600); if (Math.random() < 0.45) { S.B.tgx = 0; S.B.tgy = 0.1; } else { S.B.tgx = rnd(-0.6, 0.6); S.B.tgy = 0.6; } }
       }
@@ -979,7 +1083,7 @@
   }
   register();
   addEventListener('blur', () => { if (S) endPointer(); });
-  addEventListener('resize', () => { if (S && S.act && S.actId === 'peekaboo') backToPicker(); });
+  addEventListener('resize', () => { if (S && S.act && S.actId === 'peekaboo') backToPicker(); else if (S && !S.act) fitPicker(); });
 
   root.EyesPlaytime = {
     open: (reason) => (root.Haven && Haven.playtime ? Haven.playtime(reason) : root.EyesAbility ? EyesAbility.launch('play', reason || 'api') : false),
@@ -987,7 +1091,9 @@
     choose: (id) => choose(id),
     back: () => playBack(),
     close: () => beginClose('api'),
-    diagnostics: () => (S ? { mode: S.actId || 'pick', closing: !!S.closing, pointer: S.pointer, overlay: !!(S.el && S.el.isConnected), timers: S.timers.size, gentle: S.gentle, motion: S.motion } : { mode: null, overlay: !!document.getElementById('eyesPlaytime') }),
+    surprise: () => surprise(),
+    _surprise: { weights: () => surpriseWeights(), pick: () => surprisePick(), recent: () => recentActs.slice(), choosing: () => !!(S && S.surprise) },
+    diagnostics: () => (S ? { mode: S.actId || 'pick', closing: !!S.closing, played: { ...(S.played || {}) }, pointer: S.pointer, overlay: !!(S.el && S.el.isConnected), timers: S.timers.size, gentle: S.gentle, motion: S.motion } : { mode: null, overlay: !!document.getElementById('eyesPlaytime') }),
     activities: () => ACTS.map((a) => a.id),
     // read-only test hooks
     _body: () => (S ? { dx: S.B.dx.v, dy: S.B.dy.v, gx: S.B.gx, gy: S.B.gy, lid: S.B.lid.v, glow: S.B.glow.v, scale: S.B.scale.v, sq: S.B.sq.v } : null),

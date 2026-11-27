@@ -1,4 +1,6 @@
 /* EYES 4.4.3 · The Ability Satellite and Ability Wheel.
+   5.0: the order is declared (Vision, Weather, Pocket, Arcade, Eye Contact, Play: practical, then play and
+   friends), and holding an ability plays a short living preview of it on the Eye (nothing of it starts).
    4.4.6: Weather (weather.js) is the fourth ability. Two small additions for it: launch(id) opens an ability
    directly (the home-screen temperature opens Weather), and ambient painters may add a brief, event-timed
    touch to the idle Eye (weather moments); they ask for frames only while something is showing.
@@ -246,6 +248,7 @@
   function closeWheel(reason, instant) {
     const t = ms();
     if (machine.state !== 'WHEEL_OPEN') return false;
+    clearHold(); dropPreview();
     wheel.from = instant ? 0 : wheelU(t); wheel.open = false; wheel.at = t; wheel.lastToggle = t;
     wheel.dur = instant || !motion() ? 0 : gentle() ? 160 : 260;
     go('IDLE', reason);
@@ -254,6 +257,7 @@
   }
   function select(ability) {
     if (machine.state !== 'WHEEL_OPEN' || !wheel.open) return; // accept the first real tap, even while icons finish unfolding
+    clearHold(); dropPreview();
     // the wheel retracts while the ability's transformation begins
     const t = ms();
     wheel.from = wheelU(t); wheel.open = false; wheel.at = t; wheel.lastToggle = t;
@@ -293,6 +297,7 @@
     go('SAFE_CLEANUP', reason);
     if (owner) { try { owner.interrupt && owner.interrupt('cleanup'); } catch {} }
     machine.owner = null;
+    clearHold(); dropPreview();
     wheel.open = false; wheel.u = 0; wheel.from = 0;
     if(window.EYES_IOS_ABILITIES){getHost()?.resetInput?.();wheel.dur=0;wheel.lastToggle=0;}
     go('IDLE', reason);
@@ -361,7 +366,12 @@
       label.textContent = it.ability.label;
       b.append(label);
       it.labelEl = label;
-      b.addEventListener('click', (e) => { e.stopPropagation(); select(it.ability); });
+      // 5.0: a normal tap opens the ability at once; a deliberate hold previews it and never opens it
+      b.addEventListener('pointerdown', (e) => holdDown(e, it));
+      b.addEventListener('pointermove', (e) => holdMove(e, it));
+      for (const ty of ['pointerup', 'pointercancel', 'pointerleave']) b.addEventListener(ty, (e) => holdUp(e, it));
+      b.addEventListener('contextmenu', (e) => e.preventDefault());
+      b.addEventListener('click', (e) => { e.stopPropagation(); if (it.held) { it.held = false; return; } select(it.ability); });
       it.button = b;
       menu.append(b);
     });
@@ -413,6 +423,241 @@
     sat.setAttribute('aria-expanded', String(open));
     menu.hidden = !open;
     catcher.hidden = !open;
+  }
+
+  // ---------- 5.0: living previews ----------
+  // Hold an ability on the wheel (HOLD_MS without moving) and the Eye shows a small taste of what it is:
+  // Vision focuses and scans, Weather grows a tiny atmosphere, Pocket opens into depth, Arcade sparkles in
+  // pixels, Eye Contact looks expectantly at the satellite, Play hops. Nothing of the ability runs: no
+  // activate(), no camera, no network, no game engine. It is painted here and handed to launcher.js as a pose
+  // (the same channel an ability uses), it lasts about a second, a release fades it in 0.2 s, and a normal
+  // tap still opens the ability at once. One preview at a time; no timers or listeners outlive the wheel.
+  const HOLD_MS = 420, SLOP = 14;
+  const PREVIEW_DUR = { vision: 1300, weather: 1500, pocket: 1350, arcade: 1200, contact: 1250, play: 1150 };
+  const PV = { id: null, item: null, at: 0, dur: 0, rel: 0, relFrom: 1, wx: null, seed: 0, count: 0, cancelled: 0, byId: {} };
+  const hold = { it: null, id: null, x: 0, y: 0, timer: 0 };
+  function currentSky() {
+    // the cached forecast only (a localStorage read); a preview never asks the network
+    try {
+      const WD = window.EyesWeatherData, v = WD && WD.nowView && WD.nowView(WD.readCache());
+      if (v && v.available && v.cond && v.age < 6 * 3600e3) return { kind: String(v.cond.kind || ''), night: !!v.cond.night };
+    } catch {}
+    return null;
+  }
+  function startPreview(it) {
+    if (!motion() || machine.state !== 'WHEEL_OPEN' || !wheel.open || machine.owner) return false;
+    const id = it.ability.id;
+    if (!PREVIEW_DUR[id]) return false;
+    dropPreview();
+    PV.id = id; PV.item = it; PV.at = ms(); PV.rel = 0; PV.relFrom = 1;
+    PV.dur = PREVIEW_DUR[id] * (gentle() ? 1.3 : 1);
+    PV.seed = (Math.random() * 1e9) | 0;
+    PV.wx = id === 'weather' ? currentSky() : null;
+    PV.count++; PV.byId[id] = (PV.byId[id] || 0) + 1;
+    if (it.button) it.button.classList.add('previewing');
+    try { if (navigator.vibrate) navigator.vibrate(6); } catch {}   // Android only; iPhone has no web haptics
+    redraw();
+    return true;
+  }
+  function endPreview(reason) {
+    if (!PV.id || PV.rel) return;
+    PV.relFrom = previewEnv(ms()); PV.rel = ms();
+    if (PV.item && PV.item.button) PV.item.button.classList.remove('previewing');
+    if (reason !== 'release' && reason !== 'done') PV.cancelled++;
+    redraw();
+  }
+  function dropPreview() {
+    if (PV.item && PV.item.button) PV.item.button.classList.remove('previewing');
+    PV.id = null; PV.item = null; PV.rel = 0; PV.wx = null;
+  }
+  function previewEnv(t) {
+    if (!PV.id) return 0;
+    if (PV.rel) return PV.relFrom * (1 - ease((t - PV.rel) / 200));
+    const e = (t - PV.at) / PV.dur;
+    return ease(e / 0.16) * (1 - ease((e - 0.8) / 0.2));
+  }
+  function previewAlive(t) {
+    if (!PV.id) return false;
+    if ((PV.rel && t - PV.rel > 210) || (!PV.rel && t - PV.at > PV.dur + 30)) { dropPreview(); return false; }
+    return true;
+  }
+  // touch: a press that stays put for HOLD_MS becomes a preview; a release after a preview never selects
+  function clearHold() { clearTimeout(hold.timer); hold.timer = 0; hold.it = null; hold.id = null; }
+  function holdDown(e, it) {
+    clearHold();
+    it.held = false;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    hold.it = it; hold.id = e.pointerId; hold.x = e.clientX; hold.y = e.clientY;
+    hold.timer = setTimeout(() => { hold.timer = 0; if (hold.it === it && startPreview(it)) it.held = true; }, HOLD_MS);
+  }
+  function holdMove(e, it) {
+    if (hold.it !== it || e.pointerId !== hold.id) return;
+    if (Math.hypot(e.clientX - hold.x, e.clientY - hold.y) > SLOP) { if (it.held) endPreview('moved'); clearHold(); }
+  }
+  function holdUp(e, it) {
+    if (hold.it !== it) return;
+    if (it.held) endPreview('release');
+    clearHold();
+  }
+  // where on screen the satellite sits, as a gaze direction for the Eye
+  function gazeToward(g, p) {
+    return { x: clamp((p.x - g.cx) / Math.max(1, g.w * 0.39), -0.95, 0.95), y: clamp((p.y - g.cy) / Math.max(1, g.h * 0.34), -0.9, 0.9) };
+  }
+  const B = (u, c, w) => Math.exp(-Math.pow((u - c) / w, 2));
+  // the pose handed to launcher.js while a preview plays (never while an ability owns the iris)
+  function previewPose(t) {
+    const a = previewEnv(t) * (gentle() ? 0.6 : 1), u = clamp((t - PV.at) / PV.dur), id = PV.id;
+    const P = { k: 0, look: 0, gaze: { x: 0, y: 0 }, neutral: 0, hush: 0, open: 0, lens: 0, grow: 0, size: 0, pupil: 0, iris: 0, pupilK: 1, glow: 1, bodySx: 1, bodySy: 1, dx: 0, dy: 0, tilt: 0 };
+    if (a <= 0.001 || !geo) return P;
+    if (id === 'vision') {
+      // the aperture tightens to focus, then searches a hair left and right as the scan passes
+      const search = Math.sin(u * Math.PI * 4) * 0.1 * clamp((u - 0.3) / 0.2) * (1 - clamp((u - 0.75) / 0.1));
+      P.look = 0.5 * a; P.gaze = { x: search, y: 0.02 };
+      P.pupilK = 1 - 0.34 * a + 0.06 * a * B(u, 0.8, 0.05); P.glow = 1 + 0.05 * a; P.bodySy = 1 + 0.012 * a;
+    } else if (id === 'weather') {
+      // it lifts and senses the sky
+      P.look = 0.6 * a; P.gaze = { x: 0.08 * Math.sin(u * 5), y: -0.42 };
+      P.pupilK = 1 + 0.1 * a; P.bodySy = 1 + 0.022 * a; P.bodySx = 1 - 0.01 * a; P.dy = -2 * a;
+    } else if (id === 'pocket') {
+      // the pupil opens onto somewhere much deeper than it should be
+      const open = ease(u / 0.45);
+      P.look = 0.4 * a; P.gaze = { x: 0, y: 0.06 };
+      P.pupilK = 1 + 0.62 * a * open; P.glow = 1 + 0.07 * a; P.bodySx = 1 + 0.008 * a * open; P.bodySy = 1 - 0.006 * a * open;
+    } else if (id === 'arcade') {
+      // a jittery 8-bit bob: the body moves in steps, not curves
+      const step = Math.floor(u * 9) % 2 ? 1 : -1;
+      P.pupilK = 1 + 0.12 * a; P.glow = 1 + 0.12 * a; P.bodySy = 1 + 0.016 * a * step; P.bodySx = 1 - 0.01 * a * step; P.dy = -1.5 * a * (step > 0 ? 1 : 0);
+    } else if (id === 'contact') {
+      // it looks at the satellite expectantly: lean toward it, pupil wide, a small hopeful lift
+      const s = satShown ? satellitePoint(geo) : { x: geo.cx - geo.size, y: geo.cy - geo.size }, gz = gazeToward(geo, s);
+      const lift = B(u, 0.55, 0.12);
+      P.look = 0.9 * a; P.gaze = gz;
+      P.pupilK = 1 + 0.22 * a; P.glow = 1 + 0.1 * a + 0.06 * a * lift;
+      P.dx = Math.sign(gz.x || -1) * 3.5 * a; P.dy = (-1.5 - 2.5 * lift) * a; P.tilt = Math.sign(gz.x || -1) * 0.05 * a;
+      P.bodySy = 1 + 0.02 * a * lift;
+    } else if (id === 'play') {
+      // crouch, hop, land with a squash and a wiggle
+      const crouch = B(u, 0.18, 0.07), air = clamp((u - 0.24) / 0.36), hop = Math.sin(air * Math.PI) * (u > 0.24 && u < 0.6 ? 1 : 0), land = B(u, 0.62, 0.05);
+      P.look = 0.5 * a; P.gaze = { x: 0, y: -0.2 * hop };
+      P.dy = (-10 * hop + 3 * crouch + 2 * land) * a;
+      P.bodySy = 1 + (-0.07 * crouch + 0.05 * hop - 0.08 * land) * a; P.bodySx = 1 + (0.05 * crouch - 0.03 * hop + 0.06 * land) * a;
+      P.tilt = 0.09 * a * Math.sin(clamp((u - 0.62) / 0.3) * Math.PI * 3) * (1 - clamp((u - 0.62) / 0.3));
+      P.pupilK = 1 + 0.14 * a; P.glow = 1 + 0.06 * a;
+    }
+    return P;
+  }
+  // a small seeded random, so a preview's particles don't change from frame to frame
+  function rnd01(i) { let h = Math.imul((i + 1) * 374761393 + PV.seed, 1274126177); h ^= h >>> 13; h = Math.imul(h, 1103515245); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
+  function paintPreview(ctx, g, t) {
+    if (!previewAlive(t)) return;
+    const a = previewEnv(t) * (gentle() ? 0.7 : 1), u = clamp((t - PV.at) / PV.dur), id = PV.id, d = g.drawn;
+    if (a <= 0.004 || !d) return;
+    const sx = g.pose ? g.pose.sx : 1, C = g.screen(d.gx, d.gy), R = Math.max(4, d.irisRadius * sx), pr = Math.max(2, d.pupilR * sx);
+    const low = !!g.lowPower;
+    ctx.save();
+    const clipIris = () => { ctx.beginPath(); ctx.arc(C.x, C.y, R, 0, TAU); ctx.clip(); };
+    if (id === 'vision') {
+      clipIris();
+      // one scan line sweeps down through the iris and halfway back
+      const s = u < 0.62 ? ease((u - 0.12) / 0.5) : 1 - 0.5 * ease((u - 0.62) / 0.25);
+      if (u > 0.1) {
+        const y = C.y - R + 2 * R * s, half = Math.sqrt(Math.max(0, R * R - (y - C.y) * (y - C.y)));
+        ctx.strokeStyle = g.tint(1.35, 0.55 * a); ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.moveTo(C.x - half, y); ctx.lineTo(C.x + half, y); ctx.stroke();
+        if (!low) { const gr = ctx.createLinearGradient(0, y - 10, 0, y); gr.addColorStop(0, g.tint(1.2, 0)); gr.addColorStop(1, g.tint(1.2, 0.16 * a)); ctx.fillStyle = gr; ctx.fillRect(C.x - R, y - 10, 2 * R, 10); }
+      }
+      // focus brackets lock around the pupil at the end
+      const lock = ease((u - 0.66) / 0.12) * a;
+      if (lock > 0.01) {
+        const r = pr * (2.4 - 0.5 * lock), L = Math.max(3, pr * 0.55);
+        ctx.strokeStyle = g.tint(1.4, 0.8 * lock); ctx.lineWidth = 1.2; ctx.lineCap = 'round';
+        for (const [kx, ky] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+          const x = C.x + kx * r, y = C.y + ky * r;
+          ctx.beginPath(); ctx.moveTo(x, y - ky * L); ctx.lineTo(x, y); ctx.lineTo(x - kx * L, y); ctx.stroke();
+        }
+      }
+    } else if (id === 'weather') {
+      clipIris();
+      const kind = PV.wx ? PV.wx.kind : 'rain';
+      if (kind === 'sun') {
+        // warmth from the upper side of the iris, slow rays
+        const sxp = C.x - R * 0.35, syp = C.y - R * 0.42;
+        if (!low) { const gr = ctx.createRadialGradient(sxp, syp, 0, sxp, syp, R * 0.9); gr.addColorStop(0, `rgba(255,226,160,${0.4 * a})`); gr.addColorStop(1, 'rgba(255,200,120,0)'); ctx.fillStyle = gr; ctx.fillRect(C.x - R, C.y - R, 2 * R, 2 * R); }
+        ctx.strokeStyle = `rgba(255,232,180,${0.5 * a})`; ctx.lineWidth = 1;
+        for (let i = 0; i < 7; i++) { const an = (i / 7) * TAU + u * 0.8, r0 = R * 0.12, r1 = R * (0.24 + 0.05 * Math.sin(u * 6 + i)); ctx.beginPath(); ctx.moveTo(sxp + Math.cos(an) * r0, syp + Math.sin(an) * r0); ctx.lineTo(sxp + Math.cos(an) * r1, syp + Math.sin(an) * r1); ctx.stroke(); }
+      } else if (kind === 'night') {
+        for (let i = 0; i < 5; i++) {
+          const x = C.x + (rnd01(i) - 0.5) * R * 1.4, y = C.y + (rnd01(i + 9) - 0.75) * R * 1.1, tw = 0.5 + 0.5 * Math.sin(u * 9 + i * 2.1);
+          ctx.fillStyle = `rgba(235,240,255,${0.75 * a * tw})`; ctx.beginPath(); ctx.arc(x, y, 0.9 + rnd01(i + 3) * 0.8, 0, TAU); ctx.fill();
+        }
+      } else {
+        // a small cloud drifts across the top of the iris; under it, rain, snow, fog or nothing
+        const cx0 = C.x - R * 0.6 + R * 1.1 * u, cy0 = C.y - R * 0.5, cr = R * 0.2;
+        ctx.fillStyle = g.tint(1.3, 0.3 * a);
+        for (const [ox, oy, k] of [[-0.9, 0.2, 0.8], [0, 0, 1.05], [0.95, 0.25, 0.75]]) { ctx.beginPath(); ctx.arc(cx0 + ox * cr, cy0 + oy * cr, cr * k, 0, TAU); ctx.fill(); }
+        if (kind === 'rain' || kind === 'storm') {
+          ctx.strokeStyle = g.tint(1.4, 0.6 * a); ctx.lineWidth = 1; ctx.lineCap = 'round';
+          for (let i = 0; i < 7; i++) {
+            const ph = (u * 2.2 + rnd01(i)) % 1, x = cx0 + (rnd01(i + 20) - 0.5) * cr * 3, y = cy0 + cr * 0.6 + ph * R * 1.1;
+            ctx.globalAlpha = 1 - ph; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - 1, y + R * 0.09); ctx.stroke();
+          }
+          ctx.globalAlpha = 1;
+          if (kind === 'storm') { const f = B(u, 0.55, 0.025); if (f > 0.02) { ctx.fillStyle = `rgba(230,240,255,${0.35 * f * a})`; ctx.fillRect(C.x - R, C.y - R, 2 * R, 2 * R); } }
+        } else if (kind === 'snow') {
+          for (let i = 0; i < 7; i++) {
+            const ph = (u * 1.1 + rnd01(i)) % 1, x = cx0 + (rnd01(i + 20) - 0.5) * cr * 3.4 + Math.sin(ph * 6 + i) * 2, y = cy0 + cr * 0.6 + ph * R * 1.1;
+            ctx.fillStyle = `rgba(240,248,255,${0.8 * a * (1 - ph)})`; ctx.beginPath(); ctx.arc(x, y, 1.2, 0, TAU); ctx.fill();
+          }
+        } else if (kind === 'fog') {
+          ctx.fillStyle = g.tint(1.2, 0.12 * a);
+          for (let i = 0; i < 3; i++) ctx.fillRect(C.x - R, C.y - R * 0.1 + i * R * 0.25 + Math.sin(u * 4 + i) * 2, 2 * R, R * 0.08);
+        } else if (kind === 'wind') {
+          ctx.strokeStyle = g.tint(1.3, 0.45 * a); ctx.lineWidth = 1;
+          for (let i = 0; i < 3; i++) { const y = C.y - R * 0.05 + i * R * 0.22, x0 = C.x - R + ((u * 1.8 + i * 0.3) % 1) * R * 2; ctx.beginPath(); ctx.moveTo(x0 - R * 0.35, y); ctx.quadraticCurveTo(x0, y - 3, x0 + R * 0.1, y + 1); ctx.stroke(); }
+        }
+      }
+    } else if (id === 'pocket') {
+      // rings fall away inward through the pupil: a dimension much deeper than the Eye
+      const open = ease(u / 0.45), rr = pr * 1.04;
+      ctx.beginPath(); ctx.arc(C.x, C.y, rr, 0, TAU); ctx.clip();
+      ctx.fillStyle = `rgba(0,0,0,${0.55 * a * open})`; ctx.fillRect(C.x - rr, C.y - rr, 2 * rr, 2 * rr);
+      for (let i = 0; i < 5; i++) {
+        const f = (i / 5 + u * 0.9) % 1, r = rr * (1 - f) * open;
+        if (r < 0.8) continue;
+        ctx.strokeStyle = g.tint(1.3, 0.55 * a * (1 - f) * open); ctx.lineWidth = Math.max(0.6, 1.4 * (1 - f));
+        ctx.beginPath(); ctx.arc(C.x + Math.sin(f * 5) * 0.6, C.y, r, 0, TAU); ctx.stroke();
+      }
+      if (!low) { const gr = ctx.createRadialGradient(C.x, C.y, 0, C.x, C.y, rr * 0.4); gr.addColorStop(0, g.tint(1.5, 0.35 * a * open)); gr.addColorStop(1, g.tint(1.2, 0)); ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(C.x, C.y, rr * 0.4, 0, TAU); ctx.fill(); }
+    } else if (id === 'arcade') {
+      clipIris();
+      // pixels blink in and out around the pupil, on a coarse grid and a stepped clock
+      const px = Math.max(2, Math.round(R / 9)), tick = Math.floor((t - PV.at) / 90);
+      for (let i = 0; i < 12; i++) {
+        if (((tick + i * 3) % 5) > 2 - (i % 2)) continue;
+        const an = rnd01(i) * TAU, rad = pr * 1.35 + rnd01(i + 40) * (R - pr * 1.35 - px);
+        const x = Math.round((C.x + Math.cos(an) * rad) / px) * px, y = Math.round((C.y + Math.sin(an) * rad) / px) * px;
+        ctx.fillStyle = g.tint(1.35 + 0.25 * (i % 3), 0.75 * a);
+        ctx.fillRect(x - px / 2, y - px / 2, px, px);
+      }
+    } else if (id === 'contact') {
+      // the satellite answers with a soft ring, as if someone might be on the other side
+      if (satShown) {
+        const s = satellitePoint(g), e = ((t - PV.at) / 700) % 1;
+        ctx.strokeStyle = g.tint(1.2, 0.45 * a * (1 - e)); ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(s.x, s.y, 6 + 14 * e, 0, TAU); ctx.stroke();
+      }
+    } else if (id === 'play') {
+      // a few motes kicked up when it lands
+      const land = clamp((u - 0.6) / 0.35);
+      if (land > 0 && land < 1) {
+        const by = g.cy + (g.ry || g.size) * 1.02;
+        for (let i = 0; i < 5; i++) {
+          const dir = (i - 2) * 0.55, x = g.cx + dir * g.size * 0.5 * land, y = by - Math.sin(land * Math.PI) * (6 + 6 * rnd01(i)) ;
+          ctx.fillStyle = g.tint(1.4, 0.6 * a * (1 - land)); ctx.beginPath(); ctx.arc(x, y, 1.3, 0, TAU); ctx.fill();
+        }
+      }
+    }
+    ctx.restore();
   }
 
   // ---------- painting into the Eye's canvas ----------
@@ -508,7 +753,8 @@
     const showSat = (!blocked || wheelTouch) && !machine.owner && list.length > 0;
     const u = wheelU(t);
     wheel.u = u;
-    if (machine.state === 'WHEEL_OPEN' && wheel.items.length) layoutWheel(g);
+    // 5.0: while a preview moves the Eye, the wheel holds still (the finger stays on its target)
+    if (machine.state === 'WHEEL_OPEN' && wheel.items.length && !PV.id) layoutWheel(g);
     const sat = $('abilitySatellite');
     if (showSat) {
       const p = paintSatellite(ctx, g, t, u);
@@ -517,6 +763,7 @@
     if (sat && sat.hidden === showSat) sat.hidden = !showSat;
     satShown = showSat;
     if (u > 0.001) paintWheel(ctx, g, u);
+    if (PV.id && !machine.owner) paintPreview(ctx, g, t);
     positionWheelDom(u);
     if (machine.owner && machine.owner.frame) { try { machine.owner.frame(ctx, g); } catch (err) { cleanup('frame-error'); } }
     // 4.4.6: idle touches (weather moments) only while nothing owns the iris and the home screen is free
@@ -525,6 +772,7 @@
   // what the ability wants from the Eye this frame (null while idle: the Eye is left exactly as it was)
   function pose(t) {
     if (machine.owner && machine.owner.pose) { try { return machine.owner.pose(t) || null; } catch { return null; } }
+    if (!machine.owner && machine.state === 'WHEEL_OPEN' && previewAlive(t)) return previewPose(t);   // 5.0
     return null;
   }
   function fps(t, opts) {
@@ -532,6 +780,7 @@
     const u = wheelU(t);
     const wheelMoving = (wheel.open && u < 0.999) || (!wheel.open && u > 0.001);
     let f = wheelMoving ? (low ? 30 : 45) : 0;
+    if (PV.id && !machine.owner && previewAlive(t)) f = Math.max(f, low ? 30 : 45);   // 5.0: only while a preview plays
     if (machine.owner && machine.owner.fps) { try { f = Math.max(f, machine.owner.fps(t, low) || 0); } catch {} }
     else if (!machine.owner && machine.state === 'IDLE') for (const a of ambients) { try { f = Math.max(f, (a.fps && a.fps(t, low)) || 0); } catch {} }
     return f;
@@ -597,10 +846,17 @@
     return true;
   }
 
+  // 5.0: the wheel's order is declared here, not by script load order. Practical abilities first (Vision,
+  // Weather, Pocket), then the recreational and social ones (Arcade, Eye Contact, Play). An ability this list
+  // doesn't know keeps its registration order, after the known ones.
+  const ORDER = ['vision', 'weather', 'pocket', 'arcade', 'contact', 'play'];
+  const rank = (id) => { const i = ORDER.indexOf(id); return i < 0 ? ORDER.length : i; };
   function register(ability) {
     if (!ability || !ability.id || registry.some((a) => a.id === ability.id)) return false;
     if (!ability.entry || typeof ability.activate !== 'function') return false;
     registry.push(ability);
+    // stable: equal ranks keep the order they registered in
+    registry.sort((a, b) => rank(a.id) - rank(b.id));
     redraw();
     return true;
   }
@@ -617,9 +873,14 @@
     interrupt,
     owner: () => (machine.owner ? machine.owner.id : null),
     state: () => machine.state,
+    // 4.8: the satellite's screen point while it is shown (the Living Eye investigates it now and then)
+    satellite: () => (satShown && geo ? satellitePoint(geo) : null),
     open: openWheel,
     close: () => closeWheel('api'),
     busy: (t) => fps(t) > 0,
+    order: () => registry.map((a) => a.id),
+    // test-only: start / end a preview as a hold would (not reachable from any screen)
+    _preview: { start: (id) => { const it = wheel.items.find((x) => x.ability.id === id); return !!(it && startPreview(it) && (it.held = true)); }, end: () => endPreview('release'), active: () => PV.id },
     diagnostics: () => ({
       state: machine.state,
       owner: machine.owner ? machine.owner.id : null,
@@ -628,6 +889,7 @@
       available: availableAbilities().map((a) => a.id),
       satellite: satShown,
       wheel: { open: wheel.open, u: Math.round(wheel.u * 100) / 100, items: wheel.items.map((i) => ({ id: i.ability.id, x: Math.round(i.x), y: Math.round(i.y), label: i.label ? { x: Math.round(i.label.x), y: Math.round(i.label.y), w: i.label.w, h: i.label.h } : null })), fit: !!wheel.fit, labelMode: wheel.labelMode || null, sx: wheel.sx || 1 },
+      preview: { id: PV.id, count: PV.count, cancelled: PV.cancelled, byId: { ...PV.byId }, holding: !!hold.it },
       transitions: machine.transitions,
       refused: machine.refused,
       history: machine.history.slice(-12)

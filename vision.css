@@ -356,3 +356,68 @@
   outline: 1.5px solid #e7fbfa;
   outline-offset: 2px;
 }
+
+/* ---- 5.0: the light, and a little more feel ---- */
+#visionTorch {
+  width: 44px;
+  height: 44px;
+  --glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M8 3h8l-1.6 5H9.6zM9.6 8 9 21h6l-.6-13M12 12v3'/%3E%3C/svg%3E");
+}
+#visionTorch[hidden] {
+  display: none;
+}
+#visionTorch::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background: rgba(3, 10, 12, 0.6);
+  border: 1.2px solid rgba(var(--vision-rgb), 0.55);
+  box-shadow: 0 0 10px rgba(var(--vision-rgb), 0.2);
+  transition: background 200ms ease, box-shadow 200ms ease;
+}
+#visionTorch::after {
+  content: '';
+  position: absolute;
+  inset: 15px;
+  background: rgb(var(--vision-rgb));
+  -webkit-mask: var(--glyph) center / contain no-repeat;
+  mask: var(--glyph) center / contain no-repeat;
+}
+#visionTorch.on::before {
+  background: rgba(var(--vision-rgb), 0.32);
+  box-shadow: 0 0 18px rgba(var(--vision-rgb), 0.6), inset 0 0 10px rgba(255, 255, 255, 0.25);
+}
+#visionTorch.on::after {
+  background: #f4fffd;
+}
+/* the world comes into focus as the pupil opens */
+#visionLens.focus-pull #visionVideo {
+  animation: vision-focus-pull 620ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+@keyframes vision-focus-pull {
+  0% { filter: blur(3px); transform: scale(1.05); }
+  60% { filter: blur(0.4px); transform: scale(0.995); }
+  100% { filter: none; transform: none; }
+}
+/* the rim tightens onto a code it has found */
+#visionLens.lock .vision-glass {
+  animation: vision-lock 520ms ease-out both;
+}
+@keyframes vision-lock {
+  0% { box-shadow: inset 0 0 0 2px rgba(var(--vision-rgb), 0.5), inset 0 0 28px rgba(var(--vision-rgb), 0.2); }
+  35% { box-shadow: inset 0 0 0 5px rgba(var(--vision-rgb), 0.9), inset 0 0 40px rgba(var(--vision-rgb), 0.38); }
+  100% { box-shadow: inset 0 0 0 2px rgba(var(--vision-rgb), 0.5), inset 0 0 28px rgba(var(--vision-rgb), 0.2); }
+}
+/* the photo is safely kept: one bright breath around the lens */
+#visionLens.saved .vision-glass {
+  animation: vision-saved 900ms ease-out both;
+}
+@keyframes vision-saved {
+  0% { box-shadow: inset 0 0 0 2px rgba(var(--vision-rgb), 0.5), inset 0 0 28px rgba(var(--vision-rgb), 0.2); }
+  30% { box-shadow: inset 0 0 0 3px rgba(236, 255, 252, 0.85), inset 0 0 46px rgba(var(--vision-rgb), 0.45); }
+  100% { box-shadow: inset 0 0 0 2px rgba(var(--vision-rgb), 0.5), inset 0 0 28px rgba(var(--vision-rgb), 0.2); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #visionLens.focus-pull #visionVideo, #visionLens.lock .vision-glass, #visionLens.saved .vision-glass { animation: none; }
+}

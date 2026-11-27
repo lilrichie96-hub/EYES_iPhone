@@ -751,6 +751,8 @@
     if (text) say(text, false);
     setTimeout(() => { if (!S || S.phase === 'over') Sfx.sleep(); }, 2500);
     emit('end', { friend: s.f, result: why, was, seconds: Math.round(secs) });
+    // 5.0: a Hangout that really happened leaves the Eye content for a while (eyes-living.js, EyesFeel)
+    if (was === 'live' && secs >= 30 && !['failed', 'limited', 'declined', 'busy', 'still', 'timeout', 'faded'].includes(why)) { try { if (root.EyesFeel) EyesFeel.report('hangout', { seconds: Math.round(secs) }); } catch (e) {} }
     Ctl.end(why);
     later(() => { if (S === s) { S = null; Ctl.detach(); } }, ['cancelled', 'closed', 'away', 'stopped'].includes(why) ? 60 : END_HOLD_MS);
   }

@@ -118,6 +118,8 @@
     }
     function habit(t) {
       if (!free() || core.activeReaction(t) || core.asleep) return false;
+      // 4.8: during the Living Eye's quiet spells (or its own sequences) the Eye is happy doing nothing
+      if (root.EyesLiving && root.EyesLiving.quiet && root.EyesLiving.quiet(t)) return false;
       const name = pickHabit();
       core.react(name, t);
       habitsDone++;
@@ -158,8 +160,10 @@
       persist();
       if (mind && awayMs >= 20 * 60000) mind.observe('visit', hour);
       if (root.HavenDNA) root.HavenDNA.note('visit');
-      try { root.dispatchEvent(new CustomEvent('haven:greet')); } catch (e) {}
-      if (core.asleep) wake('stir');
+      try { root.dispatchEvent(new CustomEvent('haven:greet', { detail: { awayMs, hour } })); } catch (e) {}
+      const wasAsleep = core.asleep, L = root.EyesLiving;
+      // 4.8: a sleepy Eye sometimes wakes slowly instead of stirring (eyes-living.js)
+      if (core.asleep && !(L && L.wakeSlowly && L.wakeSlowly(awayMs))) wake('stir');
       const firstOfMorning =
         hour >= 5 && hour < 12 && awayMs > 3 * 3600000 && (!sameDay || lastHour < 4);
       clearTimeout(greetTimer);
@@ -172,6 +176,12 @@
       greetTimer = setTimeout(() => {
         const at = now();
         if (!core.motion) return;
+        // 4.8: the morning stretch and a remembered ritual stay; otherwise the Living Eye may greet you its own way,
+        // shaped by its temperament, how it felt and how long you were gone (never guilt, never a meter)
+        const ritual = !firstOfMorning && mind && awayMs >= 20 * 60000 ? mind.greeting(hour, awayMs) : false;
+        const missed = () => { if (awayMs > 60 * 60000) nudge({ missing: clamp(awayMs / (6 * 3600000)), energy: 0.1, content: 0.08 }); };
+        if (L && L.reunion && L.reunion({ awayMs, hour, firstOfMorning, wasAsleep, ritual })) { missed(); schedule(); return; }
+        if (ritual) { core.react('greet-familiar', at); missed(); schedule(); return; }
         if (firstOfMorning) {
           core.react('stretch', at);
           setTimeout(() => core.react('yawn', now()), 1750);

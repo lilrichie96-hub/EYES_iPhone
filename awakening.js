@@ -988,6 +988,9 @@ const Awaken = (() => {
   for (const type of TYPES) {
     addEventListener(type, (e) => {
       if (!box.classList.contains('open')) return;
+      // 5.0: controls that handle their own events (Rename your Eye on the Eye.D. card) receive them; they stop
+      // them from going any further themselves
+      if (e.target && e.target.closest && e.target.closest('[data-aw-own]') && box.contains(e.target)) return;
       e.stopImmediatePropagation();
       const inside = box.contains(e.target);
       if (type === 'contextmenu') { e.preventDefault(); return; }

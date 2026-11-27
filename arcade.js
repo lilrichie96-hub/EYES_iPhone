@@ -1,4 +1,8 @@
 /* EYES 4.4.4 · Pocket Arcade, the Eye's second ability.
+   5.0: Eye Arcade. Four cartridges in the same living machine (Tunnelbug with an Endless mode, Orbit Breaker,
+   Critter Crossing, Prism Break). The Eye opens into the arcade exactly as before; a cartridge shelf with label
+   art and bests comes first, then the chosen cartridge's card. A game's engine is loaded and created only when
+   you press Play, and stopped when you go back to the shelf. One emotional report per round (outcomeOf).
    He doesn't open a game: he becomes the arcade machine. Chosen from the Ability Wheel, he notices it, his
    pupil tightens, his iris stretches sideways and unfolds into an illuminated opening, and a tiny retro game
    is revealed inside him. His iris is the cabinet; the pupil became the screen; the controls grow out of
@@ -32,8 +36,31 @@
   const TAU = Math.PI * 2;
 
   const ICON = 'M6.5 8.5h11a4 4 0 0 1 3.9 4.9l-0.8 3.4a2.6 2.6 0 0 1-4.5 1.1L14.6 16H9.4l-1.5 1.9a2.6 2.6 0 0 1-4.5-1.1l-0.8-3.4A4 4 0 0 1 6.5 8.5Z M7.5 11.2v3 M6 12.7h3 M15.6 12.2a0.7 0.7 0 1 0 1.4 0a0.7 0.7 0 1 0 -1.4 0 M17.4 14.2a0.7 0.7 0 1 0 1.4 0a0.7 0.7 0 1 0 -1.4 0';
+  // 5.0: four cartridges in one machine. A cartridge's engine is fetched and created only when you press Play;
+  // the selection screen shows label art from arcade-kit.js and the bests saved by each game.
   const CATALOG = [
-    { id: 'tunnelbug', title: 'Tunnelbug', blurb: 'Dig for energy. Dodge what lives down there.', scripts: ['tunnelbug-render.js', 'tunnelbug-audio.js', 'tunnelbug.js'] }
+    { id: 'tunnelbug', title: 'Tunnelbug', blurb: 'Dig for energy. Dodge what lives down there.', action: 'Energy pulse',
+      scripts: ['tunnelbug-render.js', 'tunnelbug-audio.js', 'tunnelbug.js'], store: 'eyes.arcade.tunnelbug.v1',
+      modes: [{ id: 'timed', label: 'Timed', about: '90 seconds, three waves.' }, { id: 'endless', label: 'Endless', about: 'As deep as you can go.' }],
+      bests: [['best', 'Timed'], ['endlessBest', 'Endless']],
+      help: ['Touch and drag on the left to dig in any direction. Old tunnels are faster.', 'Gather every crystal. Three waves grow, each in riskier places.',
+        'Grubs roam the tunnels. Stalkers tremble, then hunt you through the earth.', 'Tap the right side to pulse: it stuns anything close. Touch a stunned one to pop it.',
+        'Timed: three hits or 90 seconds. Endless: no clock; the earth keeps shifting and the chambers keep waking. Each new formation gives back one heart.'] },
+    { id: 'orbit', title: 'Orbit Breaker', blurb: 'Drift through crystal debris. Break it before it breaks you.', action: 'Fire',
+      scripts: ['arcade-kit.js', 'orbit-breaker.js'], store: 'eyes.arcade.orbit.v1', bests: [['best', 'Best']],
+      help: ['Drag on the left: your ship flies that way and turns to face it.', 'Tap or hold the right side to fire where you face. Shots lean a little toward nearby crystal.',
+        'Big crystal breaks into smaller, faster pieces. Clear the field to start the next wave.', 'Pickups glow for a moment: shield, spread shot, slow drift. Fly through to take one.',
+        'Three hits and the run is over. The edges wrap around.'] },
+    { id: 'critter', title: 'Critter Crossing', blurb: 'Hop a tiny critter over lanes, rafts and streams.', action: 'Leap',
+      scripts: ['arcade-kit.js', 'critter-crossing.js'], store: 'eyes.arcade.critter.v1', bests: [['best', 'Best']],
+      help: ['Push the stick to hop one square. Hold it to keep hopping.', 'Tap the right side to leap two squares in the way you last hopped (then it recharges).',
+        'Carts and sparks hurt. Streams sweep you away unless you ride a raft or a lily.', 'Green rows are safe: stop there and plan the next move.',
+        'Reach the far bank to cross. Every crossing builds a new, harder arrangement. Three tries.'] },
+    { id: 'prism', title: 'Prism Break', blurb: 'Shatter formations of luminous crystal.', action: 'Launch',
+      scripts: ['arcade-kit.js', 'prism-break.js'], store: 'eyes.arcade.prism.v1', bests: [['best', 'Best']],
+      help: ['Drag on the left to move the paddle. Tap the right side to launch the ball.', 'Where the ball meets the paddle sets its angle: the edges send it wide.',
+        'Clear crystals take one hit, quartz two, amethyst three. Dark obsidian only bounces.', 'Pickups: wide paddle, three balls, a piercing ball, a barrier that saves one fall.',
+        'Clear every crystal for the next formation. Three balls in all.'] }
   ];
   const PREFS_KEY = 'eyes.arcade.prefs.v1';
   const CHANNELS = ['look', 'gx', 'gy', 'k', 'neutral', 'hush', 'open', 'grow', 'size', 'pupil', 'iris', 'lens', 'rxK', 'ryK', 'glow', 'bsx', 'bsy', 'lid', 'ap', 'screen', 'rim'];
@@ -49,12 +76,15 @@
     // the game loop
     raf: 0, last: 0, acc: 0, frameN: 0, lastPhase: '', resultTimer: 0, panel: '', panelFrom: '',
     // input
-    keys: [], stick: null, pulseQueued: false, pulseDownAt: 0,
+    keys: [], stick: null, pulseQueued: false, pulseDownAt: 0, pulseHeld: false, keyHeld: false,
+    // 5.0: which cartridge, which mode, and one emotional report per round at most
+    mode: null, round: 0, reportedRound: 0, selectFocus: 0,
     // sound
     audio: null, prefs: { sound: true, soundWithMusic: false, dead: 'medium' }, musicAtOpen: false,
     stats: { opened: 0, closed: 0, rounds: 0, loops: 0, steps: 0, renders: 0, reactions: {}, events: {} }
   };
   try { Object.assign(A.prefs, JSON.parse(localStorage.getItem(PREFS_KEY)) || {}); } catch {}
+  if (!A.prefs.seen || typeof A.prefs.seen !== 'object') A.prefs.seen = {};
   const savePrefs = () => { try { localStorage.setItem(PREFS_KEY, JSON.stringify(A.prefs)); } catch {} };
   const host = () => (A.api ? A.api.host() : window.Haven && Haven.abilityHost ? Haven.abilityHost() : null);
   const speed = () => { const h = host(); if (!h || !h.motion()) return 0; return h.gentle() ? 0.55 : 1; };
@@ -289,9 +319,31 @@
       case 'stir': { const p = toScreen(d.nx || 0, d.ny || 0); A.watch = { x: d.nx || 0, y: d.ny || 0, until: t + 700, amount: 0.3 }; void p; break; }
       case 'win': A.nervous = 0; A.mood = 'happy'; A.moodAt = t; react('cheer'); break;
       case 'best': A.mood = 'proud'; A.moodAt = t; react('celebrate'); if (speed()) burstSparkles(18); break;
-      case 'lose': A.nervous = 0; A.mood = 'sad'; A.moodAt = t; break;
+      // 5.0: a survival run that ends well isn't sad (the game says how it went in d.rating)
+      case 'lose': A.nervous = 0; A.mood = d && d.rating === 'good' ? 'happy' : d && d.rating === 'ok' ? '' : 'sad'; A.moodAt = t; break;
     }
     if (A.api) A.api.redraw();
+  }
+  // 5.0: the round's outcome lingers in the Living Eye after Arcade closes (eyes-living.js, EyesFeel)
+  function feel(kind, data) { try { if (window.EyesFeel) EyesFeel.report(kind, data); } catch {} }
+  // 5.0: what a finished round meant, reported once (restarts, result screens and exits never repeat it).
+  //   arcade-best  a new personal best (in that game and mode)
+  //   arcade-win   a cleared round, or a survival run that went well ('ok' runs are reported as mild wins)
+  //   arcade-loss  a round lost, or a survival run that ended early
+  function outcomeOf(s) {
+    const r = (s && s.result) || {};
+    if (s && s.newBest) return 'arcade-best';
+    if (r.rating === 'good') return 'arcade-win';
+    if (r.rating === 'ok') return 'arcade-win';
+    if (r.rating === 'poor') return 'arcade-loss';
+    return r.phase === 'won' ? 'arcade-win' : 'arcade-loss';
+  }
+  function reportRound(s) {
+    if (!A.round || A.reportedRound === A.round) return;
+    A.reportedRound = A.round;
+    const r = (s && s.result) || {}, kind = outcomeOf(s);
+    feel(kind, { game: A.entry ? A.entry.id : null, mode: A.mode || null, score: s ? s.score : 0, best: s ? s.best : 0, newBest: !!(s && s.newBest), rating: r.rating || (r.phase === 'won' ? 'good' : 'poor'), mild: r.rating === 'ok' });
+    A.stats.reports = (A.stats.reports || 0) + 1;
   }
   function flashLip(k) { A.lipFlash = { at: ms(), k }; }
   function burstSparkles(n) {
@@ -492,8 +544,8 @@
     stage.addEventListener('keydown', onKey);
     stage.addEventListener('keyup', onKeyUp);
     bindStick(stick, stickBase, knob);
-    pulseBtn.addEventListener('pointerdown', (e) => { if (e.button > 0) return; e.preventDefault(); A.pulseDownAt = ms(); queuePulse(); pulseBtn.classList.add('pressed'); });
-    for (const type of ['pointerup', 'pointercancel', 'pointerleave']) pulseBtn.addEventListener(type, () => pulseBtn.classList.remove('pressed'));
+    pulseBtn.addEventListener('pointerdown', (e) => { if (e.button > 0) return; e.preventDefault(); A.pulseDownAt = ms(); A.pulseHeld = true; queuePulse(); pulseBtn.classList.add('pressed'); });
+    for (const type of ['pointerup', 'pointercancel', 'pointerleave']) pulseBtn.addEventListener(type, () => { A.pulseHeld = false; pulseBtn.classList.remove('pressed'); });
     pulseBtn.addEventListener('click', () => { if (ms() - A.pulseDownAt > 600) queuePulse(); });   // keyboard / accessibility
     pauseBtn.addEventListener('click', () => { const s = A.game && A.game.status(); if (s && (s.phase === 'playing' || s.phase === 'ready') && !s.paused) pauseGame('button'); else close_('button'); });
     document.body.append(stage);
@@ -515,7 +567,7 @@
       try { zone.setPointerCapture(e.pointerId); } catch {}
       const r = zone.getBoundingClientRect();
       // a floating stick: it starts wherever your thumb lands
-      A.stick = { id: e.pointerId, ox: e.clientX, oy: e.clientY, dir: 0, rx: r.left, ry: r.top };
+      A.stick = { id: e.pointerId, ox: e.clientX, oy: e.clientY, dir: 0, vx: 0, vy: 0, rx: r.left, ry: r.top };
       base.classList.add('held');
       const rest = { x: A.L.stick.x - r.left, y: A.L.stick.y - r.top };
       base.style.transform = `translate(${(e.clientX - r.left - rest.x).toFixed(1)}px, ${(e.clientY - r.top - rest.y).toFixed(1)}px)`;
@@ -536,6 +588,9 @@
         dir = useH ? (dx > 0 ? 2 : 4) : (dy > 0 ? 3 : 1);
       }
       if (dir !== s.dir) { s.dir = dir; base.dataset.dir = String(dir); }
+      // 5.0: the same stick as a vector too (Orbit Breaker, Prism Break), with the same dead zone
+      const live = len < dead() ? 0 : Math.min(1, (len - dead()) / Math.max(1, max - dead()));
+      s.vx = len ? (dx / len) * live : 0; s.vy = len ? (dy / len) * live : 0;
       // a long drag carries the stick along with your thumb
       if (len > max * 1.6) { s.ox = e.clientX - dx * (max * 1.6 / len); s.oy = e.clientY - dy * (max * 1.6 / len); base.style.transform = `translate(${(s.ox - s.rx - (A.L.stick.x - s.rx)).toFixed(1)}px, ${(s.oy - s.ry - (A.L.stick.y - s.ry)).toFixed(1)}px)`; }
     });
@@ -550,7 +605,7 @@
     if (playing) {
       const d = KEYS[e.code];
       if (d) { e.preventDefault(); if (!A.keys.includes(d)) A.keys.push(d); return; }
-      if (e.code === 'Space' || e.code === 'KeyX' || e.code === 'KeyJ' || e.code === 'KeyK' || e.code === 'KeyZ') { e.preventDefault(); if (!e.repeat) queuePulse(); return; }
+      if (e.code === 'Space' || e.code === 'KeyX' || e.code === 'KeyJ' || e.code === 'KeyK' || e.code === 'KeyZ') { e.preventDefault(); A.keyHeld = true; if (!e.repeat) queuePulse(); return; }
       if (e.code === 'KeyP') { e.preventDefault(); pauseGame('key'); return; }
     } else if (e.code === 'KeyP' && s && s.paused) { e.preventDefault(); resumeGame(); return; }
     if (e.key !== 'Tab') return;
@@ -560,17 +615,29 @@
     e.preventDefault();
     items[(i + (e.shiftKey ? -1 : 1) + items.length) % items.length].focus();
   }
-  function onKeyUp(e) { const d = KEYS[e.code]; if (d) A.keys = A.keys.filter((k) => k !== d); }
+  function onKeyUp(e) {
+    const d = KEYS[e.code]; if (d) A.keys = A.keys.filter((k) => k !== d);
+    if (e.code === 'Space' || e.code === 'KeyX' || e.code === 'KeyJ' || e.code === 'KeyK' || e.code === 'KeyZ') A.keyHeld = false;
+  }
+  // 5.0: analogue direction (stick vector, or the arrow keys held together for diagonals)
+  function currentVec() {
+    if (A.stick && (A.stick.vx || A.stick.vy)) return { x: A.stick.vx, y: A.stick.vy };
+    let x = 0, y = 0;
+    for (const k of A.keys) { if (k === 1) y = -1; if (k === 3) y = 1; if (k === 2) x = 1; if (k === 4) x = -1; }
+    const l = Math.hypot(x, y) || 1;
+    return { x: x / l, y: y / l };
+  }
+  function inputState(pulse) { const v = currentVec(); return { dir: currentDir(), pulse, vx: v.x, vy: v.y, hold: A.pulseHeld || A.keyHeld }; }
   function queuePulse() { const s = A.game && A.game.status(); if (s && s.phase === 'playing' && !s.paused) A.pulseQueued = true; }
   function currentDir() {
     if (A.stick && A.stick.dir) return A.stick.dir;
     return A.keys.length ? A.keys[A.keys.length - 1] : 0;
   }
   function releaseInput() {
-    A.keys = []; A.pulseQueued = false;
+    A.keys = []; A.pulseQueued = false; A.pulseHeld = false; A.keyHeld = false;
     if (A.releaseStick) A.releaseStick();
     const p = $('arcadePulse'); if (p) p.classList.remove('pressed');
-    if (A.game) try { A.game.input({ dir: 0, pulse: false }); } catch {}
+    if (A.game) try { A.game.input({ dir: 0, pulse: false, vx: 0, vy: 0, hold: false }); } catch {}
   }
 
   // place the screen, the rim and the controls (only when opening, and if the screen size really changes)
@@ -638,6 +705,96 @@
     savePrefs();
     if (b) b.textContent = deadLabel();
   }
+  // 5.0: what a cartridge has saved (read straight from its store, without its engine)
+  function bestsOf(entry) {
+    let rec = null;
+    try { rec = JSON.parse(localStorage.getItem(entry.store)); } catch { rec = null; }
+    return (entry.bests || []).map(([k, label]) => ({ label, value: rec && Number.isFinite(rec[k]) ? rec[k] : 0 }));
+  }
+  function artCanvas(entry, w, h, cls) {
+    const c = el('canvas', { class: cls || 'arcade-art', 'aria-hidden': 'true' });
+    c.width = w; c.height = h;
+    try { if (window.ArcadeKit) ArcadeKit.art(entry.id, c.getContext('2d'), w, h); } catch {}
+    return c;
+  }
+  // the screen behind a menu while no engine runs: the cartridge's label, large and dim (painted once)
+  function paintBackdrop(entry) {
+    if (A.game || !A.L) return;
+    const cv = $('arcadeCanvas'), sc = A.L.scale;
+    if (cv.width !== 120 * sc) cv.width = 120 * sc;
+    if (cv.height !== 96 * sc) cv.height = 96 * sc;
+    const ctx = cv.getContext('2d');
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.imageSmoothingEnabled = false;
+    ctx.fillStyle = '#05070b'; ctx.fillRect(0, 0, cv.width, cv.height);
+    if (entry && window.ArcadeKit) {
+      const off = ArcadeKit.canvas(120, 96);
+      ArcadeKit.art(entry.id, off.getContext('2d'), 120, 96);
+      ctx.globalAlpha = 0.32; ctx.drawImage(off, 0, 0, cv.width, cv.height); ctx.globalAlpha = 1;
+    }
+  }
+  // the Eye notices which cartridge you're looking at: each Eye has a favourite, and its temperament decides
+  // how much of a fuss it makes (an easily excited Eye bounces; a shy one barely glances; a grumpy one shrugs)
+  function favourite() {
+    try { const d = HavenDNA.dna(); return CATALOG[(d.seed >>> 3) % CATALOG.length].id; } catch { return 'tunnelbug'; }
+  }
+  function temperament() {
+    try { const T = HavenDNA.dna().T; if (T) return T; } catch {}
+    return { curiosity: 0.5, shyness: 0.5, energy: 0.5, grump: 0.5, drama: 0.5 };
+  }
+  function browseReaction(entry, node) {
+    const T = temperament(), fav = entry.id === favourite();
+    if (node && A.L) {
+      const r = node.getBoundingClientRect();
+      A.watch = { x: clamp((r.left + r.width / 2 - A.L.cx) / (A.L.W * 0.39), -1, 1), y: clamp((r.top + r.height / 2 - A.L.cy) / (A.L.H * 0.34), -1, 1), until: ms() + 600, amount: 0.25 + 0.3 * T.curiosity };
+    }
+    if (fav) { react(T.shyness > 0.65 ? 'collect' : 'rare'); flashLip(0.7 + 0.25 * T.drama); }
+    else if (T.energy > 0.62 || T.drama > 0.7) react('collect');
+    else if (T.grump > 0.66) react('glance');
+    else { react('glance'); if (T.curiosity > 0.6) flashLip(0.35); }
+    if (A.api) A.api.redraw();
+  }
+  function stopGame() {
+    stopLoop();
+    clearTimeout(A.resultTimer);
+    releaseInput();
+    if (A.game) { try { A.game.stop(); } catch {} A.game = null; }
+    releaseAudio(false);            // the shelf is silent: nothing keeps the sound running between games
+    A.lastPhase = '';
+    A.mood = ''; A.nervous = 0; A.watch.until = 0;
+  }
+  function showSelect() {
+    stopGame();
+    paintBackdrop(null);
+    showPanel('select');
+  }
+  function openCart(entry) {
+    A.entry = entry;
+    A.prefs.last = entry.id; savePrefs();
+    paintBackdrop(entry);
+    showPanel('cart');
+  }
+  function play(mode) {
+    const entry = A.entry;
+    if (!entry) return;
+    A.mode = mode || (entry.modes ? entry.modes[0].id : null);
+    ensureAudio();                                  // a tap: the moment Android and Safari allow sound to start
+    if (!A.prefs.seen[entry.id]) { showPanel('help', 'first'); return; }
+    launchRound();
+  }
+  // the engine is fetched and created here, on Play, and only for the cartridge you chose
+  function launchRound() {
+    const entry = A.entry, gen = A.gen;
+    if (!entry || A.state !== 'ARCADE_ACTIVE') return;
+    if (A.game && A.game.id === entry.id) { startRound(); return; }
+    stopGame();
+    showPanel('loading');
+    prepareGame(entry, gen).then((g) => {
+      if (!g || gen !== A.gen || A.state !== 'ARCADE_ACTIVE') { if (g) try { g.stop(); } catch {} return; }
+      A.game = g;
+      startRound();
+    }).catch(() => { if (gen === A.gen && owned()) fail(); });
+  }
   function showPanel(name, from) {
     const menu = $('arcadeMenu');
     A.panelFrom = from || (A.panel && A.panel !== name ? A.panel : A.panelFrom);
@@ -648,44 +805,57 @@
     const s = A.game ? A.game.status() : null, entry = A.entry || CATALOG[0];
     const box = el('div', { class: 'arcade-panel arcade-panel-' + name, role: 'group', 'aria-label': name });
     let first = null;
-    if (name === 'title') {
-      box.append(el('p', { class: 'arcade-blurb', text: entry.blurb }));
-      first = button('Play', 'primary', () => startRound());
-      const row = el('div', { class: 'arcade-row' }, button('How to play', '', () => showPanel('help', 'title')), button(soundLabel(), 'quiet', toggleSound, { 'aria-pressed': String(soundOn()) }));
-      box.append(first, row);
-      if (s && s.best) box.append(el('p', { class: 'arcade-best', text: 'Best ' + s.best }));
-      if (CATALOG.length > 1) {
-        const pick = el('div', { class: 'arcade-row arcade-games' });
-        for (const g of CATALOG) pick.append(button(g.title, g.id === entry.id ? 'quiet on' : 'quiet', () => switchGame(g)));
-        box.append(pick);
-      }
+    if (name === 'select') {
+      box.append(el('h2', { class: 'arcade-machine', text: 'Eye Arcade' }));
+      const grid = el('div', { class: 'arcade-carts', role: 'list' });
+      CATALOG.forEach((g, i) => {
+        const best = bestsOf(g).filter((b) => b.value > 0).map((b) => (g.bests.length > 1 ? b.label + ' ' : 'Best ') + b.value).join(' · ');
+        const card = el('button', { type: 'button', class: 'arcade-cart' + (A.prefs.last === g.id ? ' last' : ''), role: 'listitem', 'data-game': g.id, 'aria-label': `${g.title}. ${g.blurb}${best ? ' ' + best : ''}` },
+          artCanvas(g, 48, 30), el('span', { class: 'arcade-cart-title', text: g.title }), el('span', { class: 'arcade-cart-best', text: best || 'New' }));
+        card.addEventListener('click', (e) => { e.stopPropagation(); openCart(g); });
+        card.addEventListener('pointerenter', () => browseReaction(g, card));
+        card.addEventListener('focus', () => browseReaction(g, card));
+        grid.append(card);
+        if (A.prefs.last === g.id || (!first && i === 0)) first = card;
+      });
+      box.append(grid);
+    } else if (name === 'cart') {
+      const head = el('div', { class: 'arcade-cart-head' }, artCanvas(entry, 60, 36, 'arcade-art big'),
+        el('div', { class: 'arcade-cart-text' }, el('h2', { text: entry.title }), el('p', { class: 'arcade-blurb', text: entry.blurb }),
+          el('p', { class: 'arcade-best', text: bestsOf(entry).map((b) => (entry.bests.length > 1 ? b.label + ' ' : 'Best ') + b.value).join(' · ') })));
+      box.append(head);
+      const row = el('div', { class: 'arcade-row' });
+      if (entry.modes) entry.modes.forEach((m, i) => { const b = button(m.label, i === 0 ? 'primary' : '', () => play(m.id), { 'aria-label': `Play ${m.label}: ${m.about}` }); row.append(b); if (!i) first = b; });
+      else { first = button('Play', 'primary', () => play(null)); row.append(first); }
+      box.append(row, el('div', { class: 'arcade-row' }, button('How to play', 'quiet', () => showPanel('help', 'cart')), button(soundLabel(), 'quiet', toggleSound, { 'aria-pressed': String(soundOn()) }), button('Games', 'quiet', () => showSelect())));
+      browseReaction(entry, null);
     } else if (name === 'help') {
-      box.append(el('h2', { text: 'How to play' }),
-        el('ul', { class: 'arcade-help' },
-          el('li', { text: 'Touch and drag on the left to dig in any direction. Old tunnels are faster.' }),
-          el('li', { text: 'Gather every crystal. Three waves grow, each in riskier places.' }),
-          el('li', { text: 'Grubs roam the tunnels. Stalkers tremble, then hunt you through the earth.' }),
-          el('li', { text: 'Tap the right side to pulse: it stuns anything close. Touch a stunned one to pop it.' }),
-          el('li', { text: 'Three hits and the round is over. 90 seconds on the clock.' })),
-        el('p', { class: 'arcade-keys', text: 'Keyboard: arrows or WASD, Space to pulse, P to pause.' }));
-      first = button('Back', 'primary', () => showPanel(A.panelFrom === 'pause' ? 'pause' : 'title'));
-      box.append(first);
+      box.append(el('h2', { text: entry.title + ' · how to play' }), el('ul', { class: 'arcade-help' }, ...entry.help.map((t) => el('li', { text: t }))),
+        el('p', { class: 'arcade-keys', text: 'Keyboard: arrows or WASD, Space for ' + entry.action.toLowerCase() + ', P to pause.' }));
+      if (A.panelFrom === 'first') {
+        first = button('Start', 'primary', () => { A.prefs.seen[entry.id] = true; savePrefs(); launchRound(); });
+        box.append(first, button('Back', 'quiet', () => showPanel('cart')));
+      } else {
+        first = button('Back', 'primary', () => showPanel(A.panelFrom === 'pause' ? 'pause' : 'cart'));
+        box.append(first);
+      }
+    } else if (name === 'loading') {
+      box.append(el('p', { class: 'arcade-detail', text: 'Waking ' + entry.title + '…' }));
     } else if (name === 'pause') {
       box.append(el('h2', { text: 'Paused' }));
       first = button('Resume', 'primary', () => resumeGame());
       box.append(first, el('div', { class: 'arcade-row' }, button('Restart', '', () => startRound()), button('How to play', '', () => showPanel('help', 'pause'))),
         el('div', { class: 'arcade-row' }, button(soundLabel(), 'quiet', toggleSound, { 'aria-pressed': String(soundOn()) }), button(deadLabel(), 'quiet', cycleDead)),
-        button('Leave Arcade', 'quiet', () => close_('menu')));
+        el('div', { class: 'arcade-row' }, button('Games', 'quiet', () => showSelect()), button('Leave Arcade', 'quiet', () => close_('menu'))));
     } else if (name === 'result') {
-      const r = s && s.result;
-      const won = r && r.phase === 'won';
-      const head = won ? 'Cleared!' : r && r.reason === 'time' ? "Time's up" : 'Out of energy';
-      box.append(el('h2', { text: head }));
+      const r = (s && s.result) || {};
+      box.append(el('h2', { text: r.headline || (r.phase === 'won' ? 'Cleared!' : r.reason === 'time' ? "Time's up" : 'Out of energy') }));
       box.append(el('p', { class: 'arcade-score', text: String(s ? s.score : 0) }));
       box.append(el('p', { class: 'arcade-best' + (s && s.newBest ? ' new' : ''), text: s && s.newBest ? 'New best!' : 'Best ' + (s ? s.best : 0) }));
-      if (r) box.append(el('p', { class: 'arcade-detail', text: won ? `All three waves · ${Math.round(r.timeMs / 1000)} s · bonus ${r.bonus}` : `${r.collected} crystals · wave ${r.wave} of ${r.waves}` }));
+      if (r.detail) box.append(el('p', { class: 'arcade-detail', text: r.detail }));
+      else if (r.phase) box.append(el('p', { class: 'arcade-detail', text: r.phase === 'won' ? `All three waves · ${Math.round(r.timeMs / 1000)} s · bonus ${r.bonus}` : `${r.collected} crystals · wave ${r.wave} of ${r.waves}` }));
       first = button('Play again', 'primary', () => startRound());
-      box.append(first, button('Leave Arcade', 'quiet', () => close_('menu')));
+      box.append(first, el('div', { class: 'arcade-row' }, button('Games', 'quiet', () => showSelect()), button('Leave Arcade', 'quiet', () => close_('menu'))));
     } else if (name === 'error') {
       box.append(el('h2', { text: "The arcade didn't wake up." }), el('p', { class: 'arcade-detail', text: 'Something in the game failed to load. Close and try again.' }));
       first = button('Close', 'primary', () => close_('error'));
@@ -769,8 +939,7 @@
     const game = make(gameHost());
     game.attach($('arcadeCanvas'));
     game.resize(A.L.scale);
-    game.title();
-    game.render(1);
+    $('arcadePulse').setAttribute('aria-label', entry.action || 'Action');
     return game;
   }
   function startRound() {
@@ -779,7 +948,8 @@
     releaseInput();
     A.nervous = 0; A.mood = ''; A.sparkles = [];
     clearTimeout(A.resultTimer);
-    A.game.newRound();
+    A.game.newRound({ mode: A.mode });
+    A.round++;
     A.stats.rounds++;
     A.lastPhase = 'ready';
     showPanel('');
@@ -807,13 +977,10 @@
     ensureAudio();
     kick();
   }
-  function switchGame(entry) {
-    if (!A.api || entry.id === (A.entry && A.entry.id)) return;
-    const gen = A.gen;
-    stopLoop();
-    if (A.game) { try { A.game.stop(); } catch {} A.game = null; }
-    A.entry = entry;
-    prepareGame(entry, gen).then((g) => { if (g && gen === A.gen) { A.game = g; showPanel('title'); kick(); } }).catch(() => fail());
+  function switchGame(entry) {   // kept for older callers: choosing another cartridge
+    if (!A.api || !entry) return;
+    stopGame();
+    openCart(entry);
   }
 
   // one loop for the game, alive only while something on the screen moves
@@ -830,12 +997,12 @@
     A.last = now;
     A.acc += dt;
     const stepMs = game.stepMs || 1000 / 60;
-    game.input({ dir: currentDir(), pulse: A.pulseQueued });
+    game.input(inputState(A.pulseQueued));
     A.pulseQueued = false;
     let n = 0;
     while (A.acc >= stepMs && n < 8) { game.step(stepMs); A.acc -= stepMs; n++; A.stats.steps++; }
     if (n >= 8) A.acc = 0;
-    if (n) game.input({ dir: currentDir(), pulse: false });
+    if (n) game.input(inputState(false));
     // draw at the display's pace while playing (half of it on low power); the attract screen is gentler
     A.frameN++;
     const every = attract ? (lowPower() ? 4 : 2) : lowPower() ? 2 : 1;
@@ -855,6 +1022,7 @@
       if (s.phase === 'won' || s.phase === 'lost') {
         releaseInput();
         syncRimButtons();
+        reportRound(s);   // 5.0: once per round
         clearTimeout(A.resultTimer);
         // the last moment plays out on screen, then the result card appears
         A.resultTimer = setTimeout(() => { if (A.game && A.state === 'ARCADE_ACTIVE') showPanel('result'); }, speed() ? 900 : 200);
@@ -892,7 +1060,8 @@
     A.openedAt = ms();
     A.satAt = api.satellite();
     try { const d = EyesAbility.diagnostics(); const it = d.wheel.items.find((i) => i.id === 'arcade'); A.itemAt = it ? { x: it.x, y: it.y } : null; } catch { A.itemAt = null; }
-    A.entry = A.entry || CATALOG[0];
+    A.entry = CATALOG.find((g) => g.id === A.prefs.last) || A.entry || CATALOG[0];
+    A.round = 0; A.reportedRound = 0;
     ensureDom();
     A.L = computeLayout(120, 96);
     A.reactions = []; A.ripples = []; A.sparkles = []; A.tracks = null; A.nervous = 0; A.mood = ''; A.watch = { x: 0, y: 0, until: 0, amount: 0 };
@@ -904,7 +1073,8 @@
     showStage(true);
     syncRimButtons();
     const d = planOpening();
-    const loading = prepareGame(A.entry, gen);
+    // 5.0: opening loads only the kit (label art, shared helpers): no game engine runs until you press Play
+    const loading = loadScripts(['arcade-kit.js']);
     // A stalled web asset request must NEVER trap the iPhone behind the arcade's
     // full-screen touch-capturing stage. Give a slow network room, then restore EYES.
     const openTimer = setTimeout(() => {
@@ -915,14 +1085,12 @@
       if (h && h.toast) h.toast('Arcade could not open. Check your connection and try again.');
     }, 10000);
     const ready = new Promise((r) => setTimeout(r, Math.max(0, d - 380 * speed())));
-    Promise.all([loading, ready]).then(([game]) => {
-      if (gen !== A.gen || !owned() || !game) { if (game) try { game.stop(); } catch {} return; }
-      A.game = game;
+    Promise.all([loading, ready]).then(() => {
+      if (gen !== A.gen || !owned()) return;
       if (!go('ARCADE_ACTIVE', 'ready')) { closeNow('refused'); return; }
       setTimeout(() => { if (gen === A.gen && A.state === 'ARCADE_ACTIVE') planSteady(); }, Math.max(0, A.moveUntil - ms()));
-      showPanel('title');
+      showSelect();
       if (A.musicAtOpen && !A.prefs.soundWithMusic) note('Game sound is off while your music plays.', 3200);
-      kick();
     }).catch((error) => {
       if (gen !== A.gen || !owned()) return;
       console.warn('[EYES Arcade] startup failed', error);
@@ -977,8 +1145,9 @@
     if (A.state === 'ARCADE_CLOSING') return true;
     if (A.state === 'ARCADE_OPENING' || A.state === 'ARCADE_ERROR') { close_('back', true); return true; }
     const s = A.game && A.game.status();
-    if (A.panel === 'help') { showPanel(A.panelFrom === 'pause' ? 'pause' : 'title'); return true; }
+    if (A.panel === 'help') { showPanel(A.panelFrom === 'pause' ? 'pause' : 'cart'); return true; }
     if (s && (s.phase === 'playing' || s.phase === 'ready') && !s.paused) { pauseGame('back'); return true; }   // Back never throws a round away
+    if (A.panel === 'cart' || A.panel === 'result' || A.panel === 'loading') { showSelect(); return true; }   // 5.0: back to the cartridges
     close_('back');
     return true;
   }
@@ -1008,8 +1177,9 @@
     A.L = L;
     placeDom();
     if (A.game) { A.game.resize(L.scale); A.game.render(1); }
+    else paintBackdrop(A.panel === 'select' ? null : A.entry);
     if (A.state === 'ARCADE_ACTIVE') planSteady();
-    if (A.panel === 'title' || !A.panel) kick();
+    if (!A.panel) kick();
   });
 
   function available() {
@@ -1020,9 +1190,13 @@
 
   window.EyesArcade = {
     defineGame(id, factory) { if (typeof factory === 'function' && !factories.has(id)) factories.set(id, factory); },
-    catalog: () => CATALOG.map((g) => ({ id: g.id, title: g.title })),
+    catalog: () => CATALOG.map((g) => ({ id: g.id, title: g.title, bests: bestsOf(g), modes: g.modes ? g.modes.map((m) => m.id) : null })),
+    select: () => (owned() ? (showSelect(), true) : false),
+    open: (id) => { const g = CATALOG.find((x) => x.id === id); if (!g || !owned()) return false; openCart(g); return true; },
+    play: (mode) => { if (!owned() || !A.entry) return false; play(mode); return true; },
     diagnostics: () => ({
       state: A.state, panel: A.panel, game: A.game ? A.game.status() : null, loop: !!A.raf,
+      entry: A.entry ? A.entry.id : null, mode: A.mode, engine: A.game ? A.game.id : null, round: A.round, reportedRound: A.reportedRound,
       layout: A.L ? { portrait: A.L.portrait, scale: A.L.scale, ap: A.L.ap, screen: A.L.screen, zones: A.L.zones, stick: A.L.stick, pulse: A.L.pulse, pause: A.L.pause, rx: A.L.rx, ry: A.L.ry } : null,
       audio: A.audio ? A.audio.ctx.state : 'none', sound: soundOn(), musicAtOpen: A.musicAtOpen,
       loaded: [...loaded.keys()].filter((k) => loaded.get(k) === 'ok'), defined: [...factories.keys()],

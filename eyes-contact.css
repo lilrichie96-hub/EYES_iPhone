@@ -218,3 +218,11 @@ html #eyesContact .ec-top, html[data-skin] #eyesContact .ec-top { position: rela
 @media (max-height: 680px) { #eyesContact .ec-guide-in { max-height: 50vh; padding-top: 14px; } #eyesContact .ec-guide-list { font-size: 13px; } #eyesContact .ec-guide-list dt { margin-top: 7px; } }
 @media (max-width: 340px) { #eyesContact .ec-top { gap: 2px; padding-left: 6px; padding-right: 6px; } #eyesContact .ec-icon { width: 40px; height: 40px; } }
 
+
+/* 5.0: Shared history (eyes-friendship.js), folded away until opened */
+#eyesContact .ec-history { margin: -4px 2px 14px; }
+#eyesContact .ec-history summary { cursor: pointer; color: var(--dim); font-size: 13px; letter-spacing: 0.04em; padding: 6px 0; min-height: 32px; list-style: none; }
+#eyesContact .ec-history summary::-webkit-details-marker { display: none; }
+#eyesContact .ec-history summary::after { content: ' ›'; }
+#eyesContact .ec-history[open] summary::after { content: ' ⌄'; }
+#eyesContact .ec-history .ec-facts { margin: 6px 0 8px; }

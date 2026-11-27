@@ -379,7 +379,8 @@ function adopt(seed, name, lean) {
 }
 function rename(name) {
   if (!state) return;
-  const clean = String(name || '').replace(/[<>&"]/g, '').trim().slice(0, 14);
+  // 5.0: the nickname only (never the seed, DNA or growth). Invisible and control characters never get in.
+  const clean = String(name || '').replace(/[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u2028-\u202E\u2060-\u206F\uFEFF]/g, '').replace(/[<>&"]/g, '').replace(/\s+/g, ' ').trim().slice(0, 14);
   if (!clean) return;
   state.name = clean; persist(); load(); announce();
 }
@@ -710,7 +711,7 @@ function cleanProfile(p) {
   const stage = Math.max(0, Math.min(3, Math.floor(Number(p.stage) || 0)));
   const branch = BRANCHES[p.branch] ? p.branch : null;
   const muts = Array.isArray(p.mutations) ? p.mutations.filter((id) => RARE_TRAITS.some((t) => t.id === id)).slice(0, 5) : [];
-  const name = String(p.name || '').replace(/[<>&"]/g, '').trim().slice(0, 14);
+  const name = String(p.name || '').replace(/[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u2028-\u202E\u2060-\u206F\uFEFF]/g, '').replace(/[<>&"]/g, '').trim().slice(0, 14);
   const born = Number.isFinite(Number(p.born)) ? Number(p.born) : null;
   return { v: 1, seed: Number(p.seed) >>> 0, name, stage, branch: stage >= 2 ? branch || 'radiant' : null, mutations: muts, born, lean: cleanLean(p.lean) };
 }

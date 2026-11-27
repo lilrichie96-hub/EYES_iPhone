@@ -27,6 +27,17 @@
     try { return n[name](...args); } catch { return undefined; }
   };
 
+  // 5.0: a touch of feel. Haptics only where EYES' Android bridge is present (Android WebView has the
+  // Vibration API and EYES holds VIBRATE); iPhone browsers offer no web haptics, so nothing pretends there.
+  const buzz = (pattern) => { if (!nativeV()) return; try { if (navigator.vibrate) navigator.vibrate(pattern); } catch {} };
+  const feel = (kind, data) => { try { if (window.EyesFeel) EyesFeel.report(kind, data); } catch {} };
+  function pulseLens(cls, dur) {
+    const lens = $('visionLens');
+    if (!lens || !speed()) return;
+    lens.classList.remove(cls); void lens.offsetWidth; lens.classList.add(cls);
+    clearTimeout(pulseLens[cls]);
+    pulseLens[cls] = setTimeout(() => lens.classList.remove(cls), dur);
+  }
   const ICON = 'M2.8 12C5.4 7.6 8.6 5.6 12 5.6s6.6 2 9.2 6.4c-2.6 4.4-5.8 6.4-9.2 6.4S5.4 16.4 2.8 12ZM8.6 12a3.4 3.4 0 1 0 6.8 0a3.4 3.4 0 1 0 -6.8 0M11.2 12a0.8 0.8 0 1 0 1.6 0a0.8 0.8 0 1 0 -1.6 0';
   const CHANNELS = ['look', 'gx', 'gy', 'k', 'neutral', 'hush', 'open', 'grow', 'size', 'pupil', 'iris', 'lens'];
   const ACTIVE_STATES = ['VISION_ACTIVE', 'QR_RESULT', 'PHOTO_CAPTURE'];
@@ -99,8 +110,8 @@
     const sp = speed(), t = ms();
     if (!sp) return;
     const R = {
-      candidate: { dur: 240, pupil: [[110, 0.95], [240, 0.97]], iris: [[110, 0.985], [240, 0.99]] },
-      confirm: { dur: 420, pupil: [[0, 0.97], [150, 1.035], [420, 1]], iris: [[0, 0.99], [150, 1.015], [420, 1]] },
+      candidate: { dur: 240, pupil: [[90, 0.93], [240, 0.96]], iris: [[90, 0.98], [240, 0.99]] },
+      confirm: { dur: 460, pupil: [[0, 0.96], [140, 1.045], [300, 0.99], [460, 1]], iris: [[0, 0.99], [140, 1.018], [460, 1]] },
       shutter: { dur: 430, pupil: [[85, 0.6], [150, 0.6], [430, 1]], iris: [[85, 0.96], [430, 1]] },
       nudge: { dur: 300, pupil: [[120, 1.04], [300, 1]] }
     }[name];
@@ -174,7 +185,7 @@
     // the camera collapses inward and the living eye comes back
     return plan({
       lens: [[150 * f, 1], [330 * f, 0]],
-      pupil: [[300 * f, 0.26], [680 * f, T.pupilBase]],
+      pupil: [[300 * f, 0.26], [640 * f, T.pupilBase * 1.06, 'out'], [800 * f, T.pupilBase]],   // 5.0: it settles back, alive
       grow: [[260 * f, V.cur ? V.cur.grow : 1], [640 * f, 0]],
       iris: [[640 * f, T.irisBase]],
       look: fast ? [[180, 0.55], [500, 0]] : [[200, 0]],
@@ -226,7 +237,9 @@
     const shutter = el('button', { id: 'visionShutter', type: 'button', 'aria-label': 'Take a photo' });
     const camera = el('button', { id: 'visionCamera', type: 'button', 'aria-label': "Open the phone's camera app" });
     const close = el('button', { id: 'visionClose', type: 'button', 'aria-label': 'Close Vision' });
-    const rim = el('div', { id: 'visionRim' }, shutter, camera, close);
+    // 5.0: the light, offered only when this camera says it has a torch it can control
+    const torch = el('button', { id: 'visionTorch', type: 'button', 'aria-label': 'Light', 'aria-pressed': 'false', hidden: true });
+    const rim = el('div', { id: 'visionRim' }, shutter, camera, close, torch);
     const hint = el('p', { id: 'visionHint', 'aria-live': 'polite' });
     const note = el('p', { id: 'visionNote', role: 'status', 'aria-live': 'polite' });
     const message = el('div', { id: 'visionMessage', role: 'alert', hidden: true },
@@ -241,6 +254,7 @@
     camera.addEventListener('click', handoff);
     if (window.EYES_IOS_ABILITIES) camera.hidden = true;
     close.addEventListener('click', () => close_('button'));
+    torch.addEventListener('click', toggleTorch);
     document.body.append(stage);
   }
   function onKey(e) {
@@ -277,6 +291,7 @@
     $('visionShutter').disabled = V.state !== 'VISION_ACTIVE';
     $('visionCamera').disabled = V.state !== 'VISION_ACTIVE';
     $('visionClose').disabled = !(live || V.state === 'CAMERA_STARTING' || V.state === 'CAMERA_PERMISSION');
+    $('visionTorch').disabled = V.state !== 'VISION_ACTIVE' || !V.torchOK || V.torchBusy;
   }
 
   // painted every frame from launcher.js draw(), through EyesAbility.frame()
@@ -332,6 +347,7 @@
       place('visionShutter', 90, rc + 4);
       place('visionCamera', 146, rc);
       place('visionClose', 34, rc);
+      if (V.torchOK) place('visionTorch', 270, rc);
     }
     V.layout = { cx: centre.x, cy: centre.y, r, irisR };
     placeBelow();
@@ -492,6 +508,8 @@
     if (!go('VISION_ACTIVE', 'ready')) return;
     call('setActive', true);
     planReveal();
+    pulseLens('focus-pull', 700);   // 5.0: the world comes into focus as the pupil opens
+    detectTorch();
     hint('Point me at a QR code, or take a photo.', 4200);
     if (V.api.keyboard()) setTimeout(() => { if (V.state === 'VISION_ACTIVE') $('visionShutter').focus({ preventScroll: true }); }, 400);
     scheduleScan(120);
@@ -515,6 +533,10 @@
     V.stream = null;
     V.track = null;
     V.imageCapture = null;
+    // stopping the track turns the light off with it; forget it ever was on
+    V.torch = false; V.torchOK = false; V.torchBusy = false; V.torchGen = (V.torchGen || 0) + 1;
+    const tb = $('visionTorch');
+    if (tb) { tb.hidden = true; tb.setAttribute('aria-pressed', 'false'); tb.classList.remove('on'); }
     const video = $('visionVideo');
     if (video) { try { video.pause(); } catch {} video.srcObject = null; }
     call('setActive', false);
@@ -576,12 +598,15 @@
     V.pendingConfirm = true;
     showTarget(found.corners);
     react('candidate');
+    pulseLens('lock', 520);   // 5.0: the lens rim tightens onto the code
     const gen = V.gen, delay = speed() ? 220 * speed() : 0;
     setTimeout(() => {
       V.pendingConfirm = false;
       if (gen !== V.gen || V.state !== 'VISION_ACTIVE') return;
       if (!go('QR_RESULT', 'decoded')) return;
       react('confirm');
+      buzz([12, 40, 18]);   // 5.0: recognised (Android only; no web haptics on iPhone)
+      feel('vision-scan', { qr: true });
       hint('', 0);
       showResult(found);
     }, delay);
@@ -700,6 +725,52 @@
     if (ok === false) { const h = V.api && V.api.host(); (h ? h.toast : () => {})('No browser answered the link.'); }
   }
 
+  // ---------- 5.0: the light ----------
+  // Only where getUserMedia's own track reports torch: true (Chromium on Android, cameras with a flash LED).
+  // One constraint, applied only when you tap it, with a timeout; if the camera refuses, the button goes away
+  // and the camera keeps running exactly as before. The native bridge is not involved.
+  function detectTorch() {
+    const tb = $('visionTorch'), track = V.track;
+    let ok = false;
+    try { const caps = track && track.getCapabilities ? track.getCapabilities() : null; ok = !!(caps && caps.torch === true); } catch { ok = false; }
+    V.torchOK = ok; V.torch = false;
+    if (tb) { tb.hidden = !ok; tb.setAttribute('aria-pressed', 'false'); tb.classList.remove('on'); }
+    syncStageState();
+  }
+  async function setTorch(on) {
+    const track = V.track;
+    if (!track || !V.torchOK) return false;
+    await withTimeout(track.applyConstraints({ advanced: [{ torch: !!on }] }), 1500);
+    let s = null;
+    try { s = track.getSettings ? track.getSettings() : null; } catch {}
+    return !(s && typeof s.torch === 'boolean' && s.torch !== !!on);
+  }
+  async function toggleTorch() {
+    if (V.state !== 'VISION_ACTIVE' || !V.torchOK || V.torchBusy || !V.track) return;
+    const want = !V.torch, gen = V.gen, tg = V.torchGen;
+    V.torchBusy = true; syncStageState();
+    let ok = false;
+    try { ok = await setTorch(want); } catch { ok = false; }
+    if (gen !== V.gen || tg !== V.torchGen) return;            // the camera stopped meanwhile: nothing to undo
+    V.torchBusy = false;
+    const tb = $('visionTorch');
+    if (ok) {
+      V.torch = want;
+      if (tb) { tb.classList.toggle('on', want); tb.setAttribute('aria-pressed', String(want)); }
+      buzz(8);
+    } else {
+      V.torchOK = false; V.torch = false;
+      if (tb) tb.hidden = true;
+      note("The light isn't available on this camera.", 2400);
+    }
+    syncStageState();
+  }
+  // a still photo can reset the camera's settings; put the light back if it was on
+  async function restoreTorch() {
+    if (!V.torch || !V.track) return;
+    try { await setTorch(true); } catch {}
+  }
+
   // ---------- photos ----------
   async function capture(source) {
     if (V.state !== 'VISION_ACTIVE' || V.capturing || !V.track) return;
@@ -707,6 +778,7 @@
     V.capturing = true;
     clearTimeout(V.scanTimer);
     react('shutter');
+    buzz(14);   // 5.0
     clearTimeout(V.flashTimer);
     V.flashTimer = setTimeout(() => {
       const f = $('visionFlash');
@@ -716,6 +788,7 @@
     const gen = V.gen;
     let shot = null;
     try { shot = await takeStill(); } catch {}
+    if (gen === V.gen) restoreTorch();
     V.capturing = false;
     if (gen === V.gen && V.state === 'PHOTO_CAPTURE') { go('VISION_ACTIVE', 'captured'); scheduleScan(400); }
     if (!shot || !shot.blob) { if (gen === V.gen) note("The photo didn't come out. Try again.", 2600); return; }
@@ -973,6 +1046,7 @@
         break;
       case 'photo':
         V.pendingSaves = Math.max(0, V.pendingSaves - 1);
+        if (m.ok) { feel('vision-scan', { photo: true }); if (owned()) pulseLens('saved', 900); }   // 5.0
         if (owned()) note(m.ok ? 'Saved to ' + (m.where || 'Pictures/EYES') + '.' : "Couldn't save the photo" + (m.error ? ': ' + String(m.error).slice(0, 80) : '.'), m.ok ? 2200 : 4000);
         else if (!m.ok) { const h = window.Haven && Haven.abilityHost && Haven.abilityHost(); if (h) h.toast("Couldn't save the photo."); }
         break;
@@ -1007,6 +1081,7 @@
       native: !!nativeV(),
       detector: 'eyes',
       scanning: !!V.scanTimer,
+      torch: { available: !!V.torchOK, on: !!V.torch, busy: !!V.torchBusy },
       stats: { ...V.stats },
       targets: V.targets
     }),

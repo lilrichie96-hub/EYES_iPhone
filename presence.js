@@ -26,7 +26,10 @@
     // so anything real that happens takes the body back (eyes-visits.js then lets the visitor go)
     visit: 54,
     idle: 25, night: 25,
-    'look-around': 12, firefly: 12, stretch: 12, yawn: 12, sigh: 12, dream: 8
+    'look-around': 12, firefly: 12, stretch: 12, yawn: 12, sigh: 12, dream: 8,
+    // 4.8 The Living Eye (eyes-living.js): its own idle sequences sit below every real event; its greetings sit
+    // with the greetings; being caught in the act by your touch sits just above an ordinary touch
+    living: 14, 'living-greet': 52, 'living-caught': 77
   });
   const priorityOf = (name) => PRIORITY[name] || 35;
   // 4.4: a scripted reaction carries keyframes per channel ([[u, {ch: value}], …], u = 0..1). Between two keys the
@@ -135,6 +138,8 @@
       this.sinceHome = 0;
       this.homeEvery = 5;
       this.lastPetVariant = -1;
+    // 4.8: how its feelings stretch or quicken the time between idle glances (eyes-living.js). 1 = unchanged.
+    this.paceK = 1;
       // 4.4 (review item 3): blinks while music plays, on a phrase boundary of the beat (launcher → musicBeat)
       this.music = { next: 0, touch: false, lastBeat: 0 };
     }
@@ -417,7 +422,7 @@
         // Curious: glances more often. Sleepy: lingers.
         const dnaMotion = typeof HavenDNA !== 'undefined' ? HavenDNA.motion() : null;
         const pace =
-          (1.35 - 0.7 * this.mood.curiosity) * (1 + 0.5 * this.mood.sleepiness) * (dnaMotion ? dnaMotion.gazePace : 1);
+          (1.35 - 0.7 * this.mood.curiosity) * (1 + 0.5 * this.mood.sleepiness) * (dnaMotion ? dnaMotion.gazePace : 1) * (this.paceK || 1);
         this.nextGaze = t + ((slow ? 3600 : 1500) + this.random() * (slow ? 3000 : 2600)) * pace * (this.gentle ? 1.7 : 1);
       }
       const g = clamp((t - this.gazeAt) / Math.max(1, this.gazeDuration));

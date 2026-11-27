@@ -176,6 +176,23 @@
 }
 #pocket .pk-card:active, #pocket .pk-card.held { transform: scale(0.95); box-shadow: inset 0 0 0 1.5px rgba(var(--pocket-rgb), 0.6), 0 0 26px rgba(var(--pocket-rgb), 0.25); }
 #pocket .pk-card.pinned { box-shadow: inset 0 0 0 1px rgba(var(--pocket-rgb), 0.5), 0 6px 18px rgba(0, 0, 0, 0.55), 0 0 26px rgba(var(--pocket-rgb), 0.16); }
+/* 5.0: pinned things wait at the entrance. They sit nearest (level, full size), catch the light from the
+   pupil above them (a soft top light, a brighter rim) and the dark sits further in. Text stays as readable
+   as on every other card: only the frame and the surface glow change. */
+#pocket .pk-card.pinned {
+  background:
+    radial-gradient(120% 70% at 50% -12%, rgba(var(--pocket-rgb), 0.2), transparent 62%),
+    linear-gradient(160deg, rgba(18, 32, 38, 0.92), rgba(5, 11, 14, 0.92));
+  box-shadow: inset 0 0 0 1px rgba(var(--pocket-rgb), 0.55), inset 0 1px 0 rgba(236, 255, 252, 0.12), 0 8px 22px rgba(0, 0, 0, 0.6), 0 0 30px rgba(var(--pocket-rgb), 0.2);
+}
+#pocket .pk-card.pinned .pk-face { box-shadow: inset 0 0 0 1px rgba(var(--pocket-rgb), 0.18); }
+#pocket .pk-threshold {
+  grid-column: 1 / -1;
+  height: 1px;
+  margin: 4px 18%;
+  background: linear-gradient(90deg, transparent, rgba(var(--pocket-rgb), 0.28), transparent);
+  pointer-events: none;
+}
 #pocket .pk-face {
   position: relative;
   display: flex; align-items: center; justify-content: center;

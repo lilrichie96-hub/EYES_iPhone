@@ -49,12 +49,13 @@
     api: null, state: 'IDLE', gen: 0, L: null,
     at: 0, from: null, tracks: null, osc: null, moveUntil: 0, reactions: [], cur: null,
     ripples: [], motes: [], itemAt: null, satAt: null, phase0: Math.random() * 10,
-    items: [], loaded: false, loading: null, filter: 'all', query: '', sort: 'newest',
+    items: [], loaded: false, loading: null, filter: 'all', query: '', sort: 'pinned',   // 5.0: the default view is Pinned first
     urls: new Map(), observer: null, detail: null, pendingDelete: null, undoTimer: 0, noteTimer: 0,
     tray: false, composer: null, busy: 0, flights: 0, swallowQueue: [], swallowTimer: 0, draining: null,
     watch: { x: 0, y: 0, until: 0, amount: 0 }, previewReq: 0, previewWait: new Map(), lastGeo: null,
     stats: { opened: 0, closed: 0, saved: 0, failed: 0, swallowed: 0, retrieved: 0, deleted: 0, restored: 0, imported: 0, duplicates: 0, frames: 0, reactions: {} }
   };
+  // a sort you chose yourself is kept exactly as you chose it (it's only ever saved when you change it)
   try { const pr = JSON.parse(localStorage.getItem(PREFS_KEY)) || {}; if (['newest', 'oldest', 'pinned'].includes(pr.sort)) P.sort = pr.sort; } catch {}
   const savePrefs = () => { try { localStorage.setItem(PREFS_KEY, JSON.stringify({ sort: P.sort })); } catch {} };
   const host = () => (P.api ? P.api.host() : window.Haven && Haven.abilityHost ? Haven.abilityHost() : null);
@@ -558,6 +559,8 @@
     }
     if (!ignoreFilter && P.filter !== 'all') list = list.filter((it) => it.kind === P.filter);
     const by = P.sort === 'oldest' ? (a, b) => a.created - b.created : (a, b) => b.created - a.created;
+    // 5.0 (build 128): Pinned first (the default) brings pinned things to the entrance, nearest the pupil, newest
+    // first in each group. Newest first and Oldest first are purely chronological, pinned or not.
     list.sort((a, b) => (P.sort === 'pinned' ? (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) : 0) || by(a, b));
     return list;
   }
@@ -568,7 +571,7 @@
     $('pocketScroll').scrollTop = 0;
   }
   function cycleSort() {
-    const order = ['newest', 'oldest', 'pinned'];
+    const order = ['pinned', 'newest', 'oldest'];
     P.sort = order[(order.indexOf(P.sort) + 1) % 3];
     savePrefs();
     render();
@@ -594,8 +597,9 @@
       it.pinned ? svgIcon(I.pin, 'pk-pin') : null);
     // a little depth: each thing floats at its own distance (a fixed tilt, nothing animates once settled)
     const h = hashStr(it.id);
-    b.style.setProperty('--tilt', (((h % 7) - 3) * 0.45).toFixed(2) + 'deg');
-    b.style.setProperty('--depth', (0.965 + ((h >> 3) % 5) * 0.009).toFixed(3));
+    // 5.0: pinned things float nearest, level and steady, in the light at the entrance
+    b.style.setProperty('--tilt', it.pinned ? '0deg' : (((h % 7) - 3) * 0.45).toFixed(2) + 'deg');
+    b.style.setProperty('--depth', it.pinned ? '1' : (0.965 + ((h >> 3) % 5) * 0.009).toFixed(3));
     b.style.setProperty('--i', String(Math.min(i, 14)));
     return b;
   }
@@ -608,7 +612,12 @@
     $('pocketSort').setAttribute('aria-label', sortLabel());
     $('pocketSort').dataset.sort = P.sort;
     if (P.observer) P.observer.disconnect();
-    grid.replaceChildren(...list.map(card));
+    const cards = list.map(card);
+    // 5.0: a faint threshold between what waits at the entrance and everything further in (decoration only)
+    const pins = P.sort === 'pinned' ? list.findIndex((it) => !it.pinned) : -1;
+    if (pins > 0) cards.splice(pins, 0, el('div', { class: 'pk-threshold', 'aria-hidden': 'true' }));
+    grid.classList.toggle('has-pins', P.sort === 'pinned' && list.length > 0 && !!list[0].pinned);
+    grid.replaceChildren(...cards);
     empty.hidden = list.length > 0 || !P.loaded;
     if (!list.length && P.loaded) {
       empty.replaceChildren(el('p', { class: 'pk-empty-title', text: P.items.length ? 'Nothing like that in here.' : 'His pocket is empty.' }),
@@ -619,11 +628,11 @@
   // thumbnails load only for cards near the opening, and are let go when Pocket closes
   function observeThumbs() {
     const root = $('pocketScroll');
-    if (!('IntersectionObserver' in window)) { for (const n of $('pocketGrid').children) loadThumb(n); return; }
+    if (!('IntersectionObserver' in window)) { for (const n of $('pocketGrid').querySelectorAll('.pk-card')) loadThumb(n); return; }
     if (!P.observer) P.observer = new IntersectionObserver((entries) => {
       for (const e of entries) if (e.isIntersecting) { P.observer.unobserve(e.target); loadThumb(e.target); }
     }, { root, rootMargin: '160px 0px' });
-    for (const n of $('pocketGrid').children) { const it = P.items.find((x) => x.id === n.dataset.id); if (it && it.thumb) P.observer.observe(n); }
+    for (const n of $('pocketGrid').querySelectorAll('.pk-card')) { const it = P.items.find((x) => x.id === n.dataset.id); if (it && it.thumb) P.observer.observe(n); }
   }
   async function thumbUrl(id) {
     if (P.urls.has(id)) return P.urls.get(id);
@@ -1097,6 +1106,7 @@
     const n = document.querySelector(`#pocketGrid .pk-card[data-id="${CSS.escape(it.id)}"]`);
     if (n && speed()) n.animate([{ transform: 'scale(.3)', opacity: 0, filter: 'blur(3px)' }, { transform: 'scale(1)', opacity: 1, filter: 'blur(0)' }], { duration: 380 / speed(), easing: 'cubic-bezier(.2,.9,.3,1.15)' });
     note('Swallowed.', 1500);
+    try { if (window.EyesFeel) EyesFeel.report('pocket-stored', { kind: it.kind }); } catch {}   // 5.0
   }
 
   // ---------- things shared into EYES (Android saved them already; this moves them into his pocket) ----------

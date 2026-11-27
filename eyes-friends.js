@@ -67,10 +67,10 @@
   const KEY = 'eyes.friends.v1';
   const SIGNALS = ['pulse', 'spark', 'calm', 'resonance', 'hello'];
   // 4.5: 'mirror' is no longer advertised (Mirror became Hangout); 'hangout' is.
-  const CAPS = ['ack', 'duel', 'presence', 'duel2', 'hangout'];   // what this phone understands beyond the original protocol
-  const EXTRA = ['ack', 'duel', 'away', 'mirror', 'hangout'];               // kinds that only go to peers that advertised them
+  const CAPS = ['ack', 'duel', 'presence', 'duel2', 'hangout', 'trade'];   // 4.9: 'trade' (Eye Exchange)   // what this phone understands beyond the original protocol
+  const EXTRA = ['ack', 'duel', 'away', 'mirror', 'hangout', 'trade'];               // kinds that only go to peers that advertised them
   const PRESENCE_MS = 180000, PROBE_WAIT_MS = 12000, ENGAGED_MS = 600000, MAX_COMPANIONS = 6;
-  const COMPANION_KINDS = ['hello', 'profile', 'ack', 'duel', 'away', 'mirror', 'hangout'];
+  const COMPANION_KINDS = ['hello', 'profile', 'ack', 'duel', 'away', 'mirror', 'hangout', 'trade'];
   const LIVE_MS = 90000, CONFIRMED_MS = 90000, RECENT_MS = 30 * 60000, HERE_MS = 60000;
   const capOk = (x) => typeof x === 'string' && /^[a-z0-9]{1,12}$/.test(x);
   const CODE_RE = /HL1-[A-Za-z0-9_-]{43}/;
@@ -304,6 +304,10 @@
         if (age <= 90000 && p.h && typeof p.h === 'object' && !Array.isArray(p.h)) { this.engage(); emitFor(f, 'hangout', p.h, Number(p.t) || now); }
         return;
       }
+      if (k === 'trade') {                             // 4.9 Eye Exchange: a nudge about a trade record on the server
+        if (age <= 660000 && p.x && typeof p.x === 'object' && !Array.isArray(p.x)) { this.engage(); emitFor(f, 'trade', p.x, Number(p.t) || now); }
+        return;
+      }
       if (k === 'mirror') {                            // 4.4 Mirror (older phones): still heard, so it can be answered politely
         if (age <= 90000 && p.m && typeof p.m === 'object' && !Array.isArray(p.m)) { this.engage(); emitFor(f, 'mirror', p.m, Number(p.t) || now); }
         return;
@@ -461,7 +465,7 @@
     return { steps, at, done: at >= steps.length, trouble: !!ch && ch.connection === 'offline' };
   }
   function online(f) { return !!f && presence(f).state === 'online'; }
-  function count(f, what) { f.stats[what] = (f.stats[what] || 0) + 1; const wk = weekKey(); if (f.stats.weekOf !== wk) { f.stats.weekOf = wk; f.stats.wsent = 0; f.stats.wrecv = 0; } f.stats['w' + what] = (f.stats['w' + what] || 0) + 1; save(); }
+  function count(f, what) { try { if (root.EyesFriendship) EyesFriendship.note(f, 'signal'); } catch (e) {} f.stats[what] = (f.stats[what] || 0) + 1; const wk = weekKey(); if (f.stats.weekOf !== wk) { f.stats.weekOf = wk; f.stats.wsent = 0; f.stats.wrecv = 0; } f.stats['w' + what] = (f.stats['w' + what] || 0) + 1; save(); }
   const weekKey = () => { const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.toISOString().slice(0, 10); };
   function incoming(f, kind) {
     count(f, 'recv');
@@ -668,6 +672,17 @@
       return ch.publish({ ...ch.msg('hangout'), h }, true, h.o === 'bye' || h.o === 'away');
     },
     hangoutVia: (f) => (supportsDirect(f, 'hangout') ? f : f && !f.companion && supportsDirect(companionFor(f.code), 'hangout') ? companionFor(f.code) : null),
+    // 4.9 Eye Exchange: same routing as Hangout. Nudges only: the trade itself is a record on the server.
+    trade(f, x) {
+      if (!f || !x || typeof x !== 'object' || JSON.stringify(x).length > 600) return Promise.resolve(false);
+      const via = supportsDirect(f, 'trade') ? f : !f.companion ? companionFor(f.code) : null;
+      const ch = via && channels.get(via.code);
+      if (!ch || !via.peer || !supportsDirect(via, 'trade')) return Promise.resolve(false);
+      if (!ch.active && document.visibilityState === 'visible') ch.start();
+      ch.engage();
+      return ch.publish({ ...ch.msg('trade'), x }, true);
+    },
+    tradeVia: (f) => (supportsDirect(f, 'trade') ? f : f && !f.companion && supportsDirect(companionFor(f.code), 'trade') ? companionFor(f.code) : null),
     mirrorVia: (f) => (supportsDirect(f, 'mirror') ? f : f && !f.companion && supportsDirect(companionFor(f.code), 'mirror') ? companionFor(f.code) : null),
     // 4.4: the owner has now actually seen these waiting signals: tell the sender ('later' ack, newer phones only)
     felt(f, nonces) {

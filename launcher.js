@@ -102,6 +102,7 @@
     } catch {}
   }
   const core = new Presence(present);
+  let living = null;   // 4.8 The Living Eye (eyes-living.js), created once personality and play exist
   const eyeDive = createEyeDive();
   const appManager = createHavenAppManager({
     $,
@@ -188,6 +189,33 @@
     : null;
   // 4.0 play: chase the light, staring contest (eyes-play.js)
   const play = window.createEyesPlay ? createEyesPlay({ core, personality, now, schedule: () => schedule(), eyeCentre }) : null;
+  // 4.8 The Living Eye: emotions, curiosity, independent play, reunions and rare moments. It lives only inside
+  // draw() and steps aside at once for anything the owner is doing (or any screen that isn't the Eye).
+  living = window.createEyesLiving
+    ? createEyesLiving({
+        core, personality, now, read, save, eyeCentre, schedule: () => schedule(),
+        lowPower: () => !!(core.state.saver || core.state.battery <= 20),
+        blocked() {
+          if (!visibility || document.hidden) return 'hidden';
+          if (window.HavenAwakening && HavenAwakening.open) return 'awakening';
+          if (homeHeld) return 'scene';
+          if (panel) return 'panel';
+          if (window.EyesAbility && EyesAbility.state() !== 'IDLE') return 'ability';
+          if (window.EyesContact && EyesContact.isOpen && EyesContact.isOpen()) return 'contact';
+          if (window.EyesHangout && EyesHangout.busy && EyesHangout.busy()) return 'hangout';
+          if (window.EyesDuel && EyesDuel.isOpen && EyesDuel.isOpen()) return 'duel';
+          if (window.EyesPlaytime && EyesPlaytime.active && EyesPlaytime.active()) return 'play';
+          if (play && play.busy()) return 'play';
+          if (eyeDive.active(now())) return 'dive';
+          if (!$('notice').hidden) return 'notification';
+          if (folderOpen() || iris.reachOpen() || iris.busy() || iris.flinging()) return 'iris';
+          if (appManager.dragActive() || pointerActive) return 'touch';
+          if ($('home').classList.contains('music-focus')) return 'focus';
+          if (typeof volumeIris !== 'undefined' && volumeIris && volumeIris.active(now())) return 'volume';
+          return '';
+        }
+      })
+    : null;
   // a game needs the home screen: close The Optic (or any panel) first, which also restarts the draw loop
   if (play) for (const k of ['startLight', 'startStare']) { const f = play[k]; play[k] = (...a) => { if (panel) closePanel(); return f(...a); }; }
   function native(method, ...args) {
@@ -368,6 +396,8 @@
       pp.focus *= 1 + 0.03 * b + 0.06 * groove.drop;
     }
     // Quirks: its own little habits, only while it is resting and nothing else is happening.
+    // 4.8: its feelings and its own little sequences, on this frame's body (eyes-living.js)
+    if (living) living.apply(model, t, ab);
     if (window.HavenLife)
       HavenLife.apply(
         model,
@@ -462,7 +492,7 @@
       hooks: {
         paintBody: (c, o) => skins.paintBody(c, { ...o, motion: core.motion, lowPower }),
         paintSkinIris: (c, o) => skins.paintIris(c, { ...o, motion: core.motion, gaze: v.gaze, pose: p, music: m, lowPower }),
-        paintMaterial: (c, o) => paintLivingMaterial(c, { ...o, v, music: m, lowPower }),
+        paintMaterial: (c, o) => (paintLivingMaterial(c, { ...o, v, music: m, lowPower }), living && living.paintIris(c, { ...o, music: m, lowPower, tint: (intensity, alpha) => color(v, intensity, alpha) })),
         // Music filaments are painted inside the existing clipped iris, not layered above it.
         paintMusic: (c, o) => {
           model.musicVisualizer = iris.paintMusic(c, {
@@ -571,6 +601,7 @@
     if (play) { play.tick(t); play.paint(ctx, t); }
     if (signal) paintLinkEnergy(t, cx, cy, size, signal, v);
     paintPersonality(t, cx, cy, size, v);
+    if (living) living.paint(ctx, { t, cx, cy, size, tint: (intensity, alpha) => color(v, intensity, alpha), lowPower: core.state.saver || core.state.battery <= 20 });
     // Folder connections extend the iris outward into actual touchable app nodes.
     const orbit = appManager.constellation();
     model.constellation = orbit
@@ -1168,6 +1199,7 @@
           const known = new Set(notifications.map((n) => n.key));
           if ((data.items || []).some((n) => !known.has(n.key))) personality.wake('stir');
         }
+        if (living) living.signal('notifications', data);
         notifications = data.items || [];
         iris.notifications(notifications);
         if (panel === 'inbox') renderInbox();
@@ -1478,6 +1510,7 @@
     schedule();
   }
   function openPanel(id) {
+    if (living) living.yieldNow('panel');   // 4.8: the Living Eye lets go before the panel covers it
     // EYES for iPhone has no apps, notifications or folders: those panels never open there
     if (window.EYES_WEB && ['drawer', 'inbox', 'organizeSheet', 'folderSheet'].includes(id)) return;
     closePanel();
@@ -1995,6 +2028,7 @@
       return EyesAbility.launch('play', reason || 'optic');
     },
     holdHome(on) {
+      if (on && living) living.yieldNow('scene');   // 4.8
       if(on&&window.EyesAbility)EyesAbility.interrupt('scene');
       homeHeld = !!on;
       if (!homeHeld) { draw(now()); schedule(); }

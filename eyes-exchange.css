@@ -1,0 +1,113 @@
+/* EYES 4.9 · Eye Exchange. Scoped under #eyesExchange, #eyesExchangeCall, #xxArrive, #xxJournalSheet and
+   #eyesContact .ec-trade…  No inline styles (CSP style-src 'self'): dynamic values go through el.style. */
+
+/* ---------- the scene ---------- */
+#eyesExchange { position: fixed; inset: 0; z-index: 52; background: radial-gradient(120% 70% at 50% 28%, #071218 0%, #03080b 55%, #010304 100%);
+  color: #e4f1f3; font: 15px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; overflow: hidden;
+  padding: calc(max(env(safe-area-inset-top, 0px), var(--native-inset-top, 0px)) + 10px) 16px calc(max(env(safe-area-inset-bottom, 0px), var(--native-inset-bottom, 0px)) + 14px);
+  box-sizing: border-box; display: flex; flex-direction: column; animation: xx-in 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both; -webkit-user-select: none; user-select: none; }
+@keyframes xx-in { from { opacity: 0; } }
+#eyesExchange .xx-cv { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+#eyesExchange .xx-head { position: relative; top: auto; left: auto; right: auto; display: flex; align-items: center; justify-content: space-between; min-height: 40px; }
+#eyesExchange .xx-k, #xxJournalSheet .xx-k { margin: 0; font-size: 11px; letter-spacing: 0.26em; color: rgba(228, 241, 243, 0.46); }
+#eyesExchange .xx-x { width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(228, 241, 243, 0.12); background: rgba(228, 241, 243, 0.04); color: #e4f1f3; font-size: 22px; line-height: 1; }
+#eyesExchange .xx-names { position: relative; display: grid; grid-template-columns: 1fr 1fr; margin-top: calc(31vh - 40px); text-align: center; pointer-events: none; }
+#eyesExchange .xx-name { font-size: 17px; font-weight: 600; letter-spacing: 0.01em; padding-top: min(16vw, 74px, 10vh); }
+#eyesExchange .xx-cards { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+#eyesExchange .xx-card { padding: 11px 12px 10px; border-radius: 18px; background: rgba(228, 241, 243, 0.035); border: 1px solid rgba(228, 241, 243, 0.08); min-height: 92px; }
+#eyesExchange .xx-card p { margin: 0; }
+#eyesExchange .xx-c-name { font-weight: 600; font-size: 14px; margin-bottom: 2px !important; }
+#eyesExchange .xx-c-l { font-size: 12.5px; color: rgba(228, 241, 243, 0.78); }
+#eyesExchange .xx-dim { color: rgba(228, 241, 243, 0.45) !important; font-size: 12.5px; }
+#eyesExchange .xx-c-j { list-style: none; margin: 6px 0 0; padding: 0; font-size: 11.5px; color: rgba(228, 241, 243, 0.55); }
+#eyesExchange .xx-c-j li::before { content: '·'; margin-right: 5px; }
+#eyesExchange .xx-link { margin-top: 6px; padding: 4px 0; border: 0; background: none; color: rgba(190, 228, 236, 0.85); font: inherit; font-size: 12.5px; text-decoration: underline; text-underline-offset: 3px; }
+#eyesExchange .xx-panel { position: relative; margin-top: auto; padding-top: 12px; }
+#eyesExchange .xx-state { margin: 0 0 6px; font-size: 15px; text-align: center; min-height: 21px; }
+#eyesExchange .xx-perm { margin: 0 auto 10px; max-width: 34em; text-align: center; font-size: 12.5px; color: rgba(228, 241, 243, 0.55); }
+#eyesExchange .xx-perm:empty { display: none; }
+#eyesExchange .xx-label { margin: 0 0 10px; }
+#eyesExchange .xx-label label { display: grid; gap: 5px; font-size: 12.5px; color: rgba(228, 241, 243, 0.65); }
+#eyesExchange .xx-label input { min-height: 40px; border-radius: 12px; border: 1px solid rgba(228, 241, 243, 0.16); background: rgba(228, 241, 243, 0.05); color: #e4f1f3; font: inherit; padding: 0 12px; -webkit-user-select: text; user-select: text; }
+#eyesExchange .xx-row { display: flex; gap: 10px; }
+#eyesExchange .xx-row:empty { display: none; }
+#eyesExchange .xx-btn, #xxJournalSheet .xx-btn { flex: 1; min-height: 48px; border-radius: 999px; font: inherit; font-size: 15px; color: #e4f1f3; background: rgba(228, 241, 243, 0.06); border: 1px solid rgba(228, 241, 243, 0.15); }
+#eyesExchange .xx-btn.xx-primary { background: #e4f1f3; color: #061014; font-weight: 600; border-color: transparent; }
+#eyesExchange .xx-btn.xx-off { opacity: 0.4; pointer-events: none; }
+#eyesExchange .xx-btn:active { transform: scale(0.97); }
+#eyesExchange .xx-time { height: 2px; margin-top: 12px; border-radius: 2px; background: rgba(228, 241, 243, 0.08); overflow: hidden; }
+#eyesExchange .xx-time[hidden] { display: none; }
+#eyesExchange .xx-time i { display: block; height: 100%; background: rgba(190, 228, 236, 0.55); transform-origin: 0 50%; transition: transform 1s linear; }
+#eyesExchange .xx-say { position: absolute; left: 16px; right: 16px; top: calc(max(env(safe-area-inset-top, 0px), var(--native-inset-top, 0px)) + 58px); margin: 0; text-align: center; font-size: 13.5px;
+  color: rgba(228, 241, 243, 0.85); opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+#eyesExchange .xx-say.on { opacity: 1; }
+/* while sealing and leaving, the interface steps back so the Eyes have the stage */
+#eyesExchange[data-phase=committing] .xx-cards, #eyesExchange[data-phase=done] .xx-cards, #eyesExchange[data-phase=departing] .xx-cards { opacity: 0.25; transition: opacity 0.8s; }
+#eyesExchange[data-phase=departing] .xx-names, #eyesExchange[data-phase=departing] .xx-panel, #eyesExchange[data-phase=departing] .xx-head { opacity: 0; transition: opacity 0.9s; }
+#eyesExchange[data-phase=departing] .xx-cards { opacity: 0; }
+#eyesExchange.xx-dark::after { content: ''; position: absolute; inset: 0; background: #000; animation: xx-in 0.35s both; }
+#eyesExchange[data-phase=compose] .xx-c-theirs, #eyesExchange[data-phase=waiting] .xx-c-theirs { opacity: 0.6; }
+
+/* ---------- the journal ---------- */
+#eyesExchange .xx-journal, #xxJournalSheet { position: fixed; inset: 0; z-index: 3; display: flex; align-items: center; justify-content: center; padding: 18px; background: rgba(1, 3, 4, 0.82); }
+#xxJournalSheet { z-index: 62; color: #e4f1f3; font: 15px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; }
+#eyesExchange .xx-journal[hidden] { display: none; }
+.xx-j-card { width: min(380px, 100%); box-sizing: border-box; padding: 18px 18px 14px; border-radius: 24px; background: rgba(6, 12, 15, 0.98); border: 1px solid rgba(228, 241, 243, 0.12); box-shadow: 0 18px 50px rgba(0, 0, 0, 0.6); }
+.xx-j-card h3 { margin: 6px 0 4px; font-size: 22px; font-weight: 600; }
+.xx-j-meta { margin: 0 0 12px; font-size: 13.5px; color: rgba(228, 241, 243, 0.7); }
+.xx-j-h { margin: 0 0 6px; font-size: 11px; letter-spacing: 0.2em; color: rgba(228, 241, 243, 0.45); }
+.xx-j-list { list-style: none; margin: 0 0 14px; padding: 0 0 0 14px; border-left: 1px solid rgba(190, 228, 236, 0.25); }
+.xx-j-list li { position: relative; padding: 4px 0 8px; display: flex; justify-content: space-between; gap: 10px; font-size: 14px; }
+.xx-j-list li::before { content: ''; position: absolute; left: -18px; top: 10px; width: 7px; height: 7px; border-radius: 50%; background: rgba(190, 228, 236, 0.75); }
+.xx-j-list small { color: rgba(228, 241, 243, 0.45); font-size: 12px; white-space: nowrap; }
+.xx-j-card .xx-btn { width: 100%; min-height: 44px; }
+
+/* ---------- incoming invitation ---------- */
+#eyesExchangeCall { position: fixed; left: 0; right: 0; top: calc(max(env(safe-area-inset-top, 0px), var(--native-inset-top, 0px)) + 10px); z-index: 60;
+  display: flex; justify-content: center; pointer-events: none; padding: 0 12px; font: 15px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; color: #e4f1f3;
+  animation: xxc-in 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+@keyframes xxc-in { from { opacity: 0; transform: translateY(-24px) scale(0.96); } }
+#eyesExchangeCall .xxc-card { pointer-events: auto; position: relative; width: min(420px, 100%); box-sizing: border-box; display: grid; grid-template-columns: 64px 1fr; gap: 4px 14px; align-items: center;
+  padding: 14px 14px 14px 12px; border-radius: 24px; overflow: hidden; background: rgba(6, 12, 15, 0.96); border: 1px solid rgba(var(--c, 170, 220, 230), 0.32);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55), 0 0 36px rgba(var(--c, 170, 220, 230), 0.16); }
+#eyesExchangeCall .xxc-eye { width: 64px; height: 64px; grid-row: span 2; }
+#eyesExchangeCall .xxc-k { margin: 0; font-size: 11px; letter-spacing: 0.24em; color: rgba(228, 241, 243, 0.5); }
+#eyesExchangeCall .xxc-l { margin: 1px 0 0; font-size: 15px; } #eyesExchangeCall .xxc-l b { font-weight: 600; }
+#eyesExchangeCall .xxc-name { grid-column: 1 / -1; display: block; margin-top: 6px; }
+#eyesExchangeCall .xxc-name input { width: 100%; box-sizing: border-box; min-height: 38px; border-radius: 12px; border: 1px solid rgba(228, 241, 243, 0.16); background: rgba(228, 241, 243, 0.05); color: #e4f1f3; font: inherit; font-size: 14px; padding: 0 12px; }
+#eyesExchangeCall .xxc-row { grid-column: 1 / -1; display: flex; gap: 8px; margin-top: 8px; }
+#eyesExchangeCall button { flex: 1; min-height: 42px; border-radius: 999px; font: inherit; font-size: 14.5px; color: #e4f1f3; background: rgba(228, 241, 243, 0.06); border: 1px solid rgba(228, 241, 243, 0.14); }
+#eyesExchangeCall .xxc-yes { background: #e4f1f3; color: #061014; font-weight: 600; border-color: transparent; }
+#eyesExchangeCall .xxc-time { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: rgba(var(--c, 170, 220, 230), 0.7); transform-origin: 0 50%; transition: transform 1s linear; }
+
+/* ---------- arrival ---------- */
+#xxArrive { position: fixed; inset: 0; z-index: 58; pointer-events: auto; background: #000; transition: background 0.9s ease; }
+#xxArrive.lit { background: rgba(0, 0, 0, 0); }
+#xxArrive canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+#xxArrive.out { pointer-events: none; }
+#xxArrive.out canvas { opacity: 0; transition: opacity 0.6s ease; }
+#xxArrive .xx-a-cap { position: absolute; left: 24px; right: 24px; top: calc(49% + min(23.5vw, 101px, 12.5vh) * 1.55); margin: 0; text-align: center; font: 14px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  color: rgba(228, 241, 243, 0.8); opacity: 0; transition: opacity 0.8s; }
+#xxArrive .xx-a-cap.on { opacity: 1; }
+
+/* ---------- the Meeting Space button ---------- */
+#eyesContact .ec-trade-slot:empty { display: none; }
+#eyesContact .ec-trade-slot { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; }
+#eyesContact .ec-trade { display: inline-flex; align-items: center; gap: 9px; min-height: 40px; padding: 8px 18px 8px 12px; border-radius: 999px; font: inherit; font-size: 14.5px;
+  color: #e4f1f3; background: rgba(228, 241, 243, 0.05); border: 1px solid rgba(190, 228, 236, 0.26); }
+#eyesContact .ec-trade:active { transform: scale(0.96); }
+#eyesContact .ec-trade.ec-trade-off { opacity: 0.42; }
+#eyesContact .ec-trade-g { position: relative; width: 24px; height: 16px; display: block; }
+#eyesContact .ec-trade-g > i { position: absolute; top: 3px; width: 9px; height: 9px; border-radius: 50%; border: 1.3px solid rgba(228, 241, 243, 0.9); box-sizing: border-box; animation: ec-trade-swap 3.6s ease-in-out infinite; }
+#eyesContact .ec-trade-g > i:first-child { left: 0; } #eyesContact .ec-trade-g > i:last-child { right: 0; animation-direction: reverse; }
+@keyframes ec-trade-swap { 0%, 30% { transform: translateX(0); } 50%, 80% { transform: translateX(var(--d, 15px)); } 100% { transform: translateX(0); } }
+#eyesContact .ec-trade-g > i:last-child { --d: -15px; }
+#eyesContact .ec-trade-journal { border: 0; background: none; color: rgba(228, 241, 243, 0.55); font: inherit; font-size: 12px; text-decoration: underline; text-underline-offset: 3px; padding: 2px 6px; }
+
+#eyesExchange[data-motion=off] *, #eyesExchangeCall[data-motion=off] * { animation: none !important; transition: none !important; }
+@media (prefers-reduced-motion: reduce) { #eyesExchangeCall, #eyesContact .ec-trade-g > i { animation: none; } }
+@media (max-height: 640px) { #eyesExchange .xx-names { margin-top: calc(31vh - 46px); } #eyesExchange .xx-card { min-height: 0; padding: 8px 10px; } #eyesExchange .xx-c-j { display: none; } }
+@media (orientation: landscape) and (max-height: 520px) { #eyesExchange .xx-cards { display: none; } }
+
+/* the page after an exchange stays dark until the arrival starts */
+html.xx-arriving body::after { content: ''; position: fixed; inset: 0; z-index: 57; background: #000; }

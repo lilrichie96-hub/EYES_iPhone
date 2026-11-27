@@ -357,6 +357,7 @@
       const ready = Math.min(1, (w.t - w.pulseAt) / K.TUNING.pulseCooldown);
       ctx.fillStyle = '#123038'; ctx.fillRect(82, 3, 16, 2);
       ctx.fillStyle = ready >= 1 ? '#8fffe6' : '#3f8f88'; ctx.fillRect(82, 3, Math.round(16 * ready), 2);
+      if (w.endless) { text('D' + (w.depth + 1), W - 2, 1, '#ffd166', 1, 'right'); return; }   // 5.0 Endless: how deep, not how long
       const secs = Math.ceil(Math.max(0, K.TUNING.roundMs - w.t) / 1000);
       const hurry = secs <= 10 && Math.floor(time / 250) % 2;
       text(String(secs), W - 2, 1, hurry ? '#ff9f8a' : '#cff7ef', 1, 'right');

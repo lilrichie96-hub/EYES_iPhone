@@ -393,3 +393,73 @@
   pointer-events:auto;touch-action:manipulation;
 }
 #arcade[hidden] #arcadeReturnToEye { display:none }
+
+/* ---- 5.0: Eye Arcade, the cartridge shelf and a cartridge's card ---- */
+.arcade-panel-select,
+.arcade-panel-cart,
+.arcade-panel-loading {
+  width: 100%;
+  height: 100%;
+  justify-content: center;
+  gap: 0.4em;
+  padding: 0.55em 0.7em;
+  background: linear-gradient(to bottom, rgba(2, 7, 9, 0.55), rgba(2, 7, 9, 0.85));
+}
+.arcade-machine {
+  font-size: 0.78em !important;
+  letter-spacing: 0.32em !important;
+  text-transform: uppercase;
+  color: #8fd6cc !important;
+  margin: 0 !important;
+}
+.arcade-carts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45em;
+  width: 100%;
+  max-width: 30em;
+}
+.arcade-cart {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.18em;
+  min-height: 44px;
+  min-width: 0;
+  padding: 0.4em 0.35em 0.35em;
+  border: 1.2px solid rgba(var(--arcade-rgb), 0.28);
+  border-radius: 0.7em;
+  background: rgba(4, 14, 16, 0.72);
+  color: #dff8f3;
+  font: inherit;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+.arcade-cart.last { border-color: rgba(var(--arcade-rgb), 0.6); }
+.arcade-cart:active { transform: scale(0.97); }
+.arcade-cart:focus-visible, .arcade-cart:hover { border-color: rgba(var(--arcade-rgb), 0.9); box-shadow: 0 0 14px rgba(var(--arcade-rgb), 0.25); outline: none; }
+.arcade-art {
+  display: block;
+  width: 100%;
+  max-width: 7.2em;
+  aspect-ratio: 48 / 30;
+  height: auto;
+  border-radius: 0.3em;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06), 0 0 0 1px rgba(var(--arcade-rgb), 0.18);
+}
+.arcade-art.big { max-width: 8.5em; width: 8.5em; aspect-ratio: 60 / 36; flex: none; }
+.arcade-cart-title { font-size: 0.82em; font-weight: 600; letter-spacing: 0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.arcade-cart-best { font-size: 0.66em; letter-spacing: 0.08em; text-transform: uppercase; color: #8fb9b4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.arcade-cart-head { display: flex; align-items: center; gap: 0.7em; max-width: 30em; text-align: left; }
+.arcade-cart-text { display: flex; flex-direction: column; gap: 0.2em; min-width: 0; }
+.arcade-cart-text h2 { margin: 0; }
+/* a short screen: the shelf drops its heading and the card stacks tighter */
+@media (max-height: 520px), (max-width: 340px) {
+  .arcade-machine { display: none; }
+  .arcade-art { max-width: 5.6em; }
+  .arcade-art.big { width: 6em; }
+  .arcade-panel-cart .arcade-blurb { display: none; }
+}

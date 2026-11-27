@@ -31,7 +31,11 @@
     hitRadius: 0.62, riseMs: 650, crystal: 25, rare: 100, pop: 100,
     // three waves of crystals; each new wave grows in riskier places and stirs the chambers
     waves: [{ normals: 6, rares: 0 }, { normals: 6, rares: 1 }, { normals: 5, rares: 2 }],
-    normals: 6, rares: 0, dangerNear: 3.2
+    normals: 6, rares: 0, dangerNear: 3.2,
+    // 5.0 Endless: no clock. Each formation has two waves; then the earth shifts into a new formation, the chambers
+    // wake a little more and one heart comes back. Pressure grows through more and busier organisms and riskier
+    // crystals; speed creeps up only a little and stops at +22 %.
+    endless: { speedPerDepth: 0.03, speedMax: 0.22, extraGrubsMax: 3, formationBonus: 150, shiftInvuln: 2200 }
   };
 
   /* Layout legend: '.' earth  '#' stone  ' ' an old tunnel  'P' you  'W' grub chamber  'H' stalker chamber
@@ -92,11 +96,68 @@
   const idx = (x, y) => y * COLS + x;
   const inside = (x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS;
 
+  // 5.0 Endless: a new underground formation, seeded. Same legend as LAYOUTS. Fair by construction: you start in an
+  // open tunnel at the top, chambers sit at least six tiles away (lower down), stone never walls anything in
+  // (single stones and short ridges with gaps), and crystals grow only in earth.
+  function generateLayout(seed, depth) {
+    const R = rng(seed), g = [];
+    for (let y = 0; y < ROWS; y++) g.push(new Array(COLS).fill('.'));
+    for (let x = 5; x <= 9; x++) g[0][x] = ' ';
+    g[0][7] = 'P';
+    const far = (x, y) => Math.abs(x - 7) + y >= 6;
+    // stone: scattered single rocks and a few short ridges, never on the top two rows
+    const stones = 7 + Math.min(9, depth * 2);
+    for (let i = 0; i < stones; i++) {
+      const x = Math.floor(R() * COLS), y = 2 + Math.floor(R() * (ROWS - 2));
+      const len = R() < 0.35 ? 2 + Math.floor(R() * 2) : 1, horiz = R() < 0.5;
+      for (let k = 0; k < len; k++) { const xx = horiz ? x + k : x, yy = horiz ? y : y + k; if (inside(xx, yy) && g[yy][xx] === '.') g[yy][xx] = '#'; }
+    }
+    // nothing may be sealed off: open any stone that walls a pocket of earth away from the start
+    for (let pass = 0; pass < 20; pass++) {
+      const seen = new Uint8Array(COLS * ROWS), q = [idx(7, 0)]; seen[idx(7, 0)] = 1;
+      for (let h = 0; h < q.length; h++) { const c = q[h], cx = c % COLS, cy = (c / COLS) | 0; for (let d = 1; d <= 4; d++) { const nx = cx + DX[d], ny = cy + DY[d]; if (!inside(nx, ny) || seen[idx(nx, ny)] || g[ny][nx] === '#') continue; seen[idx(nx, ny)] = 1; q.push(idx(nx, ny)); } }
+      let sealed = false;
+      for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+        if (g[y][x] === '#' || seen[idx(x, y)]) continue;
+        sealed = true;
+        for (let d = 1; d <= 4; d++) { const nx = x + DX[d], ny = y + DY[d]; if (inside(nx, ny) && g[ny][nx] === '#') g[ny][nx] = '.'; }
+      }
+      if (!sealed) break;
+    }
+    // chambers: an old tunnel with a nest in the middle
+    const chamber = (kind) => {
+      for (let tries = 0; tries < 40; tries++) {
+        const x = 2 + Math.floor(R() * (COLS - 4)), y = 3 + Math.floor(R() * (ROWS - 3));
+        if (!far(x, y) || g[y].slice(x - 2, x + 3).some((c) => c !== '.' && c !== '#')) continue;
+        for (let k = -2; k <= 2; k++) g[y][x + k] = ' ';
+        g[y][x] = kind;
+        return true;
+      }
+      return false;
+    };
+    const grubs = 1 + Math.min(2, Math.floor((depth + 1) / 2)), hunters = depth >= 1 ? 1 + Math.min(1, Math.floor(depth / 3)) : 1;
+    for (let i = 0; i < grubs; i++) chamber('W');
+    for (let i = 0; i < hunters; i++) chamber('H');
+    // a winding old passage now and then: an escape route, if you know where it is
+    if (R() < 0.7) { let x = Math.floor(R() * COLS), y = 2 + Math.floor(R() * 3); for (let k = 0; k < 9; k++) { if (inside(x, y) && g[y][x] === '.') g[y][x] = ' '; if (R() < 0.6) x += R() < 0.5 ? 1 : -1; else y++; } }
+    // crystal places (ordinary everywhere in earth; rich ones beside chambers or deep down)
+    const nests = []; for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (g[y][x] === 'W' || g[y][x] === 'H') nests.push({ x, y });
+    let c = 0, r = 0;
+    for (let tries = 0; tries < 400 && (c < 14 || r < 4); tries++) {
+      const x = Math.floor(R() * COLS), y = 1 + Math.floor(R() * (ROWS - 1));
+      if (g[y][x] !== '.') continue;
+      const nearNest = nests.some((n) => Math.abs(n.x - x) + Math.abs(n.y - y) <= 2);
+      if (r < 4 && (nearNest || y >= 9)) { g[y][x] = 'R'; r++; } else if (c < 14 && !nearNest) { g[y][x] = 'c'; c++; }
+    }
+    return { name: 'Formation ' + (depth + 1), rows: g.map((row) => row.join('')) };
+  }
+  const endlessWaves = (depth) => [{ normals: 5, rares: depth >= 1 ? 1 : 0 }, { normals: 4, rares: 1 + Math.min(1, Math.floor(depth / 3)) }];
+
   // ---------- a round ----------
   function createWorld(opts) {
     const o = opts || {};
     const layoutIndex = ((o.layout | 0) % LAYOUTS.length + LAYOUTS.length) % LAYOUTS.length;
-    const L = LAYOUTS[layoutIndex];
+    const L = o.rows ? { name: o.name || 'Formation', rows: o.rows } : LAYOUTS[layoutIndex];
     const seed = (o.seed == null ? 1 : o.seed) >>> 0;
     const R = rng(seed);
     const tiles = new Uint8Array(COLS * ROWS), links = new Uint8Array(COLS * ROWS), items = new Uint8Array(COLS * ROWS);
@@ -150,14 +211,30 @@
       player: { x: start.x, y: start.y, px: start.x, py: start.y, dir: 0, face: 2, tile: idx(start.x, start.y), moving: false, inDirt: false, walk: 0 },
       start, enemies, nextEnemyId: () => nextId++, makeEnemy: enemy,
       input: { dir: 0, pulse: false },
-      events: [], dangerAt: 0, lowSent: false, stats: { digs: 0, hits: 0, pulses: 0, pops: 0, stuns: 0 }
+      events: [], dangerAt: 0, lowSent: false, stats: { digs: 0, hits: 0, pulses: 0, pops: 0, stuns: 0 },
+      endless: !!o.endless, depth: o.depth | 0
     };
+  }
+  // 5.0 Endless: a new world for the next formation, keeping what you've earned
+  function createEndless(seed, depth, carry) {
+    const L = generateLayout((seed + depth * 7919) >>> 0, depth);
+    const w = createWorld({ rows: L.rows, name: L.name, seed: (seed ^ (depth * 2654435761)) >>> 0, waves: endlessWaves(depth), endless: true, depth });
+    if (carry) {
+      w.score = carry.score; w.t = carry.t; w.stats = carry.stats; w.collected = carry.collected;
+      w.health = Math.min(TUNING.health, carry.health + 1);
+      w.phase = 'playing'; w.readyLeft = 0; w.invulnUntil = w.t + TUNING.endless.shiftInvuln; w.pulseAt = carry.pulseAt;
+      // fair: everything that lives here starts asleep for a moment, and a few more grubs wake far from you
+      for (const e of w.enemies) { e.mode = 'spawn'; e.spawnUntil = w.t + TUNING.spawnShimmer + 400; if (e.kind === 'hunter') e.nextHunt = w.t + TUNING.firstHunt * 0.7; }
+      const extra = Math.min(TUNING.endless.extraGrubsMax, Math.floor(depth / 2));
+      for (let i = 0; i < extra && w.wNests.length; i++) { const e = w.makeEnemy('grub', w.wNests[i % w.wNests.length], w.t + TUNING.spawnShimmer + 900 + i * 700); e.mode = 'spawn'; w.enemies.push(e); }
+    }
+    return w;
   }
 
   const tileAt = (w, x, y) => (inside(x, y) ? w.tiles[idx(x, y)] : ROCK);
   const passable = (w, x, y) => inside(x, y) && w.tiles[idx(x, y)] !== ROCK;
   const linked = (w, x, y, d) => inside(x, y) && (w.links[idx(x, y)] & BIT[d]) !== 0;
-  const speedMul = (w) => 1 + TUNING.escalate * Math.min(1, w.t / TUNING.roundMs);
+  const speedMul = (w) => (w.endless ? 1 + Math.min(TUNING.endless.speedMax, TUNING.endless.speedPerDepth * w.depth + 0.04 * Math.min(1, w.t / 120000)) : 1 + TUNING.escalate * Math.min(1, w.t / TUNING.roundMs));
   const emit = (w, type, data) => { w.events.push(Object.assign({ type, at: w.t }, data || {})); };
 
   // ---------- you ----------
@@ -328,7 +405,7 @@
     } else if ((e.mode === 'patrol') && w.t >= e.nextHunt) {
       // it holds still and trembles first, so you always see a hunt coming
       e.mode = 'warn'; e.until = w.t + TUNING.huntWarn;
-      const f = Math.min(1, w.t / TUNING.roundMs + (w.wave - 1) * 0.25);
+      const f = w.endless ? Math.min(1, 0.3 + w.depth * 0.14 + (w.wave - 1) * 0.1) : Math.min(1, w.t / TUNING.roundMs + (w.wave - 1) * 0.25);
       e.nextHunt = w.t + TUNING.huntWarn + TUNING.huntFor + (TUNING.huntEvery[0] + (TUNING.huntEvery[1] - TUNING.huntEvery[0]) * f);
       emit(w, 'warn', { id: e.id, x: e.x, y: e.y });
     } else if (e.mode === 'hunt' && w.t >= e.huntUntil) {
@@ -411,10 +488,13 @@
     }
     if (w.health <= 0) return finish(w, 'lost', 'health');
     if (w.crystalsLeft <= 0) {
-      if (w.wave >= w.waves.length) return finish(w, 'won', 'clear');
+      if (w.wave >= w.waves.length) {
+        if (w.endless) { w.formationDone = true; w.score += TUNING.endless.formationBonus * (w.depth + 1); emit(w, 'formation', { depth: w.depth + 1 }); return; }
+        return finish(w, 'won', 'clear');
+      }
       nextWave(w);
     }
-    if (w.t >= TUNING.roundMs) return finish(w, 'lost', 'time');
+    if (!w.endless && w.t >= TUNING.roundMs) return finish(w, 'lost', 'time');
   }
   // a new wave: crystals grow again, now in riskier places, and the chambers stir
   function nextWave(w) {
@@ -475,10 +555,14 @@
     if (phase === 'won') bonus = Math.ceil(Math.max(0, TUNING.roundMs - w.t) / 1000) * 5 + w.health * 50;
     w.score += bonus;
     w.result = { phase, reason, bonus, score: w.score, timeMs: Math.round(w.t), collected: w.collected, wave: w.wave, waves: w.waves.length };
+    if (w.endless) {
+      const mins = Math.floor(w.t / 60000), secs = Math.floor((w.t % 60000) / 1000);
+      Object.assign(w.result, { reason: 'endless', mode: 'endless', depth: w.depth + 1, headline: 'The earth closed in', detail: `Formation ${w.depth + 1} · ${w.collected} crystals · ${mins}:${String(secs).padStart(2, '0')}` });
+    }
     emit(w, phase === 'won' ? 'win' : 'lose', w.result);
   }
 
-  const Core = { COLS, ROWS, TILE, HUD, WIDTH, HEIGHT, STEP_MS, DIRT, TUNNEL, ROCK, DX, DY, BIT, TUNING, LAYOUTS, createWorld, step, rng, idx };
+  const Core = { COLS, ROWS, TILE, HUD, WIDTH, HEIGHT, STEP_MS, DIRT, TUNNEL, ROCK, DX, DY, BIT, TUNING, LAYOUTS, createWorld, createEndless, generateLayout, step, rng, idx };
   root.TunnelbugCore = Core;
 
   // =====================================================================================================
@@ -487,7 +571,7 @@
   const STORE_KEY = 'eyes.arcade.tunnelbug.v1';
   function createGame(host) {
     const Render = root.TunnelbugRender, Audio = root.TunnelbugAudio;
-    let world = null, phase = 'title', paused = false, record = { best: 0, plays: 0, wins: 0, layout: 0 }, newBest = false;
+    let world = null, phase = 'title', paused = false, record = { best: 0, plays: 0, wins: 0, layout: 0, endlessBest: 0, endlessPlays: 0, deepest: 0 }, newBest = false, mode = 'timed', seed0 = 0;
     let titleT = 0, renderer = null, sfx = null, lastDigSound = -1e9, stepCount = 0;
     try { Object.assign(record, host.store.get(STORE_KEY) || {}); } catch {}
     const saveRecord = () => { try { host.store.set(STORE_KEY, record); } catch {} };
@@ -502,12 +586,13 @@
       phase = 'title'; paused = false; world = null; titleT = 0;
       if (renderer) renderer.title(Core.createWorld({ layout: record.layout, seed: 7 }));
     }
-    function newRound() {
-      record.layout = (record.layout + 1) % LAYOUTS.length;
-      record.plays++;
-      saveRecord();
+    function newRound(opts) {
+      mode = opts && opts.mode === 'endless' ? 'endless' : 'timed';
       const seed = (Date.now() ^ Math.floor(Math.random() * 0x7fffffff)) >>> 0;
-      world = Core.createWorld({ layout: record.layout, seed });
+      seed0 = seed;
+      if (mode === 'endless') { record.endlessPlays = (record.endlessPlays || 0) + 1; world = Core.createEndless(seed, 0, null); }
+      else { record.layout = (record.layout + 1) % LAYOUTS.length; record.plays++; world = Core.createWorld({ layout: record.layout, seed }); }
+      saveRecord();
       phase = 'ready'; paused = false; newBest = false; stepCount = 0;
       if (renderer) renderer.begin(world);
       host.emit('start', { layout: world.layoutName });
@@ -534,6 +619,14 @@
       if (renderer) renderer.tick(world, dt);
       for (const ev of world.events) handle(ev);
       world.events.length = 0;
+      // 5.0 Endless: the formation is cleared; the earth shifts into the next one
+      if (world.endless && world.formationDone) {
+        const old = world;
+        world = Core.createEndless(seed0, old.depth + 1, old);
+        if (renderer) renderer.begin(world);
+        sfx && sfx.play('rare');
+        host.emit('wave', { wave: world.depth + 1, formation: true });
+      }
     }
     function handle(ev) {
       if (renderer) renderer.event(ev, world);
@@ -556,11 +649,18 @@
         case 'win':
         case 'lose': {
           if (ev.type === 'win') record.wins++;
-          newBest = world.score > (record.best || 0) && world.score > 0;
-          if (newBest) record.best = world.score;
+          const key = world.endless ? 'endlessBest' : 'best';
+          newBest = world.score > (record[key] || 0) && world.score > 0;
+          if (newBest) record[key] = world.score;
+          if (world.endless) {
+            record.deepest = Math.max(record.deepest || 0, world.depth + 1);
+            // a survival run that ends isn't a failure by itself: how deep and how well it went decides
+            const prev = record[key] || 0;
+            world.result.rating = world.depth >= 2 || (prev && world.score >= prev * 0.6) ? 'good' : world.depth >= 1 ? 'ok' : 'poor';
+          }
           saveRecord();
           sfx && sfx.play(ev.type === 'win' ? 'win' : 'lose');
-          host.emit(ev.type, { ...ev, newBest, best: record.best });
+          host.emit(ev.type, { ...ev, newBest, best: record[key], rating: world.result.rating });
           if (newBest) host.emit('best', { score: world.score });
           break;
         }
@@ -578,9 +678,9 @@
       const pulseReady = w ? Math.min(1, (w.t - w.pulseAt) / TUNING.pulseCooldown) : 1;
       return {
         phase, paused,
-        score: w ? w.score : 0, best: record.best || 0, plays: record.plays, wins: record.wins,
+        score: w ? w.score : 0, best: (mode === 'endless' ? record.endlessBest : record.best) || 0, plays: record.plays, wins: record.wins, mode, depth: w && w.endless ? w.depth + 1 : 0,
         health: w ? w.health : TUNING.health, maxHealth: TUNING.health,
-        pulseReady, timeLeft: w ? Math.max(0, TUNING.roundMs - w.t) : TUNING.roundMs,
+        pulseReady, timeLeft: w && w.endless ? null : w ? Math.max(0, TUNING.roundMs - w.t) : TUNING.roundMs,
         crystalsLeft: w ? w.crystalsLeft : 0, crystals: w ? w.crystals : 0, wave: w ? w.wave : 1, waves: TUNING.waves.length,
         result: w ? w.result : null, newBest, layout: w ? w.layoutName : LAYOUTS[record.layout].name,
         invulnerable: !!(w && w.t < w.invulnUntil),
