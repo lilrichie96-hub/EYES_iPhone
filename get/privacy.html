@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Privacy · EYES</title>
+  <meta name="description" content="What EYES keeps on your phone, what it sends, and why.">
+  <meta name="theme-color" content="#050608">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/css/site.css">
+  <link rel="stylesheet" href="assets/css/page.css">
+  <script src="config.js" defer></script>
+  <script src="assets/js/page.js" defer></script>
+</head>
+<body class="page">
+<a class="skip" href="#main">Skip to content</a>
+<header class="page-head wrap"><a href="./" class="back" aria-label="Back to the EYES home page">← EYES</a></header>
+<main id="main" class="wrap prose">
+  <p class="eyebrow">Privacy</p>
+  <h1>What EYES keeps, and what it sends</h1>
+  <p class="fine">Applies to EYES 5.0 for Android and EYES 3.0 for iPhone, and to this website. Last reviewed for the 5.0 release.</p>
+
+  <h2>The short version</h2>
+  <ul>
+    <li>No account, no ads, no analytics, no tracking. EYES does not sell your personal data. The online services it uses are described below.</li>
+    <li>Your Eye, the Pocket Dimension, Arcade scores, shared history and your settings are kept on your phone.</li>
+    <li>A few features need the internet to work. They're listed below, with exactly what they send.</li>
+  </ul>
+
+  <h2>Kept on your phone</h2>
+  <p>Your Eye (its looks, personality, growth and nickname), its habits and moods, the Pocket Dimension, Arcade best scores, Play, your Eye Dex, shared history with friends, your launcher layout and your settings. These are stored in the app's own storage on the phone. Uninstalling EYES (Android), deleting the Home Screen app (iPhone) or clearing its data erases them, unless you've saved an Eye Passport.</p>
+  <p><b>The Pocket Dimension</b> is handy local storage, not a vault: its items aren't encrypted, nothing in it is uploaded, and it isn't included in an Eye Passport. EYES never reads your clipboard, photos or files unless you hand them over.</p>
+
+  <h2>Sent over the internet, and only when you use these features</h2>
+  <h3>Eye Contact (friends, signals, Hangouts, battles)</h3>
+  <p>EYES uses a Firebase Realtime Database (a Google service) with an anonymous sign-in, so each phone gets a random ID instead of an account. Messages between two linked Eyes are end-to-end encrypted with a key only those two phones share, so the database relays scrambled text it can't read.</p>
+  <h3 data-feature="exchange">Eye Exchange <span class="badge" data-testing-badge>Testing</span></h3>
+  <p data-feature="exchange">When two friends trade Eyes, the trade is coordinated through the same database. It stores, without end-to-end encryption: the Eye being traded (its looks and personality data), the exchange labels you chose, its journal of homes, the anonymous IDs involved, and a recovery key. The database rules are designed to prevent other users from reading the recovery key, but the EYES project owner can read these records.</p>
+  <h3>Weather Organ</h3>
+  <p>The forecast comes from <a href="https://open-meteo.com/">Open-Meteo</a>. EYES sends the city or postal code you type to look it up, and then the coordinates of the place you picked to get its forecast. On iPhone you can instead allow your location; it's rounded to about 1 km first. Turning Weather off stops these requests.</p>
+  <h3>iPhone notifications (optional)</h3>
+  <p>If you turn on notifications on iPhone, your browser's push subscription and your friendship mailbox IDs are registered with the EYES push relay, so a friend's signal can reach you while EYES is closed. The notifications themselves carry no message content.</p>
+  <h3>Downloads, updates and this website</h3>
+  <p>EYES and this website are hosted on GitHub Pages. Like any web server, GitHub keeps ordinary request logs (such as IP address and time). This website uses no cookies, no analytics and no local storage.</p>
+
+  <h2>Permissions</h2>
+  <p>All optional. EYES keeps working if you say no.</p>
+  <ul>
+    <li><b>Camera</b> — Vision only, while it's open.</li>
+    <li><b>Notification access</b> (Android) — to show notification glints and music controls in the Eye.</li>
+    <li><b>Screen and audio capture</b> (Android) — only if you turn on Live Audio; the sound is analysed on the phone and isn't sent anywhere.</li>
+    <li><b>Default Home app</b> (Android) — only if you choose EYES as your launcher.</li>
+    <li><b>Location</b> (iPhone) — only if you ask Weather to use where you are.</li>
+    <li><b>Notifications</b> (iPhone) — only if you turn them on.</li>
+  </ul>
+
+  <h2>Eye Passport</h2>
+  <p>An Eye Passport is a backup you create yourself. It's encrypted on your phone with a passphrase you choose (PBKDF2 and AES-256-GCM), and it never leaves your phone unless you copy it somewhere. Nobody can open it without the passphrase, including FRAY. It contains your friendships' secrets, so keep it to yourself.</p>
+
+  <h2>Questions</h2>
+  <p data-support-line>Write to <a data-support-link href="#">the EYES team</a>.</p>
+</main>
+<footer class="foot"><div class="wrap foot-grid"><p class="fine">EYES by FRAY, INC.</p><nav aria-label="Footer"><a href="./">Home</a><a href="attribution.html">Credits &amp; licences</a></nav></div></footer>
+</body>
+</html>

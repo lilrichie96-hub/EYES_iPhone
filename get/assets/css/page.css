@@ -1,0 +1,13 @@
+/* simple text pages (privacy, credits) */
+.page-head { padding: 26px 0; }
+.back { text-decoration: none; color: var(--ink2); font-size: 15px; }
+.back:hover { color: var(--ink); }
+.prose { max-width: 760px; padding-bottom: 90px; }
+.prose h1 { font-size: clamp(36px, 5vw, 56px); margin-bottom: 18px; }
+.prose h2 { font-size: 26px; margin: 46px 0 14px; font-weight: 400; }
+.prose h3 { font-size: 19px; margin: 26px 0 8px; font-weight: 500; }
+.prose p, .prose li { color: var(--ink2); }
+.prose b { color: var(--ink); font-weight: 500; }
+.prose ul { padding-left: 20px; }
+.prose li { margin-bottom: 8px; }
+.prose a { color: var(--ink); text-underline-offset: 3px; }

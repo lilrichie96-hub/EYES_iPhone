@@ -2,193 +2,401 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#080a0d">
-  <meta name="description" content="EYES is a small, strange life inside your phone. Wake your own Eye, watch it react, and connect with friends on Android and iPhone.">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>EYES — Your phone. Your creature. Your EYE.</title>
+  <meta name="description" content="EYES is a living digital companion that inhabits your phone. Every Eye is one of a kind: it develops its own personality, plays games, meets friends and turns itself into useful tools. Android home screen launcher and iPhone Home Screen app.">
+  <meta name="theme-color" content="#050608">
+  <meta name="color-scheme" content="dark">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="EYES — Something that looks back.">
-  <meta property="og:description" content="A living Eye for your phone. Weird. Understated. Alive.">
-  <meta property="og:image" content="https://lilrichie96-hub.github.io/EYES_iPhone/get/media/v442/social-preview.jpg">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
+  <meta property="og:title" content="EYES — Your phone. Your creature. Your EYE.">
+  <meta property="og:description" content="A living creature for your phone. One of a kind, with its own temperament, an arcade inside its pupil and friends of its own.">
+  <meta property="og:image" content="https://lilrichie96-hub.github.io/EYES_iPhone/get/media/social/og-cover.jpg">
+  <meta property="og:url" content="https://lilrichie96-hub.github.io/EYES_iPhone/get/">
   <meta name="twitter:card" content="summary_large_image">
-  <link rel="canonical" href="https://lilrichie96-hub.github.io/EYES_iPhone/get/">
-  <link rel="icon" href="../icons/icon-192.png">
-  <title>EYES — Weird. Understated. Alive.</title>
-  <style>
-    :root {color-scheme:dark;--bg:#080a0d;--panel:#11161b;--ink:#e4f1f3;--muted:#94a4ae;--dim:#6f7e86;--line:rgba(205,223,233,.13);--teal:#6fc1ca;--gold:#e0bf8a;--pulse:#ff92a8;--spark:#ffd47a;--calm:#80d6e6}
-    *,*::before,*::after{box-sizing:border-box}
-    html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
-    body::before{content:"";position:absolute;z-index:-1;inset:0 0 auto;height:1100px;background:radial-gradient(ellipse 52% 40% at 78% 28%,rgba(40,77,82,.14),transparent 80%);pointer-events:none}
-    a{color:inherit}a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--teal);outline-offset:4px}
-    button{font:inherit}img,video{display:block;max-width:100%}figure{margin:0}
-    .container{width:min(1160px,calc(100% - 46px));margin:0 auto}
-    .header{height:88px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.065)}
-    .wordmark{display:block;width:92px;height:auto}.brand{display:flex;align-items:center;gap:14px;text-decoration:none}
-    .head-meta{font-size:9px;color:var(--dim);font-weight:650;letter-spacing:.16em;text-transform:uppercase;border-left:1px solid #263036;padding-left:14px}
-    nav{display:flex;gap:26px;align-items:center}nav a{font-size:12px;text-decoration:none;color:#a9b8c0;transition:color .2s}nav a:hover{color:#fff}
-    nav .nav-cta{border-radius:100px;padding:9px 17px;border:1px solid rgba(214,235,240,.23);color:var(--ink)}
-    .hero{min-height:695px;display:grid;grid-template-columns:1fr .98fr;align-items:center;gap:24px;padding:55px 0 75px;position:relative}
-    .eyebrow{font-size:11px;color:#b7cac9;letter-spacing:.21em;text-transform:uppercase;font-weight:650;display:flex;gap:12px;align-items:center}
-    .beacon{height:6px;width:6px;border-radius:50%;background:var(--teal);box-shadow:0 0 10px rgba(111,193,202,.72)}
-    h1,h2,h3,p{margin-top:0}h1{font-size:clamp(54px,6.9vw,90px);line-height:1.05;letter-spacing:-.068em;font-weight:590;margin:24px 0 22px}
-    h1 em{font-style:normal;background:linear-gradient(120deg,#def4f1 0%,#add0d8 48%,#b1c7a7 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
-    .lead{font-size:clamp(16px,1.75vw,18px);max-width:490px;color:#a0adb4;line-height:1.85;margin-bottom:30px}
-    .actions{display:flex;flex-wrap:wrap;gap:11px}.button{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:13px 20px;min-height:49px;border:1px solid var(--line);border-radius:12px;text-decoration:none;font-size:13px;font-weight:690;transition:transform .2s,background .2s,border-color .2s;cursor:pointer}
-    .button:hover{transform:translateY(-2px)}.button.primary{background:#d9e8e9;color:#0c1114;border-color:#d9e8e9}.button.primary:hover{background:#fff}.button.secondary{background:rgba(230,244,246,.04);color:#e8f3f5}.button.secondary:hover{background:rgba(230,244,246,.09);border-color:#758c94}
-    .hero-foot{font-size:11px;color:#71838d;letter-spacing:.03em;margin-top:24px}
-    .hero-stage{height:586px;display:grid;place-items:center;position:relative;isolation:isolate}
-    .hero-stage:before{content:"";position:absolute;width:min(95%,530px);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,rgba(41,89,95,.08),transparent 67%);pointer-events:none}
-    .hero-video,.hero-still{width:min(100%,560px);aspect-ratio:1;object-fit:contain;mix-blend-mode:screen}
-    .hero-still{display:none}.hero-specimen{position:absolute;z-index:2;bottom:33px;left:6%;display:flex;align-items:center;gap:13px;padding:11px 15px;border:1px solid rgba(186,221,225,.15);background:rgba(11,17,21,.73);border-radius:11px;backdrop-filter:blur(9px)}
-    .hero-specimen span{font-size:13px;font-weight:650;letter-spacing:.03em}.hero-specimen small{font-size:10px;color:#8da1a8;display:block;margin-top:1px}
-    .status-light{width:6px;height:6px;background:#8dcdc7;border-radius:50%;box-shadow:0 0 9px #8dcdc7}
-    .real-badge{position:absolute;right:4%;top:56px;color:#6e8991;font-size:10px;letter-spacing:.13em;text-transform:uppercase}
-    .line{height:1px;background:linear-gradient(90deg,transparent,var(--line) 14%,var(--line) 86%,transparent)}
-    .section{padding:100px 0}.kicker{color:var(--gold);font-size:10px;text-transform:uppercase;letter-spacing:.24em;font-weight:750;margin-bottom:17px}
-    h2{font-size:clamp(33px,4.45vw,58px);line-height:1.15;font-weight:570;letter-spacing:-.055em;margin-bottom:22px}
-    .intro{font-size:15px;line-height:1.85;color:#98a6af;max-width:520px}
-    .section-head{display:flex;justify-content:space-between;align-items:end;gap:30px;margin-bottom:34px}.section-head h2{max-width:650px;margin-bottom:0}.section-head p{max-width:350px;margin-bottom:3px;color:#98a6af;font-size:14px;line-height:1.8}
-    .trailer-grid{display:grid;grid-template-columns:.95fr 1.05fr;gap:70px;align-items:center}
-    .trailer-copy .details{margin-top:30px;font-size:12px;color:#78868e;line-height:1.8}
-    .film-container{position:relative;min-height:460px;display:grid;place-items:center;border:1px solid var(--line);border-radius:22px;background:radial-gradient(ellipse 80% 80% at 50% 45%,rgba(28,50,70,.23),transparent 78%),#0c1015;overflow:hidden;padding:22px}
-    .film-container:after{content:"";position:absolute;inset:auto 22px 22px auto;width:65px;height:65px;border-radius:50%;background:rgba(111,193,202,.03);pointer-events:none}
-    .trailer-player{width:min(100%,290px);aspect-ratio:9/16;max-height:590px;object-fit:contain;background:#04070b;border-radius:13px;box-shadow:0 0 0 1px #2d3942,0 22px 70px rgba(0,0,0,.62)}
-    .film-caption{position:absolute;left:25px;bottom:25px;color:#b8c4cb;font-size:11px;letter-spacing:.08em;background:rgba(8,10,13,.83);padding:7px 10px;border-radius:5px}
-    .feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
-    .feature{border:1px solid var(--line);border-radius:18px;background:linear-gradient(160deg,#13191f,#0c0f13);padding:18px;overflow:hidden}
-    .feature-media{border-radius:12px;background:#070c12;overflow:hidden;height:360px;display:grid;place-items:center;position:relative}
-    .feature-media img{width:100%;height:100%;object-fit:contain;object-position:center}.feature-media .feature-video{width:100%;height:100%;object-fit:contain;object-position:center}.feature-media .feature-poster{display:none}
-    .feature-media .tag{position:absolute;left:13px;top:13px;border:1px solid rgba(220,231,238,.15);background:rgba(9,13,18,.78);padding:6px 9px;border-radius:100px;color:#cad9df;font-size:10px;letter-spacing:.05em}
-    .feature-text{padding:22px 6px 8px}.feature-text h3{font-size:19px;font-weight:650;letter-spacing:-.03em;margin-bottom:8px}.feature-text p{font-size:13px;line-height:1.8;color:#98a6b0;margin:0}
-    .lineup{margin:55px 0 22px;min-height:125px;display:grid;align-items:center;justify-items:center;background:radial-gradient(ellipse at 50% 50%,rgba(90,115,125,.08),transparent 73%)}
-    .lineup img{width:100%;max-width:970px;object-fit:contain}
-    .lineup-caption{text-align:center;color:#788890;font-size:12px;letter-spacing:.035em}
-    .social-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center}
-    .social-visual{display:grid;grid-template-columns:1fr .75fr;align-items:center;gap:14px}
-    .social-screen{width:100%;max-height:540px;object-fit:contain;border:1px solid rgba(196,220,233,.15);border-radius:19px;background:#0c1117;box-shadow:0 20px 50px rgba(0,0,0,.2)}
-    .social-aside{display:flex;flex-direction:column;gap:14px}.social-aside img{width:100%;max-height:300px;object-fit:contain;object-position:center;background:#080f16;border-radius:13px;border:1px solid var(--line)}
-    .social-label{font-size:11px;line-height:1.65;color:#82939e}
-    .compact-list{padding:0;list-style:none;margin:28px 0;display:grid;gap:16px}.compact-list li{display:grid;grid-template-columns:28px 1fr;gap:14px;color:#9eaeb6;font-size:13px;line-height:1.8}.compact-list strong{display:block;color:#e2edef;font-size:14px;margin-bottom:1px}
-    .number{display:grid;place-items:center;border:1px solid rgba(174,208,213,.25);border-radius:50%;width:27px;height:27px;color:#b0d6d9;font-size:11px}
-    .duel-grid{display:grid;grid-template-columns:.85fr 1.15fr;gap:40px;align-items:center}
-    .duel-stack{display:flex;align-items:center;justify-content:space-around;gap:18px;border:1px solid var(--line);border-radius:21px;overflow:hidden;background:radial-gradient(ellipse at center,rgba(69,46,51,.16),transparent 70%),#0d1015;padding:18px;min-height:470px}
-    .duel-stack img{max-height:425px;width:48%;object-fit:contain;border-radius:12px}
-    .duel-copy .intro{max-width:445px}
-    .quiet-link{color:var(--teal);text-decoration:underline;text-decoration-color:#517a80;text-underline-offset:5px;font-size:13px;font-weight:650}
-    .download-wrap{border:1px solid rgba(196,218,232,.14);border-radius:24px;padding:58px;background:radial-gradient(ellipse at 50% -10%,rgba(80,116,123,.11),transparent 60%),#0e1217}
-    .download-head{text-align:center;max-width:615px;margin:0 auto 36px}.download-head h2{margin-bottom:12px}.download-head p{color:#9aa8b0;line-height:1.8;font-size:14px;margin:0}
-    .platforms{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-    .platform{padding:31px;border-radius:17px;border:1px solid rgba(210,230,238,.14);background:rgba(11,16,21,.72)}
-    .platform-head{font-size:11px;letter-spacing:.2em;color:var(--teal);text-transform:uppercase;font-weight:700}
-    .platform.iphone .platform-head{color:var(--gold)}.platform h3{font-size:25px;letter-spacing:-.038em;font-weight:615;margin:16px 0 10px}.platform p{font-size:13px;line-height:1.85;color:#91a1ad;min-height:68px;margin-bottom:25px}
-    .platform .button{width:100%}.version{font-size:10px;color:#6f7f8b;margin-top:16px}
-    details{margin-top:23px;border-top:1px solid rgba(215,231,242,.1);padding-top:17px;color:#9ba9b3;font-size:12px;line-height:1.85}
-    summary{cursor:pointer;color:#d7e5ea;font-size:12px;font-weight:650}details ol{padding-left:21px;margin:13px 0 5px}details li{margin-bottom:9px}details p{margin:10px 0 0!important;min-height:0!important}
-    .download-fine{text-align:center;font-size:11px;color:#6f808a;line-height:1.8;max-width:660px;margin:28px auto 0}
-    .qa{display:grid;grid-template-columns:1fr 1.15fr;gap:70px;padding-top:72px}.qa h2{font-size:37px}.qa .intro{font-size:14px}
-    .qa details{margin:0;padding:18px 0;border-top:1px solid var(--line)}.qa details:last-child{border-bottom:1px solid var(--line)}.qa summary{font-size:14px;color:#dfe9ec}.qa details p{font-size:13px!important;color:#93a4ad}
-    footer{border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:24px;padding:33px 0 50px;color:#6f8089;font-size:12px}footer .wordmark{width:62px}
-    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-    @media(max-width:950px){.hero{grid-template-columns:1fr;text-align:center;min-height:0;gap:10px;padding-top:75px}.eyebrow,.actions{justify-content:center}.lead{margin-left:auto;margin-right:auto}.hero-stage{height:520px}.hero-specimen{left:18%}.real-badge{right:16%}.trailer-grid,.social-grid,.duel-grid{gap:32px}.section-head{display:block}.section-head p{max-width:700px;margin-top:20px}.feature-media{height:300px}.download-wrap{padding:35px}}
-    @media(max-width:680px){.container{width:calc(100% - 34px)}.header{height:72px}.head-meta,nav a:first-child{display:none}nav{gap:0}h1{font-size:clamp(50px,11.8vw,75px)}.hero{padding:58px 0 48px}.lead{font-size:15px}.hero-stage{height:370px}.hero-video,.hero-still{width:min(100%,400px)}.hero-specimen{left:3%;bottom:1px}.real-badge{right:0;top:0}.section{padding:70px 0}.section-head{margin-bottom:26px}.trailer-grid,.social-grid,.duel-grid,.platforms,.qa{grid-template-columns:1fr}.trailer-grid{gap:29px}.film-container{min-height:390px;padding:17px}.trailer-player{max-height:480px;width:auto}.film-caption{font-size:10px;left:13px;bottom:13px}.feature-grid{grid-template-columns:1fr}.feature{display:grid;grid-template-columns:130px 1fr;gap:14px;padding:14px;align-items:center}.feature-media{height:225px}.feature-text{padding:0 6px}.feature-text h3{font-size:17px}.feature-text p{font-size:12px}.lineup{margin:42px 0 8px;min-height:65px}.lineup-caption{font-size:11px}.social-grid{gap:30px}.social-visual{max-width:530px}.duel-grid{gap:25px}.duel-stack{min-height:340px;padding:10px}.duel-stack img{max-height:330px}.download-wrap{padding:27px 18px}.platform{padding:22px}.platform p{min-height:0}.qa{padding-top:52px;gap:16px}.qa h2{font-size:34px}footer{flex-wrap:wrap}}
-    @media(max-width:400px){.feature{grid-template-columns:104px 1fr}.feature-media{height:183px}.feature-text h3{font-size:16px}.feature-text p{font-size:11px}.feature-text{padding:0}.platform h3{font-size:23px}}
-    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}.hero-video,.feature-video{display:none!important}.hero-still,.feature-media .feature-poster{display:block!important}}
-  </style>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="preload" href="assets/fonts/InterDisplay-Light.woff" as="font" type="font/woff" crossorigin>
+  <link rel="stylesheet" href="assets/css/site.css">
+  <script src="config.js" defer></script>
+  <script src="assets/js/site.js" defer></script>
 </head>
 <body>
-  <div class="container">
-    <header class="header">
-      <a href="#top" class="brand" aria-label="EYES home"><img class="wordmark" src="./media/v442/eyes-wordmark.svg" alt="EYES" width="92" height="35"><span class="head-meta">a little life inside your phone</span></a>
-      <nav aria-label="Main navigation"><a href="#features">Explore</a><a href="#trailer">Watch the trailer</a><a class="nav-cta" href="#download">Get EYES ↗</a></nav>
-    </header>
-    <main id="top">
-      <section class="hero" aria-labelledby="hero-title">
-        <div class="hero-copy">
-          <div class="eyebrow"><span class="beacon"></span> A little life inside your phone</div>
-          <h1 id="hero-title">Something<br>that <em>looks back.</em></h1>
-          <p class="lead">Not another wallpaper. A small, strange presence with a life of its own. It notices things. It has moods. And when you connect with someone, your Eyes can meet.</p>
-          <div class="actions"><a class="button primary" href="#download">Meet your Eye <span aria-hidden="true">↗</span></a><a class="button secondary" href="#trailer">Watch the trailer <span aria-hidden="true">▶</span></a></div>
-          <p class="hero-foot">A real creature from EYES · Android launcher + iPhone web app</p>
-        </div>
-        <div class="hero-stage" aria-label="Miry, an actual EYES creature from the app renderer">
-          <span class="real-badge">Actual EYES renderer</span>
-          <video class="hero-video" autoplay muted playsinline loop preload="metadata" poster="./media/v442/hero-miry.webp" aria-label="Miry's subtle idle breathing and gaze animation"><source src="./media/v442/miry-idle.webm" type="video/webm"><source src="./media/v442/miry-idle.mp4" type="video/mp4"></video>
-          <img class="hero-still" src="./media/v442/hero-miry.webp" alt="Miry, a teal and violet living Eye with a glowing center" width="900" height="900">
-          <div class="hero-specimen"><i class="status-light" aria-hidden="true"></i><div><span>Miry</span><small>Tide · swirl iris · Mythic</small></div></div>
-        </div>
-      </section>
-      <div class="line"></div>
-      <section id="trailer" class="section trailer-grid" aria-labelledby="trailer-title">
-        <div class="trailer-copy"><p class="kicker">Meet EYES</p><h2 id="trailer-title">It starts with a little light.</h2><p class="intro">Choose one of three drifting lights. Hold it until it wakes. Whatever looks back is uniquely yours, and it won't look quite like anybody else's.</p><p class="intro">An unusual little creature experience that happens to live on your phone.</p><div class="details">74-second official preview · genuine EYES gameplay footage · silent video</div></div>
-        <div class="film-container"><video class="trailer-player" controls playsinline preload="none" poster="./media/v442/trailer-poster.webp" aria-label="Official EYES introduction trailer, 74 seconds"><source src="./media/v442/eyes-trailer.mp4" type="video/mp4">Your browser does not support video. <a href="./media/v442/eyes-trailer.mp4">Open the trailer file</a>.</video><span class="film-caption">EYES / Official preview</span></div>
-      </section>
-      <div class="line"></div>
-      <section id="features" class="section" aria-labelledby="features-title">
-        <div class="section-head"><div><p class="kicker">Not just a home screen</p><h2 id="features-title">A creature in the little moments.</h2></div><p>It's your Eye, with its own look and temperament. The moments are small. That’s the point.</p></div>
-        <div class="feature-grid">
-          <article class="feature"><div class="feature-media"><img loading="lazy" src="./media/v442/shot-home.webp" alt="Actual EYES Android renderer view showing the Eye centered above the app dock"><span class="tag">Android · home</span></div><div class="feature-text"><h3>It feels alive.</h3><p>It follows your finger, takes a breath, glances around, and recognizes the quiet moments between everything else.</p></div></article>
-          <article class="feature"><div class="feature-media"><video class="feature-video" muted playsinline loop preload="none" poster="./media/v442/shot-music.webp" aria-label="EYES Cymatics music mode — the iris draws new patterns to the music"><source src="./media/v442/music-cymatics.webm" type="video/webm"><source src="./media/v442/music-cymatics.mp4" type="video/mp4"></video><img class="feature-poster" loading="lazy" src="./media/v442/shot-music.webp" alt="Android EYES 4.4.2 music controller with the glowing Cymatics iris"><span class="tag">Android · Cymatics</span></div><div class="feature-text"><h3>Music changes its iris.</h3><p>On Android, every track draws its own Cymatics figure inside the Eye. Playback controls are right there, while charging and notifications have their own reactions.</p></div></article>
-          <article class="feature"><div class="feature-media"><img loading="lazy" src="./media/v442/shot-visit.webp" alt="A friend's blue Eye visiting another EYES Android home screen"><span class="tag">Connected Eyes · visits</span></div><div class="feature-text"><h3>Your friends can visit.</h3><p>Send a little signal while a friend is away, and your Eye might appear on their home screen when they return.</p></div></article>
-        </div>
-        <div class="lineup"><img loading="lazy" src="./media/v442/eyes-lineup.webp" alt="A lineup of seven differently colored real EYES creatures"></div>
-        <p class="lineup-caption">Different colours. Different temperaments. No two Eyes quite alike.</p>
-      </section>
-      <div class="line"></div>
-      <section class="section social-grid" aria-labelledby="social-title">
-        <div class="social-visual">
-          <img class="social-screen" loading="lazy" src="./media/v442/shot-meeting.webp" alt="EYES Meeting Space with Miry and Fen, with Pulse, Spark, Calm, Mirror and Battle controls">
-          <div class="social-aside"><img loading="lazy" src="./media/v442/shot-mirror.webp" alt="Two real Eyes mirroring one another during Eye Contact"><div class="social-label">Two Eyes, one quiet moment. <strong>Mirror</strong> lets them try to copy each other.</div></div>
-        </div>
-        <div class="social-copy"><p class="kicker">Eye Contact</p><h2 id="social-title">An entirely different kind of hello.</h2><p class="intro">No chat, no feed. No streak to protect. Just two Eyes, meeting somewhere between your phones.</p>
-          <ul class="compact-list">
-            <li><span class="number">01</span><div><strong>Pulse</strong>A warm pink beat, sent across the distance.</div></li>
-            <li><span class="number">02</span><div><strong>Spark</strong>A bright little star, quick and playful.</div></li>
-            <li><span class="number">03</span><div><strong>Calm</strong>A slow, soft tide to say hello.</div></li>
-          </ul>
-          <p class="intro">And yes, if neither of you can resist, your Eyes can have a tiny staring battle.</p>
-        </div>
-      </section>
-      <div class="line"></div>
-      <section class="section duel-grid" aria-labelledby="play-title">
-        <div class="duel-copy"><p class="kicker">A little mischief</p><h2 id="play-title">Every Eye fights like itself.</h2><p class="intro">Challenge a friend's Eye to a quick turn-based duel. Pick your move, keep your cool, and find out what your creature's personality does under pressure.</p><p class="intro">No grinding, no lost creature. Just a ridiculous little showdown between friends.</p><a href="#download" class="quiet-link">Find your opponent ↗</a></div>
-        <div class="duel-stack"><img loading="lazy" src="./media/v442/shot-duel.webp" alt="Two EYES creatures trading a special attack in a turn-based battle"><img loading="lazy" src="./media/v442/shot-victory.webp" alt="Victory screen at the end of an EYES creature duel"></div>
-      </section>
-      <div class="line"></div>
-      <section class="section" id="download" aria-labelledby="download-title">
-        <div class="download-wrap">
-          <div class="download-head"><p class="kicker">Early access</p><h2 id="download-title">Ready to meet yours?</h2><p>One place to start. Choose your phone, wake your Eye, and see what happens.</p></div>
-          <div class="platforms">
-            <article class="platform"><span class="platform-head">01 / Android</span><h3>The living home screen.</h3><p>Install the signed Android app. Give your Eye a home in the middle of your phone, with music, app shortcuts, and more. The latest build introduces Eye Exchange and improves messaging recovery.</p><a class="button primary" href="./EYES_4.9.0_build126_SIGNED.apk" download="EYES_4.9.0_build126_SIGNED.apk">↓ Download Android APK</a><div class="version">EYES 4.9.0 · signed build 126 · Android 8+</div>
-              <details><summary>How do I install it?</summary><ol><li>Download the APK and open it from <strong>Files</strong> or <strong>Downloads</strong>.</li><li>If Android asks, allow your browser or Files app to install this downloaded app, then tap <strong>Install</strong>.</li><li>Open EYES and wake your Eye. In <strong>The Optic → Make EYES home</strong>, choose EYES as your default launcher.</li><li>Optional: give access to notifications and music in The Optic.</li></ol><p>Already using EYES? Install this APK over your existing installation to keep your Eye and settings. Do not uninstall first.</p><p>To switch back, use Android Settings → Apps → Default apps → Home app. Only install software from sources you trust.</p></details>
-            </article>
-            <article class="platform iphone"><span class="platform-head">02 / iPhone</span><h3>Wake your Eye in Safari.</h3><p>The iPhone companion web app gives you your own creature, Eye Contact, Hangouts, duels, Arcade and more. No App Store download needed.</p><a class="button secondary" href="../">↗ Open EYES for iPhone</a><div class="version">EYES for iPhone 3.0.0 RC1 · Home Screen web app</div>
-              <details><summary>How do I add it to my iPhone?</summary><ol><li>Open EYES in <strong>Safari</strong>.</li><li>Tap <strong>Share → Add to Home Screen</strong>, then <strong>Add</strong>.</li><li>Open EYES from its new Home Screen icon and wake your Eye there.</li></ol><p>The iPhone version is not a system launcher and cannot control other apps' music or read Android-style notifications.</p></details>
-            </article>
-          </div>
-          <p class="download-fine">EYES is an independent early-access experiment. Features vary by platform. Android installs directly from this website, outside the Play Store; the iPhone experience runs as a web app. Artwork shown is captured from the genuine app renderer, with representative demo app icons and content.</p>
-        </div>
-        <div class="qa" aria-labelledby="faq-title"><div><p class="kicker">Little questions</p><h2 id="faq-title">It's weird. Here's how it works.</h2><p class="intro">A few things people ask when they first meet another Eye.</p></div><div>
-          <details><summary>What does Mirror do?</summary><p>It's a short shared moment. Two connected Eyes turn toward each other, try to copy each other's movements, breathe together, and part. Their temperaments affect how it plays out.</p></details>
-          <details><summary>What happens when I send Pulse, Spark or Calm?</summary><p>Each is a wordless signal: Pulse is a warm beat, Spark is playful energy, and Calm is a gentle tide. If your friend's Eye is awake, it reacts. Otherwise the signal may become a visit when they return.</p></details>
-          <details><summary>Can Android and iPhone Eyes connect?</summary><p>Yes. Both versions support Eye Contact. One person creates a private invite code and shares it with the other, who connects from their own Eye Contact screen.</p></details>
-          <details><summary>Can I try something else if I don't like my new home screen?</summary><p>Absolutely. On Android, change your default Home app in Settings → Apps → Default apps → Home app, or uninstall EYES.</p></details>
-        </div></div>
-      </section>
-    </main>
-    <footer><img class="wordmark" src="./media/v442/eyes-wordmark.svg" alt="EYES" width="62" height="25"><span>Weird. Understated. Alive.</span><span>Built to be a little company.</span></footer>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav" id="top">
+  <a class="nav-brand" href="#top" aria-label="EYES home">
+    <svg class="wordmark" viewBox="-1.2 -1.2 62.4 22.4" role="img" aria-hidden="true"><path d="M12 0H0V8.4M0 11.6V20H12"/><path d="M5 10H11.6"/><path d="M16.8 0L22 7.6L27.2 0"/><path d="M22 12.8V20"/><circle class="pupil" cx="22" cy="10.3" r="1.3"/><path d="M44 0H32V20H44"/><path d="M37 10H42.4"/><path d="M57.8 5A3.8 3.8 0 1 0 54 8.8M54 11.2A3.8 3.8 0 1 1 50.2 15"/></svg>
+  </a>
+  <button class="nav-toggle" aria-expanded="false" aria-controls="navlinks"><span class="sr">Menu</span><span aria-hidden="true"></span></button>
+  <nav id="navlinks" aria-label="Sections">
+    <a href="#meet">Meet your Eye</a>
+    <a href="#abilities">Abilities</a>
+    <a href="#arcade">Arcade</a>
+    <a href="#contact">Eye Contact</a>
+    <a href="#home-screen">Android home</a>
+    <a href="#faq">FAQ</a>
+    <a class="nav-cta" href="#install">Get EYES</a>
+  </nav>
+</header>
+
+<main id="main">
+
+<!-- ============================================================ HERO -->
+<section class="hero" aria-labelledby="hero-title">
+  <div class="hero-media" aria-hidden="true">
+    <video class="hero-video" muted loop playsinline preload="none" poster="media/hero/hero-poster.webp" data-autoplay>
+      <source src="media/hero/hero-loop.webm" type="video/webm">
+      <source src="media/hero/hero-loop.mp4" type="video/mp4">
+    </video>
   </div>
-  <script>
-    (function () {
-      var hero=document.querySelector('.hero-video');
-      var music=document.querySelector('.feature-video');
-      var musicVisible=false;
-      function musicMotion(){if(!music)return;if(reduced.matches||!musicVisible){music.pause();return;}music.play().catch(function(){})}
-      if(music){if('IntersectionObserver' in window){new IntersectionObserver(function(entries){musicVisible=entries[0].isIntersecting;musicMotion()},{threshold:.3}).observe(music)}else{musicVisible=true;}}
-      var reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
-      function setMotion(){if (!hero)return;if(reduced.matches){hero.pause()}else{hero.play().catch(function(){})}}
-      setMotion();musicMotion();if(reduced.addEventListener)reduced.addEventListener('change',function(){setMotion();musicMotion()});
-    })();
-  </script>
+  <div class="hero-copy">
+    <p class="eyebrow">A living creature for your phone</p>
+    <h1 id="hero-title">Your phone.<br>Your creature.<br><span>Your EYE.</span></h1>
+    <p class="lede">Somewhere inside your phone, something is waking up. It's yours alone: it has its own look and its own moods, and it will turn itself into whatever you need.</p>
+    <div class="hero-actions">
+      <button class="btn btn-play" data-trailer type="button"><span class="play-glyph" aria-hidden="true"></span>Watch the trailer <small>with sound</small></button>
+    </div>
+    <div class="hero-get">
+      <a class="btn btn-primary" data-apk href="#install-android">Download for Android</a>
+      <a class="btn btn-ghost" data-iphone href="#install-iphone">Open on iPhone</a>
+    </div>
+    <p class="fine" data-apk-note>Android 8 or newer · iPhone with Safari · Free, no ads, no account</p>
+  </div>
+</section>
+
+<!-- ============================================================ MEET -->
+<section class="meet" id="meet" aria-labelledby="meet-title">
+  <div class="wrap">
+    <p class="eyebrow">Meet your Eye</p>
+    <h2 id="meet-title">No two are alike.</h2>
+    <p class="section-lede">Every Eye hatches from its own seed. Its colour, iris, pupil, rare traits, the way it moves and its temperament are all written in it from the moment it wakes, and nobody else will ever get the same one.</p>
+  </div>
+  <ul class="eye-gallery" role="list">
+    <li><img src="media/eyes/eye-kako.webp" alt="Kako, a rose-coloured Eye with fibrous iris" width="420" height="420" loading="lazy"><b>Kako</b><span>judgy · mellow</span></li>
+    <li><img src="media/eyes/eye-luni.webp" alt="Luni, an amber Eye with ringed iris" width="420" height="420" loading="lazy"><b>Luni</b><span>hyper · timid</span></li>
+    <li><img src="media/eyes/eye-mirmi.webp" alt="Mirmi, a silver Eye with a spiral iris" width="420" height="420" loading="lazy"><b>Mirmi</b><span>dozy · timid</span></li>
+    <li><img src="media/eyes/eye-ikoi.webp" alt="Ikoi, a violet Eye with a flower-shaped pupil" width="420" height="420" loading="lazy"><b>Ikoi</b><span>restless · theatrical</span></li>
+    <li><img src="media/eyes/eye-wrena.webp" alt="Wrena, a blue Eye with fine radiating fibres" width="420" height="420" loading="lazy"><b>Wrena</b><span>dramatic · sleepy</span></li>
+    <li><img src="media/eyes/eye-osis.webp" alt="Osis, a teal Eye scattered with flecks of light" width="420" height="420" loading="lazy"><b>Osis</b><span>sleepy · curious</span></li>
+    <li><img src="media/eyes/eye-junoel.webp" alt="Junoel, a green Eye with a starburst iris" width="420" height="420" loading="lazy"><b>Junoel</b><span>hyper · judgy</span></li>
+    <li><img src="media/eyes/eye-ikoko.webp" alt="Ikoko, a lime Eye with dashed rings" width="420" height="420" loading="lazy"><b>Ikoko</b><span>mellow · theatrical</span></li>
+  </ul>
+  <div class="wrap meet-grid">
+    <article>
+      <h3>A personality, not a skin</h3>
+      <p>Some Eyes are bashful, some are judgy, some are hopelessly theatrical. Temperament shapes how it glances around, how quickly it gets bored, how it reacts when you poke it and what it likes to do with you.</p>
+    </article>
+    <article>
+      <h3>Alive when you're not looking</h3>
+      <p>It blinks, yawns, stretches, dozes off at night and wakes up curious. It notices the music you play, the weather outside and the charger you plug in.</p>
+    </article>
+    <article>
+      <h3>It remembers how things went</h3>
+      <p>A close game, a good hangout, a battle it lost: a little of that feeling lingers afterwards. Over the weeks it grows from Hatchling to Elder, and the way you treat it nudges how its light matures.</p>
+    </article>
+    <article>
+      <h3>Give it a name</h3>
+      <p>It arrives with a name of its own. Keep it, or give it a nickname of up to 14 characters on its Eye.D. card.</p>
+    </article>
+  </div>
+  <div class="wrap promise" role="note">
+    <p><b>No feeding. No punishment. No streaks.</b> Your Eye never goes hungry, never gets sick because you were busy, and never counts the days you didn't open it. Spend time with it because it's fun.</p>
+  </div>
+</section>
+
+<!-- ============================================================ ABILITIES -->
+<section class="abilities" id="abilities" aria-labelledby="abilities-title">
+  <div class="wrap">
+    <p class="eyebrow">Six abilities</p>
+    <h2 id="abilities-title">It becomes what you need.</h2>
+    <p class="section-lede">Tap the small satellite beside your Eye and six abilities unfold. Tap one and the Eye physically reshapes itself into it. Not sure? Hold an ability for a moment and the Eye shows you a little preview first.</p>
+  </div>
+  <div class="wrap ability-list">
+    <article class="ability" data-tone="vision">
+      <div class="ability-media"><video muted loop playsinline preload="none" poster="media/abilities/vision.webp" data-autoplay aria-label="Vision reading a QR code on a card"><source src="media/abilities/vision.mp4" type="video/mp4"></video></div>
+      <div class="ability-copy">
+        <h3><span class="num">01</span> Vision</h3>
+        <p>The pupil opens into a camera lens. Point it at a QR code and your Eye reads it, then lets you open the link, copy it or scan again. It can also take a photo.</p>
+        <p class="tag">Uses the camera only while Vision is open</p>
+      </div>
+    </article>
+    <article class="ability" data-tone="weather">
+      <div class="ability-media"><video muted loop playsinline preload="none" poster="media/abilities/weather.webp" data-autoplay aria-label="Weather Organ showing a rainy sky inside the Eye"><source src="media/abilities/weather.mp4" type="video/mp4"></video></div>
+      <div class="ability-copy">
+        <h3><span class="num">02</span> Weather Organ</h3>
+        <p>Your Eye becomes a tiny living sky made from the real forecast for the place you choose: rain, snow, fog, sun or stars. Drag around the dial to look ahead through the next hours, or switch to 7 days.</p>
+        <p class="tag">Pick a city or postal code · forecast by Open-Meteo</p>
+      </div>
+    </article>
+    <article class="ability" data-tone="pocket">
+      <div class="ability-media"><video muted loop playsinline preload="none" poster="media/abilities/pocket.webp" data-autoplay aria-label="Pocket Dimension swallowing a note"><source src="media/abilities/pocket.mp4" type="video/mp4"></video></div>
+      <div class="ability-copy">
+        <h3><span class="num">03</span> Pocket Dimension</h3>
+        <p>Hand it a thought, a link, a picture or a file and it swallows it into its pupil, then gives it back whenever you ask. On Android you can also share things to EYES from other apps.</p>
+        <p class="tag">Kept only on your phone · handy storage, not a vault</p>
+      </div>
+    </article>
+    <article class="ability" data-tone="arcade">
+      <div class="ability-media"><video muted loop playsinline preload="none" poster="media/abilities/arcade.webp" data-autoplay aria-label="The Eye Arcade shelf with four games"><source src="media/abilities/arcade.mp4" type="video/mp4"></video></div>
+      <div class="ability-copy">
+        <h3><span class="num">04</span> Arcade</h3>
+        <p>The Eye flips into a little game console with four games inside. Your Eye watches, cheers and sulks along with you.</p>
+        <p class="tag"><a href="#arcade">See the four games ↓</a></p>
+      </div>
+    </article>
+    <article class="ability" data-tone="contact">
+      <div class="ability-media"><video muted loop playsinline preload="none" poster="media/abilities/contact.webp" data-autoplay aria-label="Two Eyes exchanging a pulse in Eye Contact"><source src="media/abilities/contact.mp4" type="video/mp4"></video></div>
+      <div class="ability-copy">
+        <h3><span class="num">05</span> Eye Contact</h3>
+        <p>Link your Eye with people you know. Their Eye appears in your Meeting Space, and the two of you can send signals, hang out and battle from anywhere.</p>
+        <p class="tag"><a href="#contact">More about Eye Contact ↓</a></p>
+      </div>
+    </article>
+    <article class="ability" data-tone="play">
+      <div class="ability-media"><video muted loop playsinline preload="none" poster="media/abilities/play.webp" data-autoplay aria-label="Play: the Eye chasing a firefly"><source src="media/abilities/play.mp4" type="video/mp4"></video></div>
+      <div class="ability-copy">
+        <h3><span class="num">06</span> Play</h3>
+        <p>Arcade is where you play games. Play is where you play with your Eye: a staring contest, a firefly to chase, a ball to catch, peekaboo, or simply some quiet company. Or let it surprise you.</p>
+        <p class="tag">No points, no rewards. The fun is the point.</p>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ============================================================ ARCADE -->
+<section class="arcade" id="arcade" aria-labelledby="arcade-title">
+  <div class="wrap">
+    <p class="eyebrow">Eye Arcade</p>
+    <h2 id="arcade-title">A whole arcade inside your Eye.</h2>
+    <p class="section-lede">Four original games live inside the Eye itself. They're part of EYES, so once EYES is installed they play offline: on a plane, on the subway, wherever.</p>
+  </div>
+  <div class="wrap carts">
+    <article class="cart" data-game="tunnelbug">
+      <div class="cart-screen"><video muted loop playsinline preload="none" poster="media/arcade/tunnelbug.webp" data-autoplay aria-label="Tunnelbug gameplay"><source src="media/arcade/tunnelbug.mp4" type="video/mp4"></video></div>
+      <h3>Tunnelbug</h3>
+      <p>Dig for energy. Dodge what lives down there. Play a 90-second Timed run, or go Endless and see how deep you can get.</p>
+    </article>
+    <article class="cart" data-game="orbit">
+      <div class="cart-screen"><video muted loop playsinline preload="none" poster="media/arcade/orbit.webp" data-autoplay aria-label="Orbit Breaker gameplay"><source src="media/arcade/orbit.mp4" type="video/mp4"></video></div>
+      <h3>Orbit Breaker</h3>
+      <p>Drift through crystal debris. Break it before it breaks you.</p>
+    </article>
+    <article class="cart" data-game="critter">
+      <div class="cart-screen"><video muted loop playsinline preload="none" poster="media/arcade/critter.webp" data-autoplay aria-label="Critter Crossing gameplay"><source src="media/arcade/critter.mp4" type="video/mp4"></video></div>
+      <h3>Critter Crossing</h3>
+      <p>Hop a tiny critter over lanes, rafts and streams.</p>
+    </article>
+    <article class="cart" data-game="prism">
+      <div class="cart-screen"><video muted loop playsinline preload="none" poster="media/arcade/prism.webp" data-autoplay aria-label="Prism Break gameplay"><source src="media/arcade/prism.mp4" type="video/mp4"></video></div>
+      <h3>Prism Break</h3>
+      <p>Shatter formations of luminous crystal.</p>
+    </article>
+  </div>
+</section>
+
+<!-- ============================================================ EYE CONTACT -->
+<section class="contact" id="contact" aria-labelledby="contact-title">
+  <div class="wrap">
+    <p class="eyebrow">Eye Contact</p>
+    <h2 id="contact-title">You are not alone.</h2>
+    <p class="section-lede">Invite someone you know with a link or a code. From then on your Eyes know each other, on Android and iPhone alike. There's no chat and no feed: just two creatures who keep finding each other.</p>
+  </div>
+  <div class="wrap contact-grid">
+    <figure class="contact-hero">
+      <img src="media/contact/meet.webp" alt="The Meeting Space: two Eyes, Kako and Ikoi, linked by a thread of light, with Pulse, Spark and Calm buttons" width="824" height="1830" loading="lazy">
+    </figure>
+    <div class="contact-points">
+      <article><h3>Pulse &amp; Spark</h3><p>Send a warm Pulse, a bright Spark or a slow Calm. Their Eye feels it on the other phone. Answer a Pulse within about half a minute while you're both in EYES, and your Eyes resonate.</p></article>
+      <article><h3>Hangouts</h3><p>Invite their Eye over. The two of them play catch, chase fireflies and goof around on their own while you watch, or join in with a tap.</p></article>
+      <article><h3>Battles</h3><p>An Eye Duel is a quick contest of looks: glare, blink, charge. Each Eye fights in its own temperament.</p></article>
+      <article><h3>Shared history</h3><p>Each friendship remembers when you met, battles fought together, Hangouts shared and the last time you were together. It's kept only on your phone.</p></article>
+    </div>
+  </div>
+  <div class="wrap contact-strip">
+    <figure><img src="media/contact/hangout.webp" alt="A Hangout: Kako and Ikoi playing together" width="824" height="1830" loading="lazy"><figcaption>Hangout</figcaption></figure>
+    <figure><img src="media/contact/duel.webp" alt="An Eye Duel in round four" width="824" height="1830" loading="lazy"><figcaption>Eye Duel</figcaption></figure>
+    <figure><img src="media/contact/history.webp" alt="Shared history with a friend" width="824" height="1830" loading="lazy"><figcaption>Shared history</figcaption></figure>
+    <figure data-feature="exchange"><img src="media/contact/exchange.webp" alt="Trade Eyes: offering an Eye Exchange to a friend" width="824" height="1830" loading="lazy"><figcaption>Eye Exchange <span class="badge" data-testing-badge>Testing</span></figcaption></figure>
+  </div>
+  <div class="wrap exchange-note" data-feature="exchange">
+    <h3>Eye Exchange <span class="badge" data-testing-badge>Testing</span></h3>
+    <p>Two friends can agree to trade Eyes, one for one. Both see both Eyes first, both have to confirm, and the trade is permanent: each Eye goes to live with its new person, carrying its name, looks, personality and a journal of the homes it has lived in. It's always optional and nothing happens until you both confirm.</p>
+    <p class="fine" data-testing-only>Eye Exchange is still being tested on real phones. Only trade with people you know, and consider trying it first with an Eye you've made a Passport for.</p>
+  </div>
+</section>
+
+<!-- ============================================================ ANDROID HOME -->
+<section class="homescreen" id="home-screen" aria-labelledby="home-title">
+  <div class="wrap">
+    <p class="eyebrow">Make your phone its home</p>
+    <h2 id="home-title">On Android, EYES is your home screen.</h2>
+    <p class="section-lede">Choose EYES as your Home app and the Eye lives where your wallpaper used to be: a complete launcher, built around a creature.</p>
+  </div>
+  <div class="wrap home-grid">
+    <figure class="phone-shot"><img src="media/home/home.webp" alt="The EYES home screen with the clock, weather, the Eye and a dock of apps" width="824" height="1830" loading="lazy"></figure>
+    <ul class="feature-list" role="list">
+      <li><b>App drawer</b><span>Every app, searchable, one swipe away.</span></li>
+      <li><b>Dock</b><span>Up to five favourites at the bottom.</span></li>
+      <li><b>Iris shortcuts</b><span>Keep your most-used apps a touch away from the Eye.</span></li>
+      <li><b>Your layout</b><span>Arrange apps on the home screen, pick a style, and choose how much the Eye moves.</span></li>
+      <li><b>Folders</b><span>Folders unfold around the Eye like a little constellation.</span></li>
+      <li><b>Music</b><span>When something plays, the iris becomes the player. Swipe to skip; the volume keys can flow through the Eye.</span></li>
+      <li><b>Notifications</b><span>A glint appears in the iris. Hold it to peek, or tap the Eye to see your notifications and the day ahead.</span></li>
+      <li><b>Charging</b><span>Plug in and a quiet heartbeat lives inside the iris.</span></li>
+    </ul>
+  </div>
+  <div class="wrap home-strip">
+    <figure><img src="media/home/drawer.webp" alt="The app drawer" width="824" height="1830" loading="lazy"><figcaption>App drawer</figcaption></figure>
+    <figure><img src="media/home/folder.webp" alt="A folder unfolding around the Eye" width="824" height="1830" loading="lazy"><figcaption>Folders</figcaption></figure>
+    <figure><img src="media/home/music.webp" alt="Music playing through the iris" width="824" height="1830" loading="lazy"><figcaption>Music</figcaption></figure>
+    <figure><img src="media/home/charging.webp" alt="The charging heartbeat" width="824" height="1830" loading="lazy"><figcaption>Charging</figcaption></figure>
+  </div>
+  <div class="wrap">
+    <div class="compare" role="region" aria-label="Android and iPhone compared" tabindex="0">
+      <table>
+        <caption>What you get on each phone</caption>
+        <thead><tr><th scope="col"></th><th scope="col">Android</th><th scope="col">iPhone</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Your own living Eye, Eye.D. card, nickname</th><td>✓</td><td>✓</td></tr>
+          <tr><th scope="row">All six abilities, including the four Arcade games</th><td>✓</td><td>✓</td></tr>
+          <tr><th scope="row">Eye Contact, Hangouts, battles, shared history</th><td>✓</td><td>✓</td></tr>
+          <tr><th scope="row">Eye Passport backup</th><td>✓</td><td>✓</td></tr>
+          <tr><th scope="row">Home screen launcher: app drawer, dock, folders, iris shortcuts</th><td>✓</td><td>—</td></tr>
+          <tr><th scope="row">Music in the iris, notification glints, Volume Iris</th><td>✓</td><td>—</td></tr>
+          <tr><th scope="row">Charging heartbeat (needs the battery level)</th><td>✓</td><td>—</td></tr>
+          <tr><th scope="row">Share to EYES from other apps</th><td>✓</td><td>—</td></tr>
+          <tr><th scope="row">How you open it</th><td>Your home screen</td><td>An icon on your Home Screen</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ INSTALL -->
+<section class="install" id="install" aria-labelledby="install-title">
+  <div class="wrap">
+    <p class="eyebrow">Get EYES</p>
+    <h2 id="install-title">Wake yours up.</h2>
+    <p class="section-lede">Free. No account, no ads, no app store needed.</p>
+  </div>
+  <div class="wrap install-grid">
+    <article class="install-card" id="install-android">
+      <h3>Android</h3>
+      <ol class="steps">
+        <li><b>Download the APK.</b> <span>Tap the button below on your Android phone.</span></li>
+        <li><b>Allow installation when asked.</b> <span>Android asks once whether your browser may install apps. Tap Settings, allow it, then go back.</span></li>
+        <li><b>Install EYES.</b> <span>Open the downloaded file and tap Install.</span></li>
+        <li><b>Optional: make EYES your Home app.</b> <span>Open EYES, then The Optic (the round icon at the top) → Make EYES home. Or later, in Android Settings → Apps → Default apps → Home app.</span></li>
+      </ol>
+      <a class="btn btn-primary btn-wide" data-apk href="#install-android">Download for Android</a>
+      <p class="fine" data-apk-meta></p>
+      <p class="callout"><b>Already have EYES?</b> Install the new version right over the old one. Don't uninstall first — uninstalling erases your Eye unless you've saved an Eye Passport.</p>
+    </article>
+    <article class="install-card" id="install-iphone">
+      <h3>iPhone</h3>
+      <ol class="steps">
+        <li><b>Open EYES in Safari.</b> <span>Tap the button below on your iPhone.</span></li>
+        <li><b>Tap the Share button.</b> <span>The square with an arrow, at the bottom of Safari.</span></li>
+        <li><b>Choose Add to Home Screen.</b> <span>Scroll down the menu if you don't see it, then tap Add.</span></li>
+        <li><b>Open EYES from its new icon.</b> <span>Your Eye wakes up the first time you open it there.</span></li>
+      </ol>
+      <a class="btn btn-ghost btn-wide" data-iphone href="#install-iphone">Open EYES on iPhone</a>
+      <p class="callout"><b>Already have EYES?</b> Just open it while you're online; it updates itself. Close it and open it once more to finish. Please don't delete the Home Screen icon to update — that can erase your Eye.</p>
+    </article>
+  </div>
+</section>
+
+<!-- ============================================================ PASSPORT / PRIVACY / FAQ -->
+<section class="faq" id="faq" aria-labelledby="faq-title">
+  <div class="wrap faq-top">
+    <div>
+      <p class="eyebrow">Keep it safe</p>
+      <h2 id="faq-title">Eye Passport, privacy &amp; questions</h2>
+    </div>
+    <figure class="passport-shot"><img src="media/card/eyed.webp" alt="An Eye.D. card: name, temperament, rarity, iris, pupil and stage" width="824" height="1830" loading="lazy"></figure>
+  </div>
+  <div class="wrap faq-list">
+    <details open>
+      <summary>How do I back up my Eye?</summary>
+      <p>Make an <b>Eye Passport</b>: open EYES → The Optic → Eye Passport → Create, and choose a passphrase. The passport is a single block of text, encrypted with that passphrase, that carries your Eye, its growth and personality, your friendships, your Eye Dex, Arcade bests and settings. Keep it somewhere safe (a note, an email to yourself) and write the passphrase down: nobody can open the passport without it, not even FRAY. To bring your Eye back on a new phone, choose Restore in the same place.</p>
+      <p>Because it holds your friendships' secrets, keep your passport to yourself.</p>
+    </details>
+    <details>
+      <summary>How do I protect important Pocket Dimension files?</summary>
+      <p>The Pocket Dimension is handy local storage, not a backup or a vault. Items are kept only on your phone, they aren't encrypted, and they are <b>not</b> included in an Eye Passport. Uninstalling EYES or clearing its data erases them. If something matters, open it in the pocket and share or save a copy somewhere else too.</p>
+    </details>
+    <details>
+      <summary>What stays on my phone?</summary>
+      <p>Your Eye itself, the Pocket Dimension, Arcade scores, shared history with friends, your nickname (outside an Eye Exchange) and your settings all stay on your phone. EYES has no account, no ads and no analytics.</p>
+    </details>
+    <details>
+      <summary>What needs an internet connection?</summary>
+      <ul>
+        <li><b>Eye Contact</b> (signals, Hangouts, battles) goes through a Firebase database with an anonymous sign-in. The messages between two Eyes are end-to-end encrypted, so the database only relays scrambled text.</li>
+        <li data-feature="exchange"><b>Eye Exchange</b> stores what a trade needs in that same database: the Eye being traded (its looks and personality data), the labels you chose, its journal of homes, anonymous IDs and a recovery key. These records are not end-to-end encrypted, so the project owner can read them.</li>
+        <li><b>Weather</b> sends only the place you choose (or, if you allow it, rounded coordinates) to Open-Meteo to get the forecast.</li>
+        <li><b>iPhone notifications</b>, if you turn them on, register your push subscription with the EYES push relay.</li>
+        <li><b>Installing and updating</b> EYES downloads it from GitHub, which keeps ordinary web server logs.</li>
+      </ul>
+      <p>Everything else, including the Eye, Play, Vision, the Pocket Dimension and all four Arcade games, works offline once EYES is installed.</p>
+    </details>
+    <details>
+      <summary>Which permissions does EYES ask for, and why?</summary>
+      <p>All of them are optional; EYES keeps working if you say no.</p>
+      <ul>
+        <li><b>Camera</b> — only for Vision, while Vision is open.</li>
+        <li><b>Notification access</b> (Android) — so notification glints and music controls can appear in the Eye. Choose it in The Optic → Notifications &amp; music access.</li>
+        <li><b>Screen and audio capture</b> (Android, Live Audio) — only if you turn on Live Audio, so the iris can react to the actual sound of what's playing. It's analysed on the phone.</li>
+        <li><b>Default Home app</b> (Android) — only if you want EYES as your launcher.</li>
+        <li><b>Location</b> (iPhone, optional) — only if you ask Weather to use where you are instead of typing a city.</li>
+        <li><b>Notifications</b> (iPhone, optional) — to hear from friends' Eyes when EYES is closed.</li>
+      </ul>
+    </details>
+    <details>
+      <summary>What's different between Android and iPhone?</summary>
+      <p>The Eye, its abilities, the Arcade, Eye Contact and Eye Passport are on both, and Android and iPhone Eyes can be friends with each other. Only Android can be a full home screen launcher, so the app drawer, dock, folders, iris shortcuts, music and notification glints, Volume Iris, the charging heartbeat and sharing into the Pocket Dimension from other apps are Android only. On iPhone, EYES opens from an icon on your Home Screen.</p>
+    </details>
+    <details>
+      <summary>How do I go back to my old Android launcher?</summary>
+      <p>Open Android <b>Settings → Apps → Default apps → Home app</b> and pick your previous launcher. (On some phones it's under Settings → Apps → Choose default apps.) EYES stays installed and your Eye keeps waiting; you can switch back any time.</p>
+    </details>
+    <details>
+      <summary>Is my Eye ever reset or replaced?</summary>
+      <p>No. There are no rerolls and no paid ones: the Eye you wake up is yours. Updates keep your Eye as long as you install them over your current version (Android) or simply reopen EYES online (iPhone).</p>
+    </details>
+    <details>
+      <summary>Does it cost anything?</summary>
+      <p>No. EYES is free, with no ads, no subscriptions and no in-app purchases.</p>
+    </details>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-grid">
+    <div>
+      <svg class="wordmark" viewBox="-1.2 -1.2 62.4 22.4" role="img" aria-label="EYES"><path d="M12 0H0V8.4M0 11.6V20H12"/><path d="M5 10H11.6"/><path d="M16.8 0L22 7.6L27.2 0"/><path d="M22 12.8V20"/><circle class="pupil" cx="22" cy="10.3" r="1.3"/><path d="M44 0H32V20H44"/><path d="M37 10H42.4"/><path d="M57.8 5A3.8 3.8 0 1 0 54 8.8M54 11.2A3.8 3.8 0 1 1 50.2 15"/></svg>
+      <p class="fine">EYES by FRAY, INC. · Weird. Understated. Alive.</p>
+    </div>
+    <nav aria-label="Footer">
+      <a href="privacy.html">Privacy</a>
+      <a href="attribution.html">Credits &amp; licences</a>
+      <a data-support hidden href="#">Report a problem</a>
+    </nav>
+  </div>
+  <p class="wrap fine media-note">All app imagery on this page is captured from the real EYES 5.0 app. Device frames and backgrounds are presentation only.</p>
+</footer>
+
+<!-- trailer player: loads only when asked, plays with sound -->
+<dialog class="trailer" id="trailer" aria-label="EYES trailer">
+  <div class="trailer-inner">
+    <button class="trailer-close" type="button" data-close aria-label="Close trailer">×</button>
+    <video id="trailerVideo" controls playsinline preload="none" poster="media/trailer/trailer-poster.webp">
+      <track kind="captions" src="media/trailer/eyes-trailer-captions.vtt" srclang="en" label="English">
+    </video>
+  </div>
+</dialog>
 </body>
 </html>
