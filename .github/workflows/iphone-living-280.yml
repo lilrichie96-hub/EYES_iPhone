@@ -1,0 +1,35 @@
+name: iPhone 2.8.0 Living Eye
+on:
+  push:
+    branches: [hotfix/iphone-living-280]
+    paths: ['qa/living-280-shared.zip','qa/merge-280.py','qa/living-280.cjs','.github/workflows/iphone-living-280.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Verify all seven files against Claude's exact iPhone update
+        run: python3 qa/merge-280.py
+      - run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps webkit chromium
+      - name: Existing touch and Hangout regression plus Living Eye
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/eyes-static.log 2>&1 &
+          node qa/iphone-reopen-263.cjs
+          node qa/iphone-play-266.cjs
+          node qa/hangout-270.cjs
+          node qa/living-280.cjs
+      - name: Archive verified candidate
+        run: |
+          git config user.name "EYES QA"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add eyes-living.js personality.js presence.js launcher.js index.html ability-wheel.js sw.js
+          git commit -m "Verified shared Living Eye on iPhone 2.8.0"
+          git push origin HEAD:hotfix/iphone-living-280
