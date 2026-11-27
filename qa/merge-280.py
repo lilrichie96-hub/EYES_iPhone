@@ -5,7 +5,7 @@ def edit(n,a,b):
 z=zipfile.ZipFile('qa/living-280-shared.zip')
 for n in ['eyes-living.js','personality.js']:
     Path(n).write_bytes(z.read('assets/'+n))
-edit('ability-wheel.js','    state: () => machine.state,','    state: () => machine.state,\n    // 4.8: the satellite\'s screen point while it is shown (the Living Eye investigates it now and then)\n    satellite: () => (satShown && geo ? satellitePoint(geo) : null),')
+edit('ability-wheel.js','    owner: () => (machine.owner ? machine.owner.id : null),\n    state: () => machine.state,','    owner: () => (machine.owner ? machine.owner.id : null),\n    state: () => machine.state,\n    // 4.8: the satellite\'s screen point while it is shown (the Living Eye investigates it now and then)\n    satellite: () => (satShown && geo ? satellitePoint(geo) : null),')
 edit('index.html','EYES for iPhone 2.7.0','EYES for iPhone 2.8.0')
 edit('index.html','    <script src="personality.js"></script>','    <script src="personality.js"></script>\n    <script src="eyes-living.js?v=280"></script>')
 edit('index.html','launcher.js?v=266','launcher.js?v=280')
