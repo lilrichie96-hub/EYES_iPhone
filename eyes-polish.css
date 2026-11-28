@@ -385,3 +385,8 @@ html[data-skin] .dock-empty {
   #abilitySatellite.beckon::after,
   #clock .clock-ink path.drawing { animation: none; }
 }
+
+/* 5.3: the Eye no longer opens notifications when tapped; this button keeps them one step away for screen readers
+   and keyboards (invisible and untouchable for sighted taps, so it can never be hit by accident) */
+.eyes-vh { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; border: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; pointer-events: none; }
+.eyes-vh:focus-visible { position: fixed !important; left: 12px; top: 12px; width: auto; height: auto; padding: 10px 14px; margin: 0; clip: auto; clip-path: none; pointer-events: auto; z-index: 60; border-radius: 14px; background: rgba(6, 14, 18, 0.9); color: #e3f1f2; }

@@ -479,8 +479,10 @@
     model.lids = lids;
     const volumeShading = iris.shading(t);
     // One renderer for every eye (eye-render.js): the home screen adds its music and skin layers.
-    const drawn = HavenRender.paintEye(ctx, {
-      cx, cy, size, rx, ry, pose: p, gaze: v.gaze, lids, t, music: m,
+    // 5.1: Free Roam. While he is away on another device the socket is empty (ab.vacant): nothing of him is
+    // painted and Slingshot draws the quiet empty socket itself. ab.reveal lets an ability form or dissolve him.
+    const drawn = ab && ab.vacant ? { gx: 0, gy: 0, irisRadius: 0, irisOpacity: 0, pupilR: 0, light: 0, size, rx, ry } : HavenRender.paintEye(ctx, {
+      cx, cy, size, rx, ry, pose: p, gaze: v.gaze, lids, t, music: m, reveal: ab && ab.reveal ? ab.reveal : undefined,
       pupilScale: (ab ? mix(pupilScale,ab.pupil,ab.k) : pupilScale) * (ab && ab.pupilK ? ab.pupilK : 1),
       pupilAlpha: ab ? 1-ab.lens : 1,
       light: v.light, breathing, sleepDim: v.eye?.sleep || 0, energy: v.energy,
@@ -1757,16 +1759,56 @@
   };
   $('settingsOpen').onclick = () => openPanel('settings');
   $('drawerOpen').onclick = () => openPanel('drawer');
-  $('coreHit').onclick = () => {
+  // 5.3: touching the Eye is touching HIM. It no longer opens notifications (those open from the notification
+  // glow beside him, the top-corner swipe, or the screen-reader "Notifications" button); instead he answers, in a
+  // way that fits who he is and how he feels. Rapid taps can't stack reactions or open anything.
+  const eyeTap = { taps: [], last: -1e9, quietUntil: 0, count: 0, by: {} };
+  function eyeTapReaction(e) {
+    const t = now();
+    if (t < eyeTap.quietUntil || t - eyeTap.last < 420) return null;
+    eyeTap.taps = eyeTap.taps.filter((x) => t - x < 3000);
+    eyeTap.taps.push(t);
+    eyeTap.last = t;
+    const n = eyeTap.taps.length;
+    if (n >= 6) { eyeTap.quietUntil = t + 2200; eyeTap.taps = []; }      // he stops answering a drumroll
+    const T = (window.HavenDNA && HavenDNA.dna && HavenDNA.dna() && HavenDNA.dna().T) || {};
+    const m = core.mood || {};
+    const v = (k, d = 0.5) => (typeof T[k] === 'number' ? T[k] : d);
+    const box = $('coreHit').getBoundingClientRect();
+    const vec = e && e.clientX != null && box.width ? { x: Math.max(-1, Math.min(1, (e.clientX - (box.left + box.width / 2)) / (box.width / 2))), y: Math.max(-1, Math.min(1, (e.clientY - (box.top + box.height / 2)) / (box.height / 2))) } : { x: 0, y: 0 };
+    let name;
+    if (n >= 3) name = v('grump') > 0.55 ? 'annoyed' : v('energy') + v('drama') > 1.15 ? 'greet-big' : 'touch';
+    else {
+      const w = {
+        touch: 1.0,
+        'greet-familiar': 0.35 + 0.9 * (1 - v('shyness')) * (0.5 + (m.content || 0.4)),
+        peek: 0.15 + 1.1 * v('shyness'),
+        'greet-big': 0.1 + 0.8 * v('energy') * v('drama'),
+        stir: 0.1 + 0.9 * (m.sleepiness || 0)
+      };
+      let x = Math.random() * Object.values(w).reduce((a, b) => a + b, 0);
+      name = 'touch';
+      for (const [k, wk] of Object.entries(w)) { if ((x -= wk) <= 0) { name = k; break; } }
+    }
+    const ok = core.react(name, t, false, vec) || core.react('touch', t, false, vec);
+    eyeTap.count++;
+    eyeTap.by[name] = (eyeTap.by[name] || 0) + 1;
+    if (!core.motion) draw(now());
+    schedule();
+    return ok ? name : null;
+  }
+  $('coreHit').onclick = (e) => {
     if (personality.eyeTapSuppressed()) return;
-    if (!restoreMusic()) openPanel('inbox');
+    if (restoreMusic()) return;                    // unchanged: a tap brings back the music controls he was showing
+    eyeTapReaction(e);
   };
   $('coreHit').onkeydown = (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      openPanel('inbox');
+      eyeTapReaction(null);
     }
   };
+  if ($('inboxA11y')) { $('inboxA11y').onclick = () => openPanel('inbox'); if (window.EYES_WEB) $('inboxA11y').hidden = true; }
   for (const b of document.querySelectorAll('.close')) b.onclick = closePanel;
   $('drawerExpand').onclick = () => setDrawerExpanded(!$('drawer').classList.contains('expanded'));
   $('focusClose').onclick = () => {
@@ -2053,6 +2095,7 @@
     // Test hooks: trigger a habit or sleep without waiting.
     debug: {
       habit: (name) => core.react(name, now()),
+      eyeTaps: () => ({ count: eyeTap.count, by: { ...eyeTap.by } }),
       sleep: () => personality.sleepNow(),
       setSleepAfter: (ms) => personality.setSleepAfter(ms),
       bedside: () => senses && senses.enterBedside(),

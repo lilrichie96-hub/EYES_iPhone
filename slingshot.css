@@ -1,0 +1,114 @@
+/* EYES 5.1 · Slingshot (slingshot.js). The Eye's own canvas carries the slingshot, elastic, trail and the
+   empty socket; this is only the touch layer, a compact card of choices and the away caption. */
+#eyesSling {
+  --sl-top: max(env(safe-area-inset-top, 0px), var(--native-inset-top, 0px));
+  --sl-bottom: max(env(safe-area-inset-bottom, 0px), var(--native-inset-bottom, 0px));
+  position: fixed;
+  inset: 0;
+  z-index: 44;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  color: #dfeff1;
+  font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  opacity: 0;
+  transition: opacity 0.26s ease;
+}
+#eyesSling.sl-in { opacity: 1; }
+#eyesSling.sl-gentle { transition-duration: 0.4s; }
+#eyesSling [hidden] { display: none !important; }
+#eyesSling button { font: inherit; touch-action: manipulation; }
+#eyesSling button:focus-visible, #eyesSling input:focus-visible { outline: 1.5px solid rgba(190, 230, 232, 0.85); outline-offset: 2px; }
+.sl-catch { position: absolute; inset: 0; touch-action: none; pointer-events: auto; }
+.sl-top {
+  position: absolute;
+  left: max(10px, env(safe-area-inset-left, 0px));
+  right: max(10px, env(safe-area-inset-right, 0px));
+  top: calc(var(--sl-top) + 8px);
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+  z-index: 2;
+}
+.sl-top > button { pointer-events: auto; }
+.sl-icon {
+  width: 44px; height: 44px; padding: 0; border-radius: 50%;
+  border: 1px solid rgba(223, 239, 241, 0.13);
+  background: rgba(6, 14, 18, 0.38);
+  color: rgba(223, 239, 241, 0.82);
+  font-size: 24px; line-height: 1;
+}
+.sl-line {
+  position: absolute; left: 24px; right: 24px;
+  top: calc(var(--sl-top) + 62px);
+  margin: 0; text-align: center; line-height: 1.4;
+  color: rgba(223, 239, 241, 0.78); letter-spacing: 0.02em;
+  opacity: 0; transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+.sl-line.show { opacity: 1; }
+.sl-card {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  bottom: calc(var(--sl-bottom) + 14px);
+  width: min(calc(100vw - 24px), 420px);
+  box-sizing: border-box;
+  padding: 12px 14px 10px;
+  border-radius: 20px;
+  border: 1px solid rgba(223, 239, 241, 0.1);
+  background: rgba(6, 14, 18, 0.72);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  pointer-events: auto;
+  z-index: 2;
+}
+.sl-eyebrow { margin: 0 0 8px; font-size: 10.5px; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(159, 196, 202, 0.72); }
+.sl-targets { display: flex; flex-wrap: wrap; gap: 6px; }
+.sl-chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  min-height: 40px; padding: 6px 12px; border-radius: 14px;
+  border: 1px solid rgba(223, 239, 241, 0.14); background: rgba(12, 26, 31, 0.7); color: #dfeff1;
+}
+.sl-chip.on { border-color: rgba(150, 225, 230, 0.6); background: rgba(20, 44, 50, 0.85); }
+.sl-chip-name { font-weight: 600; max-width: 12em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sl-chip-state { font-size: 11.5px; color: rgba(223, 239, 241, 0.55); }
+.sl-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(223, 239, 241, 0.25); }
+.sl-chip[data-state="online"] .sl-dot { background: rgba(140, 220, 210, 0.75); }
+.sl-chip[data-state="ready"] .sl-dot { background: #9ff3e6; box-shadow: 0 0 8px rgba(159, 243, 230, 0.8); }
+.sl-chip[data-state="offline"] .sl-dot { background: rgba(240, 170, 140, 0.55); }
+.sl-empty, .sl-hint, .sl-small { margin: 4px 0 0; color: rgba(223, 239, 241, 0.62); line-height: 1.4; font-size: 12.5px; }
+.sl-actions { display: flex; gap: 8px; margin-top: 10px; }
+.sl-btn {
+  flex: 1; min-height: 46px; padding: 8px 12px; border-radius: 14px;
+  border: 1px solid rgba(223, 239, 241, 0.14); background: rgba(14, 30, 35, 0.8); color: #dfeff1;
+}
+.sl-btn.primary { background: rgba(60, 130, 138, 0.55); border-color: rgba(150, 225, 230, 0.45); font-weight: 600; }
+.sl-btn:disabled { opacity: 0.4; }
+.sl-link { display: block; margin: 8px auto 0; padding: 8px 10px; border: 0; background: none; color: rgba(159, 210, 215, 0.85); text-decoration: underline; text-underline-offset: 3px; }
+.sl-pair-body p { margin: 0 0 8px; line-height: 1.45; }
+.sl-code { font: 600 26px/1.2 ui-monospace, "Roboto Mono", monospace; letter-spacing: 0.08em; text-align: center; color: #e9fbfa; }
+.sl-warn { color: #f2c8b4; }
+.sl-input {
+  width: 100%; box-sizing: border-box; min-height: 46px; padding: 8px 12px; margin-bottom: 4px;
+  border-radius: 12px; border: 1px solid rgba(223, 239, 241, 0.2); background: rgba(2, 8, 10, 0.6); color: #e9fbfa;
+  font: 15px ui-monospace, "Roboto Mono", monospace; letter-spacing: 0.04em; user-select: text; -webkit-user-select: text;
+}
+/* away: the launcher stays fully usable; only the caption and the recall button sit under the empty socket */
+#eyesSling.sl-away-mode { pointer-events: none; }
+.sl-away {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  width: min(calc(100vw - 40px), 320px);
+  text-align: center; pointer-events: none;
+}
+.sl-away > button { pointer-events: auto; }
+.sl-away-where { margin: 0; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(190, 225, 228, 0.8); }
+.sl-away-note { margin: 4px 0 0; min-height: 1.2em; font-size: 12.5px; color: rgba(223, 239, 241, 0.6); line-height: 1.4; }
+.sl-recall { margin-top: 8px; width: auto; min-width: 160px; flex: none; }
+.sl-socket { position: fixed; border-radius: 50%; border: 0; background: transparent; padding: 0; }
+@media (orientation: landscape) and (max-height: 560px) {
+  .sl-card { left: auto; right: max(14px, env(safe-area-inset-right, 0px)); transform: none; top: calc(var(--sl-top) + 56px); bottom: auto; width: min(38vw, 320px); }
+}
+@media (prefers-reduced-motion: reduce) { #eyesSling { transition: none; } }
+.sl-known { margin: 2px 0 8px; border-top: 1px solid rgba(223, 239, 241, 0.08); }
+.sl-known-row { display: flex; align-items: center; justify-content: space-between; min-height: 40px; border-bottom: 1px solid rgba(223, 239, 241, 0.08); }
+.sl-known-row .sl-link { margin: 0; }

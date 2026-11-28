@@ -637,6 +637,8 @@
   }
   function showResult(found) {
     const box = $('visionResult');
+    // 5.1: an EYES computer's pairing or aiming code goes to Slingshot (the camera closes first)
+    if (window.EyesRoam && window.EyesSlingshot && EyesRoam.isCode(found.text)) return showRoamCode(box, found);
     const info = classify(found.text);
     V.result = { info, text: found.text };
     box.replaceChildren();
@@ -684,6 +686,31 @@
     void box.offsetWidth;
     box.classList.add('emerge');
     if (V.api.keyboard()) first.focus({ preventScroll: true });
+  }
+  function showRoamCode(box, found) {
+    const target = EyesRoam.parseTarget(found.text);
+    V.result = { info: { kind: 'eyes-roam' }, text: found.text };
+    box.replaceChildren();
+    box.dataset.kind = 'text';
+    box.append(el('div', { class: 'vr-eyebrow', text: target ? 'EYES computer' : 'EYES pairing code' }));
+    box.append(el('div', { class: 'vr-text', text: target ? 'Aim Slingshot at this computer.' : 'Pair this computer with your Eye, for Slingshot.' }));
+    const actions = el('div', { class: 'vision-actions' });
+    const use = el('button', { type: 'button', class: 'primary', text: target ? 'Aim here' : 'Pair' });
+    const again = el('button', { type: 'button', class: '', text: 'Scan again' });
+    use.addEventListener('click', () => {
+      const text = found.text;
+      close_('slingshot', true);                       // the normal close path stops the camera
+      EyesSlingshot.fromCode(text);
+    });
+    again.addEventListener('click', scanAgain);
+    actions.append(use, again);
+    box.append(actions);
+    box.hidden = false;
+    placeCard(box);
+    box.classList.remove('emerge');
+    void box.offsetWidth;
+    box.classList.add('emerge');
+    if (V.api.keyboard()) use.focus({ preventScroll: true });
   }
   function hideResult() {
     const box = $('visionResult');

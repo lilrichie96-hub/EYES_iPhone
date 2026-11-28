@@ -1,4 +1,6 @@
 /* EYES 4.4.3 · The Ability Satellite and Ability Wheel.
+   5.2: abilities may register with wheel:false (reached through another ability); Play is now a fork (play-hub.js).
+   5.3: Journal (eyes-journal.js) joins the wheel after Play, with a reading preview.
    5.0: the order is declared (Vision, Weather, Pocket, Arcade, Eye Contact, Play: practical, then play and
    friends), and holding an ability plays a short living preview of it on the Eye (nothing of it starts).
    4.4.6: Weather (weather.js) is the fourth ability. Two small additions for it: launch(id) opens an ability
@@ -91,7 +93,9 @@
   // ---------- wheel ----------
   function availableAbilities() {
     if (window.EYES_WEB && !window.EYES_IOS_ABILITIES) return [];
-    return registry.filter((a) => { try { return a.available ? !!a.available() : true; } catch { return false; } });
+    // 5.2: an ability registered with wheel:false is reached through another one (Play leads to Play together
+    // and Slingshot); launch() and claim() still find it
+    return registry.filter((a) => { if (a.wheel === false) return false; try { return a.available ? !!a.available() : true; } catch { return false; } });
   }
   function satellitePoint(g) {
     // upper-left of the Eye, outside the body; the notification glint lives upper-right and the
@@ -433,7 +437,7 @@
   // (the same channel an ability uses), it lasts about a second, a release fades it in 0.2 s, and a normal
   // tap still opens the ability at once. One preview at a time; no timers or listeners outlive the wheel.
   const HOLD_MS = 420, SLOP = 14;
-  const PREVIEW_DUR = { vision: 1300, weather: 1500, pocket: 1350, arcade: 1200, contact: 1250, play: 1150 };
+  const PREVIEW_DUR = { vision: 1300, weather: 1500, pocket: 1350, arcade: 1200, contact: 1250, play: 1150, journal: 1400 };   // 5.3: journal
   const PV = { id: null, item: null, at: 0, dur: 0, rel: 0, relFrom: 1, wx: null, seed: 0, count: 0, cancelled: 0, byId: {} };
   const hold = { it: null, id: null, x: 0, y: 0, timer: 0 };
   function currentSky() {
@@ -446,7 +450,7 @@
   }
   function startPreview(it) {
     if (!motion() || machine.state !== 'WHEEL_OPEN' || !wheel.open || machine.owner) return false;
-    const id = it.ability.id;
+    const id = it.ability.preview || it.ability.id;      // 5.2: Play (the fork) previews as Play always did
     if (!PREVIEW_DUR[id]) return false;
     dropPreview();
     PV.id = id; PV.item = it; PV.at = ms(); PV.rel = 0; PV.relFrom = 1;
@@ -535,6 +539,11 @@
       P.pupilK = 1 + 0.22 * a; P.glow = 1 + 0.1 * a + 0.06 * a * lift;
       P.dx = Math.sign(gz.x || -1) * 3.5 * a; P.dy = (-1.5 - 2.5 * lift) * a; P.tilt = Math.sign(gz.x || -1) * 0.05 * a;
       P.bodySy = 1 + 0.02 * a * lift;
+    } else if (id === 'journal') {
+      // 5.3: he looks down as if reading a page, eyes moving along two lines, then a fond little lift
+      const line = u < 0.42 ? u / 0.42 : u < 0.8 ? (u - 0.42) / 0.38 : 1, row = u < 0.42 ? 0 : 1;
+      P.look = 0.7 * a; P.gaze = { x: -0.3 + 0.6 * ease(line), y: 0.34 + 0.1 * row };
+      P.pupilK = 1 + 0.06 * a; P.glow = 1 + 0.08 * a * B(u, 0.88, 0.08); P.bodySy = 1 - 0.012 * a; P.dy = (1.5 - 2 * B(u, 0.88, 0.08)) * a;
     } else if (id === 'play') {
       // crouch, hop, land with a squash and a wiggle
       const crouch = B(u, 0.18, 0.07), air = clamp((u - 0.24) / 0.36), hop = Math.sin(air * Math.PI) * (u > 0.24 && u < 0.6 ? 1 : 0), land = B(u, 0.62, 0.05);
@@ -849,7 +858,10 @@
   // 5.0: the wheel's order is declared here, not by script load order. Practical abilities first (Vision,
   // Weather, Pocket), then the recreational and social ones (Arcade, Eye Contact, Play). An ability this list
   // doesn't know keeps its registration order, after the known ones.
-  const ORDER = ['vision', 'weather', 'pocket', 'arcade', 'contact', 'play'];
+  // 5.1: Slingshot joins the practical (utility) group, after Pocket.
+  // 5.2: Slingshot moves under Play (play-hub.js): the wheel's Play is the fork to Play together and Slingshot.
+  // 5.3: Journal, his scrapbook, sits after Play.
+  const ORDER = ['vision', 'weather', 'pocket', 'arcade', 'contact', 'playhub', 'journal', 'play', 'slingshot'];
   const rank = (id) => { const i = ORDER.indexOf(id); return i < 0 ? ORDER.length : i; };
   function register(ability) {
     if (!ability || !ability.id || registry.some((a) => a.id === ability.id)) return false;

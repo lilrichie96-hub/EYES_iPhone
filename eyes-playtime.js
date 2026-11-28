@@ -1068,7 +1068,7 @@
       suspend(reason) { contactCancel(reason); }
     });
     EyesAbility.register({
-      id: 'play', label: 'Play', icon: PLAY_ICON,
+      id: 'play', label: 'Play together', icon: PLAY_ICON, wheel: false,      // 5.2: reached through Play (play-hub.js)
       available: playAvailable,
       entry: 'PLAY_PICK',
       states: { PLAY_PICK: ['PLAY_ACTIVE', 'PLAY_CLOSING'], PLAY_ACTIVE: ['PLAY_PICK', 'PLAY_CLOSING'], PLAY_CLOSING: [] },

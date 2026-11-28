@@ -1,0 +1,27 @@
+/* EYES 5.2 · Play, the fork (play-hub.js). The buds, filaments and icons are painted into the Eye's own canvas;
+   this is only the accessible touch layer and the labels. */
+#eyesPlayHub { position: fixed; inset: 0; z-index: 43; pointer-events: none; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+#eyesPlayHub .ph-catch { position: absolute; inset: 0; pointer-events: auto; touch-action: none; }
+#eyesPlayHub[data-state='HUB_CHOSEN'] .ph-catch, #eyesPlayHub[data-state='HUB_CLOSING'] .ph-catch { pointer-events: none; }
+.ph-bud {
+  position: absolute; width: 56px; height: 56px; padding: 0; border: 0; border-radius: 50%;
+  background: transparent; transform: translate(-50%, -50%); pointer-events: auto; touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; font: inherit;
+}
+.ph-bud:disabled { pointer-events: none; }
+.ph-bud:focus-visible { outline: 1.5px solid rgba(190, 230, 232, 0.85); outline-offset: 3px; }
+.ph-label {
+  position: absolute; left: 50%; top: calc(100% + 4px); transform: translateX(-50%);
+  font: 10px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  letter-spacing: 0.16em; text-transform: uppercase; white-space: nowrap; color: #9fc4ca;
+  text-shadow: 0 1px 10px #000; pointer-events: none; transition: color 0.18s ease;
+}
+.ph-label.ph-side { top: 50%; left: calc(100% + 6px); transform: translateY(-50%); }
+.ph-label.ph-side.ph-left { left: auto; right: calc(100% + 6px); }
+.ph-bud:active .ph-label, .ph-bud:focus-visible .ph-label { color: #d8f1f3; }
+/* the home rows recede while the fork is out, exactly as they do for the wheel */
+html[data-ability='playhub'] #home #timeBlock,
+html[data-ability='playhub'] #home #homeApps,
+html[data-ability='playhub'] #home #dock,
+html[data-ability='playhub'] #home footer,
+html[data-ability='playhub'] #home .weather-chip { opacity: 0.12; pointer-events: none; }

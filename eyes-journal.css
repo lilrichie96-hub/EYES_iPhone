@@ -1,0 +1,158 @@
+/* EYES 5.3 · His journal (eyes-journal.js). A scrapbook of light, not a dashboard: his own colour, soft glow,
+   lots of quiet space, no badges or counters shouting. Works on the Android launcher, the iPhone web app
+   (safe areas) and the companion's desktop viewer (.ej-desktop). */
+#eyesJournal {
+  --ej-top: max(env(safe-area-inset-top, 0px), var(--native-inset-top, 0px));
+  --ej-bottom: max(env(safe-area-inset-bottom, 0px), var(--native-inset-bottom, 0px));
+  --ej-tint: rgba(150, 225, 228, 1);
+  --ej-tint-soft: rgba(150, 225, 228, 0.16);
+  --ej-ink: #e3f1f2;
+  --ej-ink-2: rgba(227, 241, 242, 0.68);
+  --ej-ink-3: rgba(227, 241, 242, 0.46);
+  position: fixed;
+  inset: 0;
+  z-index: 46;
+  color: var(--ej-ink);
+  font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  opacity: 0;
+  transition: opacity 0.28s ease;
+}
+#eyesJournal.ej-in { opacity: 1; }
+#eyesJournal.ej-still, #eyesJournal.ej-still * { transition: none !important; animation: none !important; }
+#eyesJournal [hidden] { display: none !important; }
+#eyesJournal button { font: inherit; color: inherit; touch-action: manipulation; }
+#eyesJournal h2, #eyesJournal h3, #eyesJournal p, #eyesJournal ul { position: static; }
+#eyesJournal button:focus-visible, #eyesJournal [tabindex]:focus-visible { outline: 2px solid var(--ej-tint); outline-offset: 2px; }
+#eyesJournal .ej-sheet:focus, #eyesJournal .ej-sheet:focus-visible { outline: none; }
+.ej-shade { position: absolute; inset: 0; background: rgba(2, 8, 10, 0.62); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.ej-sheet {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translate(-50%, 24px);
+  transition: transform 0.36s cubic-bezier(0.2, 0.8, 0.2, 1);
+  width: min(100vw, 560px);
+  height: calc(100% - var(--ej-top) - 40px);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  border-radius: 26px 26px 0 0;
+  border: 1px solid rgba(227, 241, 242, 0.09);
+  border-bottom: 0;
+  background:
+    radial-gradient(120% 60% at 50% -10%, var(--ej-tint-soft), transparent 60%),
+    linear-gradient(180deg, rgba(8, 20, 24, 0.96), rgba(4, 11, 14, 0.98));
+  box-shadow: 0 -12px 50px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+#eyesJournal.ej-in .ej-sheet { transform: translate(-50%, 0); }
+.ej-head { display: flex; align-items: flex-start; gap: 12px; padding: 20px 20px 6px; }
+.ej-head > div { flex: 1; min-width: 0; }
+.ej-eyebrow { margin: 0; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ej-ink-3); }
+.ej-title { margin: 2px 0 0; font-size: 24px; font-weight: 600; letter-spacing: 0.01em; text-shadow: 0 0 18px var(--ej-tint-soft); }
+.ej-sub { margin: 2px 0 0; color: var(--ej-ink-2); font-size: 13.5px; }
+.ej-close {
+  flex: none; width: 44px; height: 44px; border-radius: 50%; padding: 0;
+  border: 1px solid rgba(227, 241, 242, 0.12); background: rgba(6, 14, 18, 0.5);
+  font-size: 24px; line-height: 1; color: var(--ej-ink-2);
+}
+.ej-tabs { display: flex; gap: 2px; padding: 10px 12px 8px; overflow-x: auto; scrollbar-width: none; }
+.ej-tabs::-webkit-scrollbar { display: none; }
+.ej-tab {
+  flex: none; min-height: 44px; padding: 0 11px; border-radius: 22px;
+  border: 1px solid transparent; background: transparent; color: var(--ej-ink-2);
+  letter-spacing: 0.01em;
+}
+.ej-tab[aria-selected="true"] { color: var(--ej-ink); border-color: rgba(227, 241, 242, 0.14); background: var(--ej-tint-soft); box-shadow: 0 0 14px var(--ej-tint-soft) inset; }
+.ej-status { margin: 0 20px; min-height: 0; font-size: 12.5px; color: var(--ej-ink-3); }
+.ej-status:not(:empty) { padding: 2px 0 6px; }
+.ej-body {
+  flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+  padding: 6px 20px calc(var(--ej-bottom) + 28px);
+}
+.ej-body:focus { outline: none; }
+.ej-body { scrollbar-width: thin; scrollbar-color: rgba(227, 241, 242, 0.18) transparent; }
+.ej-body::-webkit-scrollbar { width: 6px; }
+.ej-body::-webkit-scrollbar-track { background: transparent; }
+.ej-body::-webkit-scrollbar-thumb { background: rgba(227, 241, 242, 0.18); border-radius: 3px; }
+.ej-day { margin: 18px 0 6px; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ej-ink-3); }
+.ej-day:first-child { margin-top: 6px; }
+.ej-list { list-style: none; margin: 0; padding: 0; }
+.ej-entry { display: flex; gap: 14px; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(227, 241, 242, 0.05); }
+.ej-entry:last-child { border-bottom: 0; }
+.ej-art { flex: none; width: 52px; height: 52px; }
+.ej-entry.ej-quiet .ej-art { opacity: 0.7; }
+.ej-text { min-width: 0; flex: 1; }
+.ej-text p { margin: 0; }
+.ej-line { font-size: 15.5px; }
+.ej-entry.ej-keep .ej-line { text-shadow: 0 0 14px var(--ej-tint-soft); }
+.ej-entry.ej-quiet .ej-line { color: var(--ej-ink-2); font-size: 14.5px; }
+.ej-meta { margin-top: 2px !important; font-size: 12.5px; color: var(--ej-ink-3); }
+.ej-more { display: block; margin: 16px auto 0; min-height: 44px; padding: 0 18px; border-radius: 22px; border: 1px solid rgba(227, 241, 242, 0.12); background: transparent; color: var(--ej-ink-2); }
+.ej-empty { margin: 40px 10px; text-align: center; color: var(--ej-ink-2); line-height: 1.6; }
+.ej-empty canvas { display: block; margin: 0 auto 14px; width: 96px; height: 96px; }
+.ej-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-top: 8px; }
+.ej-card {
+  position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px;
+  padding: 14px 10px 12px; border-radius: 18px; border: 1px solid rgba(227, 241, 242, 0.07);
+  background: radial-gradient(90% 70% at 50% 30%, var(--ej-tint-soft), transparent 70%), rgba(255, 255, 255, 0.015);
+}
+.ej-card .ej-art { width: 84px; height: 84px; }
+.ej-card p { margin: 0; }
+.ej-card .ej-line { font-size: 14px; }
+.ej-sec { margin: 22px 0 8px; }
+.ej-sec:first-child { margin-top: 4px; }
+.ej-sec h3 { margin: 0; font-size: 16px; font-weight: 600; }
+.ej-sec p.ej-blurb { margin: 2px 0 0; font-size: 13px; color: var(--ej-ink-3); }
+.ej-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 10px; margin-top: 10px; }
+.ej-tile {
+  display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 44px;
+  padding: 8px 4px 10px; border-radius: 16px; border: 1px solid rgba(227, 241, 242, 0.06); background: rgba(255, 255, 255, 0.02);
+}
+.ej-tile .ej-art { width: 64px; height: 64px; }
+.ej-tile-name { font-size: 12.5px; line-height: 1.25; }
+.ej-tile-count { font-size: 11.5px; color: var(--ej-ink-3); }
+.ej-hint { margin: 18px 0 0; font-size: 13px; color: var(--ej-ink-3); text-align: center; }
+.ej-detail { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(2, 8, 10, 0.55); }
+.ej-detail-card {
+  width: min(100%, 380px); box-sizing: border-box; padding: 22px 20px 18px; border-radius: 24px; text-align: center;
+  border: 1px solid rgba(227, 241, 242, 0.1);
+  background: radial-gradient(100% 60% at 50% 20%, var(--ej-tint-soft), transparent 70%), rgba(6, 15, 19, 0.98);
+}
+.ej-detail-card .ej-art { width: 150px; height: 150px; margin: 0 auto; display: block; }
+.ej-detail-card h3 { margin: 6px 0 0; font-size: 20px; }
+.ej-detail-card p { margin: 6px 0 0; color: var(--ej-ink-2); }
+.ej-detail-card .ej-facts { list-style: none; padding: 0; margin: 12px 0 0; font-size: 13.5px; color: var(--ej-ink-2); }
+.ej-detail-card .ej-facts li { padding: 3px 0; }
+.ej-detail-card button { margin-top: 14px; min-height: 44px; padding: 0 22px; border-radius: 22px; border: 1px solid rgba(227, 241, 242, 0.14); background: var(--ej-tint-soft); }
+.ej-facts-list { list-style: none; margin: 8px 0 0; padding: 0; }
+.ej-facts-list li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid rgba(227, 241, 242, 0.05); }
+.ej-facts-list li span:last-child { color: var(--ej-ink-2); text-align: right; }
+.ej-small { font-size: 12.5px; color: var(--ej-ink-3); margin: 10px 0 0; }
+/* desktop viewer: the window is the sheet */
+#eyesJournal.ej-desktop .ej-shade { display: none; }
+#eyesJournal.ej-desktop .ej-sheet { width: 100%; height: 100%; border-radius: 0; border: 0; transform: none; left: 0; }
+#eyesJournal.ej-desktop .ej-close { display: none; }
+@media (orientation: landscape) and (max-height: 500px) {
+  .ej-sheet { height: calc(100% - var(--ej-top) - 10px); width: min(100vw, 680px); }
+  .ej-head { padding-top: 12px; }
+  .ej-title { font-size: 20px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #eyesJournal, .ej-sheet { transition: none !important; }
+}
+/* the homecoming chip: a quiet line under him, gone by itself after a few seconds */
+.ej-chip {
+  position: fixed; left: 50%; z-index: 43;
+  top: calc(49% + min(26vw, 150px));
+  transform: translate(-50%, 8px);
+  max-width: min(88vw, 380px); min-height: 44px; padding: 10px 18px; box-sizing: border-box;
+  border-radius: 22px; border: 1px solid rgba(227, 241, 242, 0.12);
+  background: rgba(6, 14, 18, 0.66); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  color: #e3f1f2; font: 14px/1.35 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; text-align: center;
+  opacity: 0; transition: opacity 0.4s ease, transform 0.4s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.ej-chip.ej-chip-in { opacity: 1; transform: translate(-50%, 0); }
+@media (prefers-reduced-motion: reduce) { .ej-chip { transition: none; } }

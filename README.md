@@ -1,3 +1,30 @@
+# EYES for iPhone · 3.1.0 · Free Roam and A Life Remembered
+
+**3.1.0** pairs with Android EYES 5.3.0 build 132 and the Linux companion 5.3.0. Cache: `eyes-web-3.1.0`. **Not deployed.** Upload when you're ready, keeping the live `eyes-config.js`, `icons/`, `manifest.webmanifest`, `.nojekyll` and `cloudflare/` (all unchanged here).
+
+- **Free Roam on iPhone.** The wheel's **Play** now opens the same fork as Android: **Play together** or **Slingshot**.
+  - **Pair a computer:** scan its QR with Vision (permission-gated camera), or type the code. Both screens show the same 6-digit check, and the computer approves.
+  - **Launch:** the same elastic pull and release, or the Launch button. Launch confirmation, rebound on failure and the away screen work as on Android, as does **Call him home**.
+  - **The protocol:** the same Firebase backend and authority protocol as Android (`freeRoamV1`).
+  - **Your eye:** your existing creature, DNA, name and settings are kept. Pairing never creates a new eye.
+- **Safari and Home Screen realities, handled:**
+  - **No background execution is assumed.** While suspended, nothing runs. On return, the app asks the server where he is, and if a computer sent him home meanwhile, he arrives.
+  - **Refresh or closing the app:** he is still away on reopening (server-verified).
+  - **Storage:** if Safari trims the app's Free Roam storage, the app asks the server instead of assuming he's home, so there is never a duplicate creature. After pairing, the app asks Safari to keep its storage (`navigator.storage.persist()`). Installing to the Home Screen is recommended; Safari can clear website data that hasn't been used for weeks.
+  - **Camera:** iOS may ask for camera permission again in a Home Screen app. If the camera isn't available, use **Type a code**.
+  - **Haptics:** none on iPhone (the browser has none).
+- **His journal** (new on the wheel, after Play): a scrapbook of what he did on your computers.
+  - **Lately**, **Keepsakes**, **Collection** (fish he met and released, flowers, things from beyond the portals, his creations) and **About him** (his unchanging nature beside what he has lived).
+  - It is also reachable from the away screen while he's out.
+- **The homecoming:** when he returns with something special, he briefly reveals it above him, and a quiet line offers the journal. No reward screens, never more than one, and it never delays his return.
+- **Unchanged:** every existing ability (Vision, Weather, Pocket, Arcade, Eye Contact, Play together), friends, Eye Exchange, Arcade records and Pocket items. Tapping the Eye still opens the Ability Wheel on iPhone.
+- **Files:**
+  - **new, shared byte-for-byte with Android build 132:** `eyes-roam.js`, `slingshot.js/.css`, `play-hub.js/.css`, `eyes-catalog.js`, `eyes-chronicle.js`, `eyes-experience.js`, `eyes-keepsake-art.js`, `eyes-journal.js/.css`;
+  - **merged (iPhone forks keep their iPhone-specific code):** `ability-wheel.js`, `launcher.js`, `vision.js`, `eyes-polish.css`;
+  - **taken from Android unchanged:** `eyes-playtime.js`;
+  - **updated:** `index.html` (scripts and styles, `?v=310`) and `sw.js` (cache `eyes-web-3.1.0`, precache list).
+- **Testing:** Chromium (QtWebEngine 6.12) emulation only, with an iPhone user agent. **Not Safari, and not a real iPhone.** See the 5.3 verification report.
+
 # EYES for iPhone · 3.0.0 RC1 · Security, Stability & Release Candidate
 
 **3.0.0 RC1** (pairs with Android EYES 5.0.0 build 129). Cache: `eyes-web-3.0.0-rc1`. Not deployed — upload when you're ready, keeping the live `eyes-config.js`, `icons/`, `manifest.webmanifest` and `.nojekyll`.
